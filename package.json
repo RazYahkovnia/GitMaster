@@ -24,7 +24,6 @@
         "reflog",
         "visualization"
     ],
-    "icon": "resources/gitmaster-icon.png",
     "engines": {
         "vscode": "^1.85.0"
     },
@@ -363,7 +362,8 @@
         "compile": "tsc -p ./",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile",
-        "lint": "eslint src --ext ts"
+        "lint": "eslint src --ext ts",
+        "publish": "vsce publish"
     },
     "devDependencies": {
         "@types/node": "20.10.0",
