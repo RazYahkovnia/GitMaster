@@ -1,157 +1,186 @@
-# GitMaster
+# GitMaster 🎯
 
-**GitMaster** is a powerful VS Code extension that provides advanced Git visualization and management features to supercharge your development workflow.
+> **Advanced Git visualization and management for VS Code**
 
-## ✨ Features
+Stop wrestling with Git commands in the terminal. GitMaster brings powerful Git features directly into your VS Code sidebar with beautiful visualizations, intuitive controls, and author color-coding across all views.
 
-### 📜 **File History**
-- View complete commit history for any open file
-- See commit messages, authors, dates, and hashes
-- Click any commit to view the diff
-- **Author Color Coding**: Each author's commits appear in a unique color
-- Copy commit IDs with one click
-- Automatically updates when switching files
+Perfect for developers who want to understand their repository's history, manage branches efficiently, and work with stashes visually.
 
-### 📋 **Commit Details**
-- View all files changed in a selected commit
-- See file status (Added, Modified, Deleted, Renamed)
-- View additions/deletions count per file
-- Click files to see their diffs
-- Open commit in GitHub directly
-- Smart handling of renamed and deleted files
+## ✨ Key Features
 
-### 📦 **Shelves (Stash Management)**
-- Create named stashes (shelves) for your changes
-- Apply or pop shelves with one click
-- Delete unwanted shelves
-- View file count for each shelf
-- See what changed in stashed files
-- Warns about uncommitted changes before operations
-- Option to include untracked files
+### 📜 **File History - Know Your Code's Story**
 
-### 🌿 **Branches**
-- View all branches sorted by recent activity
-- **Author Filtering**: 
-  - Filter by your branches
-  - Filter by any author
-  - Show all branches
-- Visual indicators:
-  - ✓ Current branch
-  - 🌿 Local branches
-  - ☁️ Remote branches
-- **Author Color Coding**: Branch icons colored by last commit author
-- Quick checkout to any branch
-- Delete local branches (with force option)
-- Create new branches
-- Smart remote branch handling
+Ever wonder when a line was changed or who modified a file? Open any file and instantly see its complete commit history.
 
-### 📊 **Git Log**
-- View last 20 repository commits
-- **Author Color Coding**: Commits colored by author
-- Revert commit in new branch
-- Checkout to any commit
-- Cherry-pick commits
-- Create branch from commit
-- Branch name validation
-- Conflict detection for cherry-picks
+- 🎨 **Color-coded by author** - spot patterns at a glance
+- 🔍 **Click any commit** to view the exact changes
+- 📋 **Copy commit IDs** with one click
+- ⚡ **Auto-updates** when switching files
+- 🕐 **Relative dates** - "2 hours ago" is clearer than timestamps
 
-### 🔄 **Git Operations (Reflog)**
-- View git reflog (operation history)
-- Smart icons for different operations:
-  - 📝 Commit, 🌿 Checkout, ☁️ Pull, 🔀 Merge
-  - 📚 Rebase, ❌ Reset, 🍒 Cherry-pick
-- Checkout to any point in history
-- Uncommitted changes warnings
+### 📦 **Shelves - Stash with Style**
 
-## 🎨 Visual Features
+WebStorm-inspired stash management. Save your work-in-progress changes with meaningful names.
 
-- **Consistent Author Colors**: Same author = same color across all views
-- **Theme-Aware**: Colors adapt to your VS Code theme (light/dark)
-- **Smart Icons**: Different icons for different states and operations
-- **Collapsible Sections**: Keep your sidebar organized
+- ✍️ **Named stashes** - no more "stash@{0}" confusion
+- 👁️ **Preview changes** - see what's in each shelf before applying
+- 📊 **File counts** - know how much is stashed
+- ⚠️ **Smart warnings** - won't let you lose work
+- 🗂️ **Include untracked** - stash those new files too
 
-## 🚀 Getting Started
+### 🌿 **Branches - Your Way**
 
-1. Install the extension from the VS Code Marketplace
-2. Open any Git repository in VS Code
-3. Click the **Git Master** icon in the Activity Bar
-4. Start exploring your repository!
+Tired of seeing everyone's branches? Filter to show only what matters to you.
 
-## 📖 Usage Guide
+- 👤 **"My Branches" filter** - one click to see only yours
+- 🔍 **Filter by any author** - focus on specific team members
+- 🎨 **Color-coded by author** - visual organization
+- ✓ **Current branch** highlighted
+- ☁️ **Remote branches** with smart checkout
+- ➕ **Create & delete** branches visually
+- 📅 **Sorted by activity** - recent work first
 
-### Viewing File History
-1. Open any file in a Git repository
-2. The File History section shows all commits that modified this file
-3. Click a commit to see what changed
-4. Right-click to copy commit ID
+### 📊 **Git Log - Repository Timeline**
 
-### Managing Shelves
-1. Make some changes in your working directory
-2. Click the **+** button in Shelves section
-3. Enter a descriptive name for your shelf
-4. Apply (keeps the shelf) or Pop (applies and removes)
-5. Click any file in a shelf to see what changed
+View your repository's recent history and perform advanced Git operations without typing commands.
 
-### Filtering Branches
-1. Expand the Branches section
-2. Click the **👤** icon to see only your branches
-3. Click the **🔍** icon to filter by any author
-4. Click the **❌** icon to show all branches
+- 🎨 **Author colors** throughout
+- 🔄 **Revert in new branch** - safe commit reversal
+- 🍒 **Cherry-pick** with conflict detection
+- 🌿 **Create branches** from any commit
+- ⏪ **Checkout** to any point in history
+- 🛡️ **Uncommitted changes** warnings
 
-### Working with Git Log
-1. Expand the Git Log section
-2. Click any commit to:
-   - Revert it in a new branch
-   - Checkout to that commit
-   - Cherry-pick it
-   - Create a branch from it
+### 🔄 **Git Operations - Time Travel**
 
-## ⚙️ Requirements
+View your Git reflog (every action you've taken) with beautiful icons and descriptions.
 
-- **Git**: Must be installed and accessible from command line
-- **VS Code**: Version 1.85.0 or higher
-- **Repository**: Must be working within a Git repository
+- 📝 Commits
+- 🌿 Checkouts  
+- ☁️ Pulls
+- 🔀 Merges
+- 📚 Rebases
+- ❌ Resets
+- 🍒 Cherry-picks
 
-## 🎯 Keyboard-Free Operations
+Jump back to any point in your repository's history with one click.
 
-All operations are accessible via mouse clicks:
-- Click commits to view diffs
-- Right-click for context menus
-- Toolbar buttons for common actions
-- No need to remember Git commands!
+## 🎨 Why GitMaster?
 
-## 🛡️ Safety Features
+**🌈 Author Color-Coding Everywhere**  
+The same author gets the same color across File History, Branches, and Git Log. Spot who did what instantly.
 
-- Warns before operations that might lose work
-- Prevents deleting current branch
-- Confirms destructive operations
-- Shows conflict warnings
-- Validates branch names
-- Smart handling of remote branches
+**🎭 Theme-Aware**  
+Works beautifully in both light and dark themes. Colors automatically adapt.
 
-## 🏗️ Architecture
+**🖱️ Mouse-Driven Workflow**  
+Stop memorizing Git commands. Everything is point-and-click.
 
-GitMaster follows a clean, modular architecture:
-- **Types**: Shared interfaces
-- **Services**: Business logic (Git operations)
-- **Providers**: Tree view data providers
-- **Commands**: User action handlers
-- **Extension**: Registration and orchestration
+**🛡️ Safe by Default**  
+Warns before destructive operations. Validates inputs. Shows what will happen.
 
-See `ARCHITECTURE.md` for detailed documentation.
+## 🚀 Quick Start
 
-## 🤝 Contributing
+1. **Install** GitMaster from the Extensions panel
+2. **Open** any Git repository
+3. **Click** the Git Master icon in the sidebar (Activity Bar)
+4. **Explore!** All your Git data is now visual and interactive
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+> **💡 Tip:** No configuration needed. GitMaster works out of the box with any Git repository.
+
+## 📖 Common Workflows
+
+### 🔍 "When was this line changed?"
+1. Open the file
+2. Click a commit in File History
+3. See the exact diff with that change highlighted
+
+### 📦 "Save my work but switch branches"
+1. Click **+** in Shelves
+2. Name it (e.g., "WIP: login feature")
+3. Switch branches freely
+4. Come back and click **Pop** to restore
+
+### 🌿 "Show me only my branches"
+1. Expand Branches
+2. Click the **👤** (My Branches) icon
+3. Work without distraction from 50 team branches
+
+### 🔄 "Undo that commit, but safely"
+1. Find the commit in Git Log
+2. Right-click → "Revert in New Branch"
+3. Name your revert branch
+4. Review the revert, then merge when ready
+
+### 🍒 "I need just that one commit"
+1. Find it in Git Log
+2. Click "Cherry Pick"
+3. GitMaster applies it and warns if there are conflicts
+
+## 💻 System Requirements
+
+- **Git** installed and in your PATH
+- **VS Code** 1.85.0 or newer
+- Any **Git repository**
+
+That's it! GitMaster works with any Git repo - no additional setup required.
+
+## ❓ FAQ
+
+**Q: Will this work with GitHub/GitLab/Bitbucket?**  
+A: Yes! GitMaster works with any Git repository, regardless of where it's hosted.
+
+**Q: Does it support mono-repos?**  
+A: Absolutely. GitMaster works great with large repositories.
+
+**Q: Can I use it with Git worktrees?**  
+A: Yes, each worktree is treated as its own repository.
+
+**Q: Does it work with VS Code's built-in Git features?**  
+A: Yes! GitMaster complements (doesn't replace) VS Code's Git features. Use both together.
+
+**Q: Is my Git history safe?**  
+A: Yes. GitMaster only reads your Git data for most operations. For write operations (like creating branches or stashing), it asks for confirmation first.
+
+## 🆚 GitMaster vs. Git Command Line
+
+| Feature | Command Line | GitMaster |
+|---------|-------------|-----------|
+| View file history | `git log --follow <file>` | Click file → see history |
+| Stash with name | `git stash push -m "name"` | Click + → type name |
+| Filter branches by author | `git branch -a \| grep ...` + bash scripting | Click 👤 icon |
+| Cherry-pick safely | `git cherry-pick` + check conflicts | Click commit → auto conflict detection |
+| View reflog | `git reflog` → parse output | Beautiful timeline with icons |
+
+**GitMaster makes Git visual, intuitive, and safe.**
+
+## 🐛 Found a Bug?
+
+Please [open an issue](https://github.com/yourusername/gitmaster/issues) with:
+- What you were trying to do
+- What happened instead
+- Your VS Code version
+- Your Git version (`git --version`)
+
+## 🌟 Love GitMaster?
+
+- ⭐ **Star** the repository
+- ✍️ **Leave a review** on the marketplace
+- 📢 **Tell your team** about it
+- 🐦 **Tweet** about your favorite feature
 
 ## 📝 License
 
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-Built with ❤️ for developers who love Git but want a better visual experience.
+MIT License - Free to use in personal and commercial projects.
 
 ---
 
-**Enjoy using GitMaster!** If you find it useful, please ⭐ star the repository and leave a review!
+<div align="center">
+
+**Made with ❤️ for developers who love Git**
+
+*Because visual Git is better Git*
+
+[Report Bug](https://github.com/yourusername/gitmaster/issues) • [Request Feature](https://github.com/yourusername/gitmaster/issues) • [Discussions](https://github.com/yourusername/gitmaster/discussions)
+
+</div>

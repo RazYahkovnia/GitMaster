@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.1",
+    "version": "0.0.2",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -363,7 +363,8 @@
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile",
         "lint": "eslint src --ext ts",
-        "publish": "vsce publish"
+        "publish": "vsce publish",
+        "package": "vsce package"
     },
     "devDependencies": {
         "@types/node": "20.10.0",

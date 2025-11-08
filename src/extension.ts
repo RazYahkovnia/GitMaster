@@ -46,8 +46,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Register event listeners
     registerEventListeners(context);
 
-    // Initialize with current active editor
-    updateFileHistory(vscode.window.activeTextEditor);
+    // Initialize with current active editor or workspace
+    initializeFromWorkspace();
 }
 
 /**
@@ -307,7 +307,53 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
         () => updateFileHistory(vscode.window.activeTextEditor)
     );
 
-    context.subscriptions.push(editorChangeDisposable, visibleEditorsChangeDisposable);
+    // Listen to workspace folder changes
+    const workspaceFoldersChangeDisposable = vscode.workspace.onDidChangeWorkspaceFolders(
+        () => initializeFromWorkspace()
+    );
+
+    context.subscriptions.push(
+        editorChangeDisposable, 
+        visibleEditorsChangeDisposable,
+        workspaceFoldersChangeDisposable
+    );
+}
+
+/**
+ * Initialize providers from workspace or active editor
+ */
+async function initializeFromWorkspace(): Promise<void> {
+    // Try to use active editor first
+    if (vscode.window.activeTextEditor && vscode.window.activeTextEditor.document.uri.scheme === 'file') {
+        await updateFileHistory(vscode.window.activeTextEditor);
+        return;
+    }
+
+    // If no active editor, try to find git repo from workspace folders
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (workspaceFolders && workspaceFolders.length > 0) {
+        // Try each workspace folder to find a git repo
+        for (const folder of workspaceFolders) {
+            const folderPath = folder.uri.fsPath;
+            const repoRoot = await gitService.getRepoRoot(folderPath);
+            
+            if (repoRoot) {
+                // Found a git repo, initialize all providers
+                shelvesProvider.setRepoRoot(repoRoot);
+                reflogProvider.setRepoRoot(repoRoot);
+                repositoryLogProvider.setRepoRoot(repoRoot);
+                branchesProvider.setRepoRoot(repoRoot);
+                return;
+            }
+        }
+    }
+
+    // No git repo found, clear everything
+    fileHistoryProvider.setCurrentFile(undefined);
+    shelvesProvider.setRepoRoot(undefined);
+    reflogProvider.setRepoRoot(undefined);
+    repositoryLogProvider.setRepoRoot(undefined);
+    branchesProvider.setRepoRoot(undefined);
 }
 
 /**
@@ -325,10 +371,7 @@ async function updateFileHistory(editor: vscode.TextEditor | undefined): Promise
         repositoryLogProvider.setRepoRoot(repoRoot || undefined);
         branchesProvider.setRepoRoot(repoRoot || undefined);
     } else {
-        fileHistoryProvider.setCurrentFile(undefined);
-        shelvesProvider.setRepoRoot(undefined);
-        reflogProvider.setRepoRoot(undefined);
-        repositoryLogProvider.setRepoRoot(undefined);
-        branchesProvider.setRepoRoot(undefined);
+        // No active editor, fall back to workspace initialization
+        await initializeFromWorkspace();
     }
 }
