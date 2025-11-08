@@ -10,11 +10,21 @@ const execAsync = promisify(exec);
  */
 export class GitService {
     /**
-     * Get the git repository root directory for a given file path
+     * Get the git repository root directory for a given file or folder path
      */
     async getRepoRoot(filePath: string): Promise<string | null> {
         try {
-            const dirPath = path.dirname(filePath);
+            const fs = await import('fs');
+            // Check if path is a directory or file
+            let dirPath: string;
+            try {
+                const stats = fs.statSync(filePath);
+                dirPath = stats.isDirectory() ? filePath : path.dirname(filePath);
+            } catch {
+                // If stat fails, assume it's a file path
+                dirPath = path.dirname(filePath);
+            }
+
             const { stdout } = await execAsync('git rev-parse --show-toplevel', {
                 cwd: dirPath
             });

@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
