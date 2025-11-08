@@ -44,6 +44,16 @@
                     "contextualTitle": "Git Shelves"
                 },
                 {
+                    "id": "gitmaster.branches",
+                    "name": "Branches",
+                    "contextualTitle": "Git Branches"
+                },
+                {
+                    "id": "gitmaster.repositoryLog",
+                    "name": "Git Log",
+                    "contextualTitle": "Git Commit Log"
+                },
+                {
                     "id": "gitmaster.reflog",
                     "name": "Git Operations",
                     "contextualTitle": "Git Operations History"
@@ -110,6 +120,66 @@
                 "command": "gitmaster.refreshReflog",
                 "title": "Refresh Git Operations",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.revertCommitInNewBranch",
+                "title": "Revert in New Branch",
+                "icon": "$(debug-reverse-continue)"
+            },
+            {
+                "command": "gitmaster.checkoutCommitFromRepoLog",
+                "title": "Checkout to Commit",
+                "icon": "$(git-branch)"
+            },
+            {
+                "command": "gitmaster.cherryPickCommit",
+                "title": "Cherry Pick Commit",
+                "icon": "$(git-pull-request)"
+            },
+            {
+                "command": "gitmaster.createBranchFromCommit",
+                "title": "Create Branch from Commit",
+                "icon": "$(git-branch-create)"
+            },
+            {
+                "command": "gitmaster.refreshRepositoryLog",
+                "title": "Refresh Git Log",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.checkoutBranch",
+                "title": "Checkout Branch",
+                "icon": "$(check)"
+            },
+            {
+                "command": "gitmaster.deleteBranch",
+                "title": "Delete Branch",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "gitmaster.createNewBranch",
+                "title": "Create New Branch",
+                "icon": "$(add)"
+            },
+            {
+                "command": "gitmaster.refreshBranches",
+                "title": "Refresh Branches",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.filterByMyBranches",
+                "title": "Filter by My Branches",
+                "icon": "$(account)"
+            },
+            {
+                "command": "gitmaster.filterByAuthor",
+                "title": "Filter by Author",
+                "icon": "$(filter)"
+            },
+            {
+                "command": "gitmaster.clearBranchFilter",
+                "title": "Show All Branches",
+                "icon": "$(clear-all)"
             }
         ],
         "menus": {
@@ -133,6 +203,36 @@
                     "command": "gitmaster.refreshReflog",
                     "when": "view == gitmaster.reflog",
                     "group": "navigation"
+                },
+                {
+                    "command": "gitmaster.refreshRepositoryLog",
+                    "when": "view == gitmaster.repositoryLog",
+                    "group": "navigation"
+                },
+                {
+                    "command": "gitmaster.createNewBranch",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.filterByMyBranches",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "gitmaster.filterByAuthor",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "gitmaster.clearBranchFilter",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "gitmaster.refreshBranches",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@5"
                 }
             ],
             "view/item/context": [
@@ -175,6 +275,61 @@
                     "command": "gitmaster.deleteShelf",
                     "when": "view == gitmaster.shelves && viewItem == stash",
                     "group": "2_danger"
+                },
+                {
+                    "command": "gitmaster.revertCommitInNewBranch",
+                    "when": "view == gitmaster.repositoryLog && viewItem == repositoryCommit",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.checkoutCommitFromRepoLog",
+                    "when": "view == gitmaster.repositoryLog && viewItem == repositoryCommit",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.revertCommitInNewBranch",
+                    "when": "view == gitmaster.repositoryLog && viewItem == repositoryCommit",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.cherryPickCommit",
+                    "when": "view == gitmaster.repositoryLog && viewItem == repositoryCommit",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.createBranchFromCommit",
+                    "when": "view == gitmaster.repositoryLog && viewItem == repositoryCommit",
+                    "group": "2_branch"
+                },
+                {
+                    "command": "gitmaster.checkoutBranch",
+                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.deleteBranch",
+                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "gitmaster.checkoutBranch",
+                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.deleteBranch",
+                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "group": "2_danger"
+                },
+                {
+                    "command": "gitmaster.checkoutBranch",
+                    "when": "view == gitmaster.branches && viewItem == remoteBranch",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.checkoutBranch",
+                    "when": "view == gitmaster.branches && viewItem == remoteBranch",
+                    "group": "1_actions"
                 }
             ]
         }

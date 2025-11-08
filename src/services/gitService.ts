@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
-import { CommitInfo, ChangedFile, StashInfo, ReflogEntry } from '../types/git';
+import { CommitInfo, ChangedFile, StashInfo, ReflogEntry, RepositoryCommit, BranchInfo } from '../types/git';
 
 const execAsync = promisify(exec);
 
@@ -523,6 +523,225 @@ export class GitService {
             await execAsync(`git checkout ${commitHash}`, { cwd: repoRoot });
         } catch (error) {
             throw new Error(`Failed to checkout commit: ${error}`);
+        }
+    }
+
+    /**
+     * Get repository commit log (all commits, not file-specific)
+     */
+    async getRepositoryLog(repoRoot: string, limit: number = 20): Promise<RepositoryCommit[]> {
+        try {
+            const format = '%H|%h|%an|%ad|%s|%P';
+            const { stdout } = await execAsync(
+                `git log --format="${format}" --date=short -n ${limit}`,
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            const commits: RepositoryCommit[] = [];
+            const lines = stdout.trim().split('\n');
+
+            for (const line of lines) {
+                const parts = line.split('|');
+                if (parts.length >= 5) {
+                    const [hash, shortHash, author, date, ...messageParts] = parts;
+                    // The rest after the 5th element is the parent hashes
+                    const message = messageParts.slice(0, -1).join('|'); // Message is everything except last part
+                    const parentHashesStr = messageParts[messageParts.length - 1] || '';
+                    const parentHashes = parentHashesStr.trim() ? parentHashesStr.split(' ') : [];
+
+                    commits.push({
+                        hash,
+                        shortHash,
+                        author,
+                        date,
+                        message,
+                        parentHashes
+                    });
+                }
+            }
+
+            return commits;
+        } catch (error) {
+            console.error('Error getting repository log:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Revert a commit in a new branch
+     * Creates a new branch from HEAD and applies the revert
+     */
+    async revertCommitInNewBranch(commitHash: string, branchName: string, repoRoot: string): Promise<string> {
+        try {
+            // Create new branch from current HEAD
+            await execAsync(`git checkout -b ${branchName}`, { cwd: repoRoot });
+
+            // Revert the commit
+            await execAsync(`git revert ${commitHash} --no-edit`, { cwd: repoRoot });
+
+            return branchName;
+        } catch (error) {
+            throw new Error(`Failed to revert commit in new branch: ${error}`);
+        }
+    }
+
+    /**
+     * Cherry-pick a commit onto current branch
+     */
+    async cherryPickCommit(commitHash: string, repoRoot: string): Promise<void> {
+        try {
+            await execAsync(`git cherry-pick ${commitHash}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to cherry-pick commit: ${error}`);
+        }
+    }
+
+    /**
+     * Create a new branch from a specific commit
+     */
+    async createBranchFromCommit(branchName: string, commitHash: string, repoRoot: string): Promise<void> {
+        try {
+            await execAsync(`git branch ${branchName} ${commitHash}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to create branch: ${error}`);
+        }
+    }
+
+    /**
+     * Checkout to a branch
+     */
+    async checkoutBranch(branchName: string, repoRoot: string): Promise<void> {
+        try {
+            await execAsync(`git checkout ${branchName}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to checkout branch: ${error}`);
+        }
+    }
+
+    /**
+     * Get all branches (local and remote) sorted by most recent activity
+     */
+    async getBranches(repoRoot: string, limit: number = 20): Promise<BranchInfo[]> {
+        try {
+            // Get branches sorted by most recent commit
+            const format = '%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
+            const { stdout } = await execAsync(
+                `git branch -a --sort=-committerdate --format="${format}" | head -n ${limit}`,
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            const branches: BranchInfo[] = [];
+            const lines = stdout.trim().split('\n');
+            const seenBranches = new Set<string>(); // To avoid duplicate remotes
+
+            for (const line of lines) {
+                const parts = line.split('|');
+                if (parts.length >= 7) {
+                    let branchName = parts[0].trim();
+                    const isCurrent = parts[1].trim() === '*';
+                    const commitHash = parts[2].trim();
+                    const shortCommitHash = parts[3].trim();
+                    const lastCommitMessage = parts[4].trim();
+                    const lastCommitAuthor = parts[5].trim();
+                    const lastCommitDate = parts[6].trim();
+                    const upstream = parts[7]?.trim() || undefined;
+
+                    // Skip remote tracking refs that are duplicates
+                    const isRemote = branchName.startsWith('remotes/');
+                    if (isRemote) {
+                        branchName = branchName.replace('remotes/', '');
+                        // Skip if we already have the local version
+                        const localName = branchName.replace(/^[^/]+\//, '');
+                        if (seenBranches.has(localName)) {
+                            continue;
+                        }
+                    }
+
+                    seenBranches.add(isRemote ? branchName.replace(/^[^/]+\//, '') : branchName);
+
+                    branches.push({
+                        name: branchName,
+                        isCurrent,
+                        isRemote,
+                        commitHash,
+                        shortCommitHash,
+                        lastCommitMessage,
+                        lastCommitAuthor,
+                        lastCommitDate,
+                        upstream
+                    });
+                }
+            }
+
+            return branches;
+        } catch (error) {
+            console.error('Error getting branches:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Delete a branch (local or remote)
+     */
+    async deleteBranch(branchName: string, repoRoot: string, force: boolean = false): Promise<void> {
+        try {
+            const flag = force ? '-D' : '-d';
+            await execAsync(`git branch ${flag} ${branchName}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to delete branch: ${error}`);
+        }
+    }
+
+    /**
+     * Get the current branch name
+     */
+    async getCurrentBranch(repoRoot: string): Promise<string | null> {
+        try {
+            const { stdout } = await execAsync('git branch --show-current', { cwd: repoRoot });
+            return stdout.trim() || null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Get the current user's git name
+     */
+    async getCurrentUserName(repoRoot: string): Promise<string | null> {
+        try {
+            const { stdout } = await execAsync('git config user.name', { cwd: repoRoot });
+            return stdout.trim() || null;
+        } catch (error) {
+            return null;
+        }
+    }
+
+    /**
+     * Get unique list of authors from branches
+     */
+    async getBranchAuthors(repoRoot: string): Promise<string[]> {
+        try {
+            const { stdout } = await execAsync(
+                'git for-each-ref --format="%(authorname)" refs/heads refs/remotes | sort -u',
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            return stdout.trim().split('\n').filter(author => author.length > 0);
+        } catch (error) {
+            console.error('Error getting branch authors:', error);
+            return [];
         }
     }
 }

@@ -5,9 +5,13 @@ import { FileHistoryProvider } from './providers/fileHistoryProvider';
 import { CommitDetailsProvider } from './providers/commitDetailsProvider';
 import { ShelvesProvider } from './providers/shelvesProvider';
 import { ReflogProvider } from './providers/reflogProvider';
+import { RepositoryLogProvider } from './providers/repositoryLogProvider';
+import { BranchesProvider } from './providers/branchesProvider';
 import { CommitCommands } from './commands/commitCommands';
 import { StashCommands } from './commands/stashCommands';
 import { ReflogCommands } from './commands/reflogCommands';
+import { RepositoryLogCommands } from './commands/repositoryLogCommands';
+import { BranchCommands } from './commands/branchCommands';
 
 // Global service instances
 let gitService: GitService;
@@ -16,9 +20,13 @@ let fileHistoryProvider: FileHistoryProvider;
 let commitDetailsProvider: CommitDetailsProvider;
 let shelvesProvider: ShelvesProvider;
 let reflogProvider: ReflogProvider;
+let repositoryLogProvider: RepositoryLogProvider;
+let branchesProvider: BranchesProvider;
 let commitCommands: CommitCommands;
 let stashCommands: StashCommands;
 let reflogCommands: ReflogCommands;
+let repositoryLogCommands: RepositoryLogCommands;
+let branchCommands: BranchCommands;
 
 /**
  * Activate the GitMaster extension
@@ -59,13 +67,17 @@ function initializeServices(): void {
     commitDetailsProvider = new CommitDetailsProvider();
     shelvesProvider = new ShelvesProvider();
     reflogProvider = new ReflogProvider();
+    repositoryLogProvider = new RepositoryLogProvider(gitService);
+    branchesProvider = new BranchesProvider(gitService);
     commitCommands = new CommitCommands(gitService, diffService, commitDetailsProvider);
     stashCommands = new StashCommands(gitService, diffService, shelvesProvider);
     reflogCommands = new ReflogCommands(gitService, reflogProvider);
+    repositoryLogCommands = new RepositoryLogCommands(gitService, repositoryLogProvider);
+    branchCommands = new BranchCommands(gitService, branchesProvider);
 }
 
 /**
- * Register tree views for file history, commit details, shelves, and reflog
+ * Register tree views for file history, commit details, shelves, reflog, repository log, and branches
  */
 function registerTreeViews(context: vscode.ExtensionContext): void {
     // File History tree view
@@ -73,14 +85,12 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         treeDataProvider: fileHistoryProvider,
         showCollapseAll: false
     });
-    fileHistoryTreeView.message = 'No file history available';
 
     // Commit Details tree view
     const commitDetailsTreeView = vscode.window.createTreeView('gitmaster.commitDetails', {
         treeDataProvider: commitDetailsProvider,
         showCollapseAll: false
     });
-    commitDetailsTreeView.message = 'Select a commit to view details';
 
     // Shelves tree view
     const shelvesTreeView = vscode.window.createTreeView('gitmaster.shelves', {
@@ -94,7 +104,26 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         showCollapseAll: false
     });
 
-    context.subscriptions.push(fileHistoryTreeView, commitDetailsTreeView, shelvesTreeView, reflogTreeView);
+    // Repository Log tree view
+    const repositoryLogTreeView = vscode.window.createTreeView('gitmaster.repositoryLog', {
+        treeDataProvider: repositoryLogProvider,
+        showCollapseAll: false
+    });
+
+    // Branches tree view
+    const branchesTreeView = vscode.window.createTreeView('gitmaster.branches', {
+        treeDataProvider: branchesProvider,
+        showCollapseAll: false
+    });
+
+    context.subscriptions.push(
+        fileHistoryTreeView,
+        commitDetailsTreeView,
+        shelvesTreeView,
+        reflogTreeView,
+        repositoryLogTreeView,
+        branchesTreeView
+    );
 }
 
 /**
@@ -173,6 +202,68 @@ function registerCommands(context: vscode.ExtensionContext): void {
         () => reflogCommands.refreshReflog()
     );
 
+    // Repository Log commands
+    const revertCommitInNewBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.revertCommitInNewBranch',
+        async (commit, repoRoot) => await repositoryLogCommands.revertCommitInNewBranch(commit, repoRoot)
+    );
+
+    const checkoutCommitFromRepoLogCommand = vscode.commands.registerCommand(
+        'gitmaster.checkoutCommitFromRepoLog',
+        async (commit, repoRoot) => await repositoryLogCommands.checkoutCommit(commit, repoRoot)
+    );
+
+    const cherryPickCommitCommand = vscode.commands.registerCommand(
+        'gitmaster.cherryPickCommit',
+        async (commit, repoRoot) => await repositoryLogCommands.cherryPickCommit(commit, repoRoot)
+    );
+
+    const createBranchFromCommitCommand = vscode.commands.registerCommand(
+        'gitmaster.createBranchFromCommit',
+        async (commit, repoRoot) => await repositoryLogCommands.createBranchFromCommit(commit, repoRoot)
+    );
+
+    const refreshRepositoryLogCommand = vscode.commands.registerCommand(
+        'gitmaster.refreshRepositoryLog',
+        () => repositoryLogCommands.refreshRepositoryLog()
+    );
+
+    // Branch commands
+    const checkoutBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.checkoutBranch',
+        async (branch, repoRoot) => await branchCommands.checkoutBranch(branch, repoRoot)
+    );
+
+    const deleteBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.deleteBranch',
+        async (branch, repoRoot) => await branchCommands.deleteBranch(branch, repoRoot)
+    );
+
+    const createNewBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.createNewBranch',
+        async () => await branchCommands.createNewBranch()
+    );
+
+    const refreshBranchesCommand = vscode.commands.registerCommand(
+        'gitmaster.refreshBranches',
+        () => branchCommands.refreshBranches()
+    );
+
+    const filterByMyBranchesCommand = vscode.commands.registerCommand(
+        'gitmaster.filterByMyBranches',
+        async () => await branchCommands.filterByMyBranches()
+    );
+
+    const filterByAuthorCommand = vscode.commands.registerCommand(
+        'gitmaster.filterByAuthor',
+        async () => await branchCommands.filterByAuthor()
+    );
+
+    const clearBranchFilterCommand = vscode.commands.registerCommand(
+        'gitmaster.clearBranchFilter',
+        () => branchCommands.clearBranchFilter()
+    );
+
     context.subscriptions.push(
         refreshCommand,
         showCommitDiffCommand,
@@ -186,7 +277,19 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshShelvesCommand,
         showStashFileDiffCommand,
         checkoutFromReflogCommand,
-        refreshReflogCommand
+        refreshReflogCommand,
+        revertCommitInNewBranchCommand,
+        checkoutCommitFromRepoLogCommand,
+        cherryPickCommitCommand,
+        createBranchFromCommitCommand,
+        refreshRepositoryLogCommand,
+        checkoutBranchCommand,
+        deleteBranchCommand,
+        createNewBranchCommand,
+        refreshBranchesCommand,
+        filterByMyBranchesCommand,
+        filterByAuthorCommand,
+        clearBranchFilterCommand
     );
 }
 
@@ -215,13 +318,17 @@ async function updateFileHistory(editor: vscode.TextEditor | undefined): Promise
         const filePath = editor.document.uri.fsPath;
         fileHistoryProvider.setCurrentFile(filePath);
 
-        // Update shelves and reflog providers with repo root
+        // Update shelves, reflog, repository log, and branches providers with repo root
         const repoRoot = await gitService.getRepoRoot(filePath);
         shelvesProvider.setRepoRoot(repoRoot || undefined);
         reflogProvider.setRepoRoot(repoRoot || undefined);
+        repositoryLogProvider.setRepoRoot(repoRoot || undefined);
+        branchesProvider.setRepoRoot(repoRoot || undefined);
     } else {
         fileHistoryProvider.setCurrentFile(undefined);
         shelvesProvider.setRepoRoot(undefined);
         reflogProvider.setRepoRoot(undefined);
+        repositoryLogProvider.setRepoRoot(undefined);
+        branchesProvider.setRepoRoot(undefined);
     }
 }

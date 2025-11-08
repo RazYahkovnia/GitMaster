@@ -60,3 +60,45 @@ export interface ReflogEntry {
     message: string;
 }
 
+/**
+ * Information about a repository commit (for full repo log)
+ */
+export interface RepositoryCommit {
+    /** Full commit hash */
+    hash: string;
+    /** Short commit hash */
+    shortHash: string;
+    /** Commit author name */
+    author: string;
+    /** Commit date (short format) */
+    date: string;
+    /** Commit message (first line) */
+    message: string;
+    /** Parent commit hashes */
+    parentHashes: string[];
+}
+
+/**
+ * Information about a git branch
+ */
+export interface BranchInfo {
+    /** Branch name */
+    name: string;
+    /** Whether this is the current branch */
+    isCurrent: boolean;
+    /** Whether this is a remote branch */
+    isRemote: boolean;
+    /** Commit hash the branch points to */
+    commitHash: string;
+    /** Short commit hash */
+    shortCommitHash: string;
+    /** Last commit message on this branch */
+    lastCommitMessage: string;
+    /** Last commit author */
+    lastCommitAuthor: string;
+    /** Last commit date (relative) */
+    lastCommitDate: string;
+    /** Upstream branch (if tracking) */
+    upstream?: string;
+}
+

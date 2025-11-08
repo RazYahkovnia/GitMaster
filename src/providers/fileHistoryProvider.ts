@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { CommitInfo } from '../types/git';
+import { getAuthorColor } from '../utils/colorUtils';
 
 export class CommitTreeItem extends vscode.TreeItem {
     constructor(
@@ -13,7 +14,10 @@ export class CommitTreeItem extends vscode.TreeItem {
         this.tooltip = this.createTooltip();
         this.description = `${commit.shortHash} • ${commit.relativeDate}`;
         this.contextValue = 'commit';
-        this.iconPath = new vscode.ThemeIcon('git-commit');
+
+        // Use author-specific color
+        const authorColor = getAuthorColor(commit.author);
+        this.iconPath = new vscode.ThemeIcon('git-commit', authorColor);
 
         // Set the command to execute when the item is clicked
         this.command = {
@@ -35,10 +39,10 @@ export class CommitTreeItem extends vscode.TreeItem {
     }
 }
 
-export class FileHistoryProvider implements vscode.TreeDataProvider<CommitTreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<CommitTreeItem | undefined | null | void> =
-        new vscode.EventEmitter<CommitTreeItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<CommitTreeItem | undefined | null | void> =
+export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> =
+        new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
     private gitService: GitService;
@@ -55,32 +59,41 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<CommitTreeIt
         this._onDidChangeTreeData.fire();
     }
 
-    getTreeItem(element: CommitTreeItem): vscode.TreeItem {
+    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    async getChildren(element?: CommitTreeItem): Promise<CommitTreeItem[]> {
+    async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
         // Only show top-level items (commits), no children
         if (element) {
             return [];
         }
 
         if (!this.currentFilePath) {
-            return [];
+            const emptyItem = new vscode.TreeItem('Open a file to view its history');
+            emptyItem.contextValue = 'empty';
+            emptyItem.iconPath = new vscode.ThemeIcon('info');
+            return [emptyItem];
         }
 
         try {
             // Check if the file is tracked by git
             const isTracked = await this.gitService.isFileTracked(this.currentFilePath);
             if (!isTracked) {
-                return [];
+                const emptyItem = new vscode.TreeItem('File is not tracked by Git');
+                emptyItem.contextValue = 'empty';
+                emptyItem.iconPath = new vscode.ThemeIcon('warning');
+                return [emptyItem];
             }
 
             // Get commit history for the current file
             const commits = await this.gitService.getFileHistory(this.currentFilePath);
 
             if (commits.length === 0) {
-                return [];
+                const emptyItem = new vscode.TreeItem('No commits found for this file');
+                emptyItem.contextValue = 'empty';
+                emptyItem.iconPath = new vscode.ThemeIcon('info');
+                return [emptyItem];
             }
 
             // Convert commits to tree items
@@ -93,7 +106,10 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<CommitTreeIt
             );
         } catch (error) {
             console.error('Error getting file history:', error);
-            return [];
+            const errorItem = new vscode.TreeItem('Failed to load file history');
+            errorItem.contextValue = 'empty';
+            errorItem.iconPath = new vscode.ThemeIcon('error');
+            return [errorItem];
         }
     }
 
