@@ -46,17 +46,20 @@
                 {
                     "id": "gitmaster.branches",
                     "name": "Branches",
-                    "contextualTitle": "Git Branches"
+                    "contextualTitle": "Git Branches",
+                    "visibility": "collapsed"
                 },
                 {
                     "id": "gitmaster.repositoryLog",
                     "name": "Git Log",
-                    "contextualTitle": "Git Commit Log"
+                    "contextualTitle": "Git Commit Log",
+                    "visibility": "collapsed"
                 },
                 {
                     "id": "gitmaster.reflog",
                     "name": "Git Operations",
-                    "contextualTitle": "Git Operations History"
+                    "contextualTitle": "Git Operations History",
+                    "visibility": "collapsed"
                 }
             ]
         },
