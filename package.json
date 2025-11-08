@@ -37,6 +37,11 @@
                     "name": "Commit Details",
                     "contextualTitle": "Commit Files",
                     "when": "gitmaster.commitSelected"
+                },
+                {
+                    "id": "gitmaster.shelves",
+                    "name": "Shelves",
+                    "contextualTitle": "Git Shelves"
                 }
             ]
         },
@@ -57,6 +62,40 @@
             {
                 "command": "gitmaster.openCommitInGitHub",
                 "title": "Open Commit in GitHub"
+            },
+            {
+                "command": "gitmaster.copyCommitId",
+                "title": "Copy Commit ID",
+                "icon": "$(copy)"
+            },
+            {
+                "command": "gitmaster.createShelf",
+                "title": "Create Shelf",
+                "icon": "$(add)"
+            },
+            {
+                "command": "gitmaster.applyShelf",
+                "title": "Apply Shelf",
+                "icon": "$(export)"
+            },
+            {
+                "command": "gitmaster.popShelf",
+                "title": "Pop Shelf",
+                "icon": "$(check)"
+            },
+            {
+                "command": "gitmaster.deleteShelf",
+                "title": "Delete Shelf",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "gitmaster.refreshShelves",
+                "title": "Refresh Shelves",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.showStashFileDiff",
+                "title": "Show Stash File Diff"
             }
         ],
         "menus": {
@@ -65,6 +104,58 @@
                     "command": "gitmaster.refreshFileHistory",
                     "when": "view == gitmaster.fileHistory",
                     "group": "navigation"
+                },
+                {
+                    "command": "gitmaster.createShelf",
+                    "when": "view == gitmaster.shelves",
+                    "group": "navigation"
+                },
+                {
+                    "command": "gitmaster.refreshShelves",
+                    "when": "view == gitmaster.shelves",
+                    "group": "navigation"
+                }
+            ],
+            "view/item/context": [
+                {
+                    "command": "gitmaster.copyCommitId",
+                    "when": "view == gitmaster.fileHistory && viewItem == commit",
+                    "group": "inline"
+                },
+                {
+                    "command": "gitmaster.copyCommitId",
+                    "when": "view == gitmaster.fileHistory && viewItem == commit",
+                    "group": "9_cutcopypaste"
+                },
+                {
+                    "command": "gitmaster.applyShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.popShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "gitmaster.deleteShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "gitmaster.applyShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "1_stash"
+                },
+                {
+                    "command": "gitmaster.popShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "1_stash"
+                },
+                {
+                    "command": "gitmaster.deleteShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "2_danger"
                 }
             ]
         }

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { GitService, CommitInfo } from './gitService';
+import { GitService } from '../services/gitService';
+import { CommitInfo } from '../types/git';
 
 export class CommitTreeItem extends vscode.TreeItem {
     constructor(

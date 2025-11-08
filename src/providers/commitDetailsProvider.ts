@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
-import { GitService, CommitInfo, ChangedFile } from './gitService';
+import { GitService } from '../services/gitService';
+import { CommitInfo, ChangedFile } from '../types/git';
 
 export class CommitFileTreeItem extends vscode.TreeItem {
     constructor(
@@ -154,7 +155,7 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
         try {
             // Get changed files
             this.changedFiles = await this.gitService.getChangedFilesInCommit(commit.hash, repoRoot);
-            
+
             // Get GitHub URL
             this.githubUrl = await this.gitService.getGitHubRepoUrl(repoRoot);
 
