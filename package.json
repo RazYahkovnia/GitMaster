@@ -1,0 +1,87 @@
+{
+    "name": "gitmaster",
+    "displayName": "GitMaster",
+    "description": "Advanced git features including file history viewer",
+    "version": "0.0.1",
+    "publisher": "your-publisher-name",
+    "engines": {
+        "vscode": "^1.85.0"
+    },
+    "categories": [
+        "SCM Providers",
+        "Visualization"
+    ],
+    "activationEvents": [
+        "onStartupFinished"
+    ],
+    "main": "./out/extension.js",
+    "contributes": {
+        "viewsContainers": {
+            "activitybar": [
+                {
+                    "id": "gitmaster",
+                    "title": "Git Master",
+                    "icon": "resources/gitmaster-icon.svg"
+                }
+            ]
+        },
+        "views": {
+            "gitmaster": [
+                {
+                    "id": "gitmaster.fileHistory",
+                    "name": "File History",
+                    "contextualTitle": "GitMaster File History"
+                },
+                {
+                    "id": "gitmaster.commitDetails",
+                    "name": "Commit Details",
+                    "contextualTitle": "Commit Files",
+                    "when": "gitmaster.commitSelected"
+                }
+            ]
+        },
+        "commands": [
+            {
+                "command": "gitmaster.refreshFileHistory",
+                "title": "Refresh File History",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.showCommitDiff",
+                "title": "Show Commit Details"
+            },
+            {
+                "command": "gitmaster.showFileDiff",
+                "title": "Show File Diff"
+            },
+            {
+                "command": "gitmaster.openCommitInGitHub",
+                "title": "Open Commit in GitHub"
+            }
+        ],
+        "menus": {
+            "view/title": [
+                {
+                    "command": "gitmaster.refreshFileHistory",
+                    "when": "view == gitmaster.fileHistory",
+                    "group": "navigation"
+                }
+            ]
+        }
+    },
+    "scripts": {
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./",
+        "watch": "tsc -watch -p ./",
+        "pretest": "npm run compile",
+        "lint": "eslint src --ext ts"
+    },
+    "devDependencies": {
+        "@types/node": "20.10.0",
+        "@types/vscode": "^1.85.0",
+        "@typescript-eslint/eslint-plugin": "^6.13.0",
+        "@typescript-eslint/parser": "^6.13.0",
+        "eslint": "^8.55.0",
+        "typescript": "^5.3.3"
+    }
+}
