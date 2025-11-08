@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.3",
+    "version": "0.0.4",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -24,6 +24,7 @@
         "reflog",
         "visualization"
     ],
+    "icon": "resources/gitmaster-icon-128.png",
     "engines": {
         "vscode": "^1.85.0"
     },

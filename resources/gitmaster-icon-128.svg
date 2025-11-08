@@ -1,36 +1,13 @@
 <svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <circle cx="64" cy="64" r="60" fill="#4A90E2"/>
+  <!-- Background -->
+  <rect width="128" height="128" rx="24" fill="#F05033"/>
   
-  <!-- Git branch structure -->
-  <!-- Main branch line -->
-  <path d="M 30 40 L 30 88" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <!-- Simple Git branch icon -->
+  <circle cx="40" cy="40" r="8" fill="white"/>
+  <circle cx="40" cy="88" r="8" fill="white"/>
+  <circle cx="88" cy="64" r="8" fill="white"/>
   
-  <!-- Branch lines -->
-  <path d="M 30 50 Q 45 50 55 60 L 55 88" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <path d="M 30 65 Q 50 65 65 75 L 65 88" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
-  <path d="M 55 70 Q 70 70 80 80 L 80 88" stroke="white" stroke-width="3" stroke-linecap="round" fill="none"/>
-  
-  <!-- Commit nodes (circles) -->
-  <circle cx="30" cy="40" r="5" fill="white"/>
-  <circle cx="30" cy="50" r="5" fill="white"/>
-  <circle cx="30" cy="65" r="5" fill="white"/>
-  <circle cx="30" cy="88" r="5" fill="white"/>
-  
-  <circle cx="55" cy="60" r="5" fill="#FFA500"/>
-  <circle cx="55" cy="70" r="5" fill="white"/>
-  <circle cx="55" cy="88" r="5" fill="#90EE90"/>
-  
-  <circle cx="65" cy="75" r="5" fill="white"/>
-  <circle cx="65" cy="88" r="5" fill="#FFD700"/>
-  
-  <circle cx="80" cy="80" r="4" fill="white"/>
-  <circle cx="80" cy="88" r="4" fill="#FF6B6B"/>
-  
-  <!-- Star icon (representing "master") -->
-  <path d="M 98 30 L 101 38 L 109 38 L 103 43 L 105 51 L 98 46 L 91 51 L 93 43 L 87 38 L 95 38 Z" fill="#FFD700" stroke="white" stroke-width="1.5"/>
-  
-  <!-- Outer circle border -->
-  <circle cx="64" cy="64" r="60" stroke="white" stroke-width="2" fill="none" opacity="0.3"/>
+  <line x1="40" y1="48" x2="40" y2="80" stroke="white" stroke-width="4" stroke-linecap="round"/>
+  <path d="M 40 64 Q 64 64 80 64" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
 </svg>
 
