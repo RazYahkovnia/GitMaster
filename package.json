@@ -42,6 +42,11 @@
                     "id": "gitmaster.shelves",
                     "name": "Shelves",
                     "contextualTitle": "Git Shelves"
+                },
+                {
+                    "id": "gitmaster.reflog",
+                    "name": "Git Operations",
+                    "contextualTitle": "Git Operations History"
                 }
             ]
         },
@@ -96,6 +101,15 @@
             {
                 "command": "gitmaster.showStashFileDiff",
                 "title": "Show Stash File Diff"
+            },
+            {
+                "command": "gitmaster.checkoutFromReflog",
+                "title": "Checkout to Commit"
+            },
+            {
+                "command": "gitmaster.refreshReflog",
+                "title": "Refresh Git Operations",
+                "icon": "$(refresh)"
             }
         ],
         "menus": {
@@ -113,6 +127,11 @@
                 {
                     "command": "gitmaster.refreshShelves",
                     "when": "view == gitmaster.shelves",
+                    "group": "navigation"
+                },
+                {
+                    "command": "gitmaster.refreshReflog",
+                    "when": "view == gitmaster.reflog",
                     "group": "navigation"
                 }
             ],

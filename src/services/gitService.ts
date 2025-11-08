@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
-import { CommitInfo, ChangedFile, StashInfo } from '../types/git';
+import { CommitInfo, ChangedFile, StashInfo, ReflogEntry } from '../types/git';
 
 const execAsync = promisify(exec);
 
@@ -469,6 +469,60 @@ export class GitService {
         } catch (error) {
             // File might not exist in parent (new file)
             return '';
+        }
+    }
+
+    /**
+     * Get reflog entries (git operations history)
+     */
+    async getReflog(repoRoot: string, limit: number = 50): Promise<ReflogEntry[]> {
+        try {
+            const { stdout } = await execAsync(
+                `git reflog --format="%H|%h|%gd|%gs" -n ${limit}`,
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            const entries: ReflogEntry[] = [];
+            const lines = stdout.trim().split('\n');
+
+            for (const line of lines) {
+                const parts = line.split('|');
+                if (parts.length >= 4) {
+                    const [hash, shortHash, selector, message] = parts;
+
+                    // Extract action from message (e.g., "commit", "checkout", "pull")
+                    const actionMatch = message.match(/^(\w+):/);
+                    const action = actionMatch ? actionMatch[1] : 'other';
+
+                    entries.push({
+                        hash,
+                        shortHash,
+                        selector,
+                        action,
+                        message
+                    });
+                }
+            }
+
+            return entries;
+        } catch (error) {
+            console.error('Error getting reflog:', error);
+            return [];
+        }
+    }
+
+    /**
+     * Checkout to a specific commit
+     */
+    async checkoutCommit(commitHash: string, repoRoot: string): Promise<void> {
+        try {
+            await execAsync(`git checkout ${commitHash}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to checkout commit: ${error}`);
         }
     }
 }

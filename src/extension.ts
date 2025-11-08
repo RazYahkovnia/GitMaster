@@ -4,8 +4,10 @@ import { DiffService } from './services/diffService';
 import { FileHistoryProvider } from './providers/fileHistoryProvider';
 import { CommitDetailsProvider } from './providers/commitDetailsProvider';
 import { ShelvesProvider } from './providers/shelvesProvider';
+import { ReflogProvider } from './providers/reflogProvider';
 import { CommitCommands } from './commands/commitCommands';
 import { StashCommands } from './commands/stashCommands';
+import { ReflogCommands } from './commands/reflogCommands';
 
 // Global service instances
 let gitService: GitService;
@@ -13,8 +15,10 @@ let diffService: DiffService;
 let fileHistoryProvider: FileHistoryProvider;
 let commitDetailsProvider: CommitDetailsProvider;
 let shelvesProvider: ShelvesProvider;
+let reflogProvider: ReflogProvider;
 let commitCommands: CommitCommands;
 let stashCommands: StashCommands;
+let reflogCommands: ReflogCommands;
 
 /**
  * Activate the GitMaster extension
@@ -54,12 +58,14 @@ function initializeServices(): void {
     fileHistoryProvider = new FileHistoryProvider();
     commitDetailsProvider = new CommitDetailsProvider();
     shelvesProvider = new ShelvesProvider();
+    reflogProvider = new ReflogProvider();
     commitCommands = new CommitCommands(gitService, diffService, commitDetailsProvider);
     stashCommands = new StashCommands(gitService, diffService, shelvesProvider);
+    reflogCommands = new ReflogCommands(gitService, reflogProvider);
 }
 
 /**
- * Register tree views for file history, commit details, and shelves
+ * Register tree views for file history, commit details, shelves, and reflog
  */
 function registerTreeViews(context: vscode.ExtensionContext): void {
     // File History tree view
@@ -82,7 +88,13 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         showCollapseAll: false
     });
 
-    context.subscriptions.push(fileHistoryTreeView, commitDetailsTreeView, shelvesTreeView);
+    // Git Operations (Reflog) tree view
+    const reflogTreeView = vscode.window.createTreeView('gitmaster.reflog', {
+        treeDataProvider: reflogProvider,
+        showCollapseAll: false
+    });
+
+    context.subscriptions.push(fileHistoryTreeView, commitDetailsTreeView, shelvesTreeView, reflogTreeView);
 }
 
 /**
@@ -150,6 +162,17 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (file, stashIndex, repoRoot) => await stashCommands.showStashFileDiff(file, stashIndex, repoRoot)
     );
 
+    // Reflog commands
+    const checkoutFromReflogCommand = vscode.commands.registerCommand(
+        'gitmaster.checkoutFromReflog',
+        async (entry, repoRoot) => await reflogCommands.checkoutFromReflog(entry, repoRoot)
+    );
+
+    const refreshReflogCommand = vscode.commands.registerCommand(
+        'gitmaster.refreshReflog',
+        () => reflogCommands.refreshReflog()
+    );
+
     context.subscriptions.push(
         refreshCommand,
         showCommitDiffCommand,
@@ -161,7 +184,9 @@ function registerCommands(context: vscode.ExtensionContext): void {
         popShelfCommand,
         deleteShelfCommand,
         refreshShelvesCommand,
-        showStashFileDiffCommand
+        showStashFileDiffCommand,
+        checkoutFromReflogCommand,
+        refreshReflogCommand
     );
 }
 
@@ -190,11 +215,13 @@ async function updateFileHistory(editor: vscode.TextEditor | undefined): Promise
         const filePath = editor.document.uri.fsPath;
         fileHistoryProvider.setCurrentFile(filePath);
 
-        // Update shelves provider with repo root
+        // Update shelves and reflog providers with repo root
         const repoRoot = await gitService.getRepoRoot(filePath);
         shelvesProvider.setRepoRoot(repoRoot || undefined);
+        reflogProvider.setRepoRoot(repoRoot || undefined);
     } else {
         fileHistoryProvider.setCurrentFile(undefined);
         shelvesProvider.setRepoRoot(undefined);
+        reflogProvider.setRepoRoot(undefined);
     }
 }

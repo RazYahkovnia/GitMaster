@@ -44,3 +44,19 @@ export interface StashInfo {
     fileCount: number;
 }
 
+/**
+ * Information about a git reflog entry (operation)
+ */
+export interface ReflogEntry {
+    /** Commit hash */
+    hash: string;
+    /** Short commit hash */
+    shortHash: string;
+    /** Reflog selector (e.g., "HEAD@{0}") */
+    selector: string;
+    /** Operation description (e.g., "commit", "checkout", "rebase") */
+    action: string;
+    /** Full message */
+    message: string;
+}
+
