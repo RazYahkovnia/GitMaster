@@ -50,8 +50,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Register show file diff command (for clicking files in commit details)
     const showFileDiffCommand = vscode.commands.registerCommand(
         'gitmaster.showFileDiff',
-        async (relativePath: string, commit: CommitInfo, repoRoot: string) => {
-            await openFileDiff(relativePath, commit, repoRoot);
+        async (file: ChangedFile, commit: CommitInfo, repoRoot: string) => {
+            await openFileDiff(file.path, commit, repoRoot, file.oldPath, file.status);
         }
     );
 
@@ -114,9 +114,27 @@ async function showCommitDetails(commit: CommitInfo, filePath: string) {
 
         // Update the commit details view
         await commitDetailsProvider.setCommit(commit, repoRoot);
-
+        
         // Set context to show the commit details view
         vscode.commands.executeCommand('setContext', 'gitmaster.commitSelected', true);
+
+        // Also open the diff for the current file
+        const relativePath = path.relative(repoRoot, filePath);
+        
+        // Get the file's status in this commit
+        const changedFiles = await gitService.getChangedFilesInCommit(commit.hash, repoRoot);
+        const currentFile = changedFiles.find(f => 
+            f.path === relativePath || 
+            f.oldPath === relativePath
+        );
+        
+        await openFileDiff(
+            currentFile?.path || relativePath, 
+            commit, 
+            repoRoot, 
+            currentFile?.oldPath, 
+            currentFile?.status
+        );
 
     } catch (error) {
         vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);
@@ -143,26 +161,51 @@ class DiffContentProvider implements vscode.TextDocumentContentProvider {
 /**
  * Open a file diff for a specific file in a commit
  */
-async function openFileDiff(relativePath: string, commit: CommitInfo, repoRoot: string) {
+async function openFileDiff(relativePath: string, commit: CommitInfo, repoRoot: string, oldPath?: string, status?: string) {
     try {
         const fileName = path.basename(relativePath);
         const parentCommit = await gitService.getParentCommit(commit.hash, repoRoot);
 
         let leftContent = '';
         let leftTitle = `${fileName} (empty)`;
+        let leftFileName = fileName;
+
+        let rightContent = '';
+        let rightTitle = `${fileName} (${commit.shortHash})`;
+
+        // Handle different file statuses
+        const isDeleted = status === 'D';
+        const isAdded = status === 'A';
+        const isRenamed = status === 'R';
 
         if (parentCommit) {
             try {
-                leftContent = await gitService.getFileContentAtCommit(relativePath, parentCommit, repoRoot);
-                leftTitle = `${fileName} (${parentCommit.substring(0, 7)})`;
+                // For renamed/deleted files, use the old path in the parent commit
+                const pathToUse = oldPath || relativePath;
+                leftContent = await gitService.getFileContentAtCommit(pathToUse, parentCommit, repoRoot);
+                leftFileName = path.basename(pathToUse);
+                leftTitle = `${leftFileName} (${parentCommit.substring(0, 7)})`;
             } catch (error) {
+                // File might not exist in parent commit (e.g., it was added)
                 leftContent = '';
                 leftTitle = `${fileName} (empty)`;
             }
         }
 
-        const rightContent = await gitService.getFileContentAtCommit(relativePath, commit.hash, repoRoot);
-        const rightTitle = `${fileName} (${commit.shortHash})`;
+        // Get the right side content (current commit)
+        if (!isDeleted) {
+            try {
+                rightContent = await gitService.getFileContentAtCommit(relativePath, commit.hash, repoRoot);
+            } catch (error) {
+                // If file doesn't exist in current commit, it's deleted
+                rightContent = '';
+                rightTitle = `${fileName} (deleted)`;
+            }
+        } else {
+            // File was deleted, right side is empty
+            rightContent = '';
+            rightTitle = `${fileName} (deleted)`;
+        }
 
         const leftUri = vscode.Uri.parse(`gitmaster-diff:${leftTitle}`).with({
             query: Buffer.from(leftContent).toString('base64')
@@ -175,7 +218,15 @@ async function openFileDiff(relativePath: string, commit: CommitInfo, repoRoot: 
         const provider = new DiffContentProvider();
         const providerDisposable = vscode.workspace.registerTextDocumentContentProvider('gitmaster-diff', provider);
 
-        const title = `${fileName}: ${commit.message}`;
+        let title = `${fileName}: ${commit.message}`;
+        if (isRenamed && oldPath) {
+            title = `${oldPath} → ${relativePath}`;
+        } else if (isDeleted) {
+            title = `${relativePath} (deleted)`;
+        } else if (isAdded) {
+            title = `${relativePath} (added)`;
+        }
+
         await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
 
         setTimeout(() => {

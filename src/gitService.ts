@@ -15,6 +15,7 @@ export interface CommitInfo {
 
 export interface ChangedFile {
     path: string;
+    oldPath?: string; // For renamed files
     status: string; // A (added), M (modified), D (deleted), R (renamed)
     additions: number;
     deletions: number;
@@ -156,8 +157,9 @@ export class GitService {
      */
     async getChangedFilesInCommit(commitHash: string, repoRoot: string): Promise<ChangedFile[]> {
         try {
+            // Use diff-tree with rename detection
             const { stdout } = await execAsync(
-                `git show --pretty="" --numstat ${commitHash}`,
+                `git diff-tree --no-commit-id --numstat -M -r ${commitHash}`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 
@@ -167,40 +169,80 @@ export class GitService {
             for (const line of lines) {
                 const parts = line.split('\t');
                 if (parts.length >= 3) {
-                    const additions = parseInt(parts[0]) || 0;
-                    const deletions = parseInt(parts[1]) || 0;
-                    const filePath = parts[2];
+                    const additions = parts[0] === '-' ? 0 : parseInt(parts[0]) || 0;
+                    const deletions = parts[1] === '-' ? 0 : parseInt(parts[1]) || 0;
+                    let filePath = parts[2];
+                    let oldPath: string | undefined = undefined;
 
-                    // Determine status
-                    let status = 'M'; // Modified by default
-                    if (parts[0] === '-' && parts[1] === '-') {
-                        status = 'Binary';
-                    } else if (additions > 0 && deletions === 0) {
-                        // Could be added, but we'll check properly
-                        status = 'M';
+                    // Check if it's a rename (format: "oldname => newname" or "{olddir => newdir}/file")
+                    if (filePath.includes(' => ')) {
+                        // Check for brace pattern: "path/{old => new}/file" or "file{old => new}.ext"
+                        const braceMatch = filePath.match(/^(.+)\{(.+)\s*=>\s*(.+)\}(.+)$/);
+                        if (braceMatch) {
+                            const prefix = braceMatch[1];
+                            const oldPart = braceMatch[2];
+                            const newPart = braceMatch[3];
+                            const suffix = braceMatch[4];
+                            
+                            oldPath = (prefix + oldPart + suffix).trim();
+                            filePath = (prefix + newPart + suffix).trim();
+                        } else {
+                            // Simple rename: "oldfile => newfile"
+                            const parts = filePath.split(' => ');
+                            if (parts.length === 2) {
+                                oldPath = parts[0].trim();
+                                filePath = parts[1].trim();
+                            }
+                        }
                     }
 
                     files.push({
                         path: filePath,
-                        status,
+                        oldPath,
+                        status: 'M', // Will be updated below
                         additions,
                         deletions
                     });
                 }
             }
 
-            // Get proper status using diff-tree
+            // Get proper status using diff-tree with rename detection
             const { stdout: statusOutput } = await execAsync(
-                `git diff-tree --no-commit-id --name-status -r ${commitHash}`,
+                `git diff-tree --no-commit-id --name-status -M -r ${commitHash}`,
                 { cwd: repoRoot }
             );
 
             const statusLines = statusOutput.trim().split('\n');
             for (const line of statusLines) {
-                const [status, filePath] = line.split('\t');
-                const file = files.find(f => f.path === filePath);
+                const parts = line.split('\t');
+                const status = parts[0];
+                let filePath = parts[parts.length - 1]; // Last part is the new name
+                let oldPath: string | undefined = undefined;
+
+                // Handle renames (R100, R095, etc.) and copies (C100, etc.)
+                if (status.startsWith('R') || status.startsWith('C')) {
+                    if (parts.length >= 3) {
+                        oldPath = parts[1];
+                        filePath = parts[2];
+                    }
+                }
+
+                // Find the file in our list
+                const file = files.find(f => 
+                    f.path === filePath || 
+                    (oldPath && f.oldPath === oldPath) ||
+                    f.path.includes(filePath) ||
+                    filePath.includes(f.path)
+                );
+                
                 if (file) {
-                    file.status = status;
+                    file.status = status.startsWith('R') ? 'R' : 
+                                 status.startsWith('A') ? 'A' : 
+                                 status.startsWith('D') ? 'D' : 
+                                 status.startsWith('M') ? 'M' : status;
+                    if (oldPath) {
+                        file.oldPath = oldPath;
+                    }
                 }
             }
 

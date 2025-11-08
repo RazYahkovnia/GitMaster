@@ -8,7 +8,7 @@ export class CommitFileTreeItem extends vscode.TreeItem {
         public readonly repoRoot: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState
     ) {
-        super(file.path, collapsibleState);
+        super(file.oldPath && file.status === 'R' ? `${file.oldPath} → ${file.path}` : file.path, collapsibleState);
 
         this.tooltip = this.createTooltip();
         this.description = this.getStatusDescription();
@@ -19,11 +19,14 @@ export class CommitFileTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.showFileDiff',
             title: 'Show File Diff',
-            arguments: [this.file.path, this.commit, this.repoRoot]
+            arguments: [this.file, this.commit, this.repoRoot]
         };
     }
 
     private createTooltip(): string {
+        if (this.file.status === 'R' && this.file.oldPath) {
+            return `Renamed: ${this.file.oldPath} → ${this.file.path}\n+${this.file.additions} -${this.file.deletions}`;
+        }
         return `${this.file.path}\n${this.file.status}: +${this.file.additions} -${this.file.deletions}`;
     }
 
@@ -38,7 +41,9 @@ export class CommitFileTreeItem extends vscode.TreeItem {
             case 'M':
                 return new vscode.ThemeIcon('diff-modified', new vscode.ThemeColor('gitDecoration.modifiedResourceForeground'));
             case 'D':
-                return new vscode.ThemeIcon('diff-removed', new vscode.ThemeColor('gitDecoration.deletedResourceForeground'));
+                return new vscode.ThemeIcon('trash', new vscode.ThemeColor('gitDecoration.deletedResourceForeground'));
+            case 'R':
+                return new vscode.ThemeIcon('diff-renamed', new vscode.ThemeColor('gitDecoration.renamedResourceForeground'));
             default:
                 return new vscode.ThemeIcon('file');
         }
