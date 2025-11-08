@@ -1,9 +1,30 @@
 {
     "name": "gitmaster",
     "displayName": "GitMaster",
-    "description": "Advanced git features including file history viewer",
+    "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
     "version": "0.0.1",
-    "publisher": "your-publisher-name",
+    "publisher": "razyahkovnia",
+    "author": "Raz Yahkovnia",
+    "license": "MIT",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/yourusername/gitmaster.git"
+    },
+    "bugs": {
+        "url": "https://github.com/yourusername/gitmaster/issues"
+    },
+    "homepage": "https://github.com/yourusername/gitmaster#readme",
+    "keywords": [
+        "git",
+        "history",
+        "branch",
+        "commit",
+        "stash",
+        "shelves",
+        "reflog",
+        "visualization"
+    ],
+    "icon": "resources/gitmaster-icon.png",
     "engines": {
         "vscode": "^1.85.0"
     },
