@@ -142,6 +142,11 @@
                 "title": "Show Stash File Diff"
             },
             {
+                "command": "gitmaster.shelveFileTo",
+                "title": "Shelve to...",
+                "icon": "$(archive)"
+            },
+            {
                 "command": "gitmaster.checkoutFromReflog",
                 "title": "Checkout to Commit"
             },
@@ -369,6 +374,18 @@
                     "command": "gitmaster.checkoutBranch",
                     "when": "view == gitmaster.branches && viewItem == remoteBranch",
                     "group": "1_actions"
+                }
+            ],
+            "scm/resourceState/context": [
+                {
+                    "command": "gitmaster.shelveFileTo",
+                    "when": "scmProvider == git",
+                    "group": "inline"
+                },
+                {
+                    "command": "gitmaster.shelveFileTo",
+                    "when": "scmProvider == git",
+                    "group": "1_modification"
                 }
             ]
         }

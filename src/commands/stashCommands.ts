@@ -246,6 +246,90 @@ export class StashCommands {
     }
 
     /**
+     * Shelve specific file(s) to an existing shelf
+     */
+    async shelveFileTo(...resources: vscode.SourceControlResourceState[]): Promise<void> {
+        try {
+            // Get repository root
+            const repoRoot = this.shelvesProvider.getRepoRoot();
+            if (!repoRoot) {
+                vscode.window.showErrorMessage('Not in a git repository');
+                return;
+            }
+
+            // Get file paths from resources
+            if (!resources || resources.length === 0) {
+                vscode.window.showWarningMessage('No files selected');
+                return;
+            }
+
+            const filePaths = resources.map(r => r.resourceUri.fsPath);
+            const relativeFilePaths = filePaths.map(fp => {
+                return fp.replace(repoRoot + path.sep, '');
+            });
+
+            // Get list of shelves
+            const stashes = await this.gitService.getStashes(repoRoot);
+            if (stashes.length === 0) {
+                vscode.window.showWarningMessage('No shelves available. Create a shelf first.');
+                return;
+            }
+
+            // Show quick pick to choose shelf
+            const shelfItems = stashes.map(stash => ({
+                label: stash.message,
+                description: `${stash.fileCount} files • ${stash.branch}`,
+                detail: stash.index,
+                stash: stash
+            }));
+
+            const selected = await vscode.window.showQuickPick(shelfItems, {
+                placeHolder: `Shelve ${relativeFilePaths.length} file(s) to...`,
+                title: 'Select Shelf'
+            });
+
+            if (!selected) {
+                return;
+            }
+
+            const targetStash = selected.stash;
+            const fileNames = relativeFilePaths.map(p => path.basename(p)).join(', ');
+
+            // Confirm the action
+            const confirm = await vscode.window.showWarningMessage(
+                `Add ${relativeFilePaths.length} file(s) to shelf "${targetStash.message}"?\n\nFiles: ${fileNames}`,
+                { modal: true },
+                'Add to Shelf'
+            );
+
+            if (confirm !== 'Add to Shelf') {
+                return;
+            }
+
+            // Check if target stash has untracked files
+            const stashHasUntracked = await this.gitService.stashHasUntrackedFiles(targetStash.index, repoRoot);
+
+            // Stash the specific files temporarily
+            await this.gitService.stashSpecificFiles(repoRoot, relativeFilePaths);
+
+            // Pop the target shelf
+            await this.gitService.popStash(targetStash.index, repoRoot);
+
+            // Pop the temporary stash we just created (combines the changes)
+            await this.gitService.popStash('stash@{0}', repoRoot);
+
+            // Create a new stash with the combined changes
+            await this.gitService.createStash(repoRoot, targetStash.message, stashHasUntracked);
+
+            this.shelvesProvider.refresh();
+            vscode.window.showInformationMessage(`Added ${relativeFilePaths.length} file(s) to shelf "${targetStash.message}"`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to shelve file: ${error}`);
+            console.error('Error shelving file to shelf:', error);
+        }
+    }
+
+    /**
      * Refresh the shelves view
      */
     refreshShelves(): void {

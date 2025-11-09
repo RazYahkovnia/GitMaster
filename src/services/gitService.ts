@@ -421,6 +421,19 @@ export class GitService {
     }
 
     /**
+     * Stash specific files only
+     */
+    async stashSpecificFiles(repoRoot: string, filePaths: string[]): Promise<void> {
+        try {
+            // Quote each file path to handle spaces
+            const quotedPaths = filePaths.map(p => `"${p}"`).join(' ');
+            await execAsync(`git stash push -m "temp-file-stash" -- ${quotedPaths}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to stash specific files: ${error}`);
+        }
+    }
+
+    /**
      * Apply a stash (keeps it in the stash list)
      * Uses --index to restore the staging state
      */

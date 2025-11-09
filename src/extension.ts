@@ -196,6 +196,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (file, stashIndex, repoRoot) => await stashCommands.showStashFileDiff(file, stashIndex, repoRoot)
     );
 
+    const shelveFileToCommand = vscode.commands.registerCommand(
+        'gitmaster.shelveFileTo',
+        async (...resources) => await stashCommands.shelveFileTo(...resources)
+    );
+
     // Reflog commands
     const checkoutFromReflogCommand = vscode.commands.registerCommand(
         'gitmaster.checkoutFromReflog',
@@ -282,6 +287,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         mergeIntoShelfCommand,
         refreshShelvesCommand,
         showStashFileDiffCommand,
+        shelveFileToCommand,
         checkoutFromReflogCommand,
         refreshReflogCommand,
         revertCommitInNewBranchCommand,
