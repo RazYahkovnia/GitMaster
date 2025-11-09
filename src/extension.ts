@@ -181,6 +181,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (stashItem) => await stashCommands.deleteShelf(stashItem)
     );
 
+    const mergeIntoShelfCommand = vscode.commands.registerCommand(
+        'gitmaster.mergeIntoShelf',
+        async (stashItem) => await stashCommands.mergeIntoShelf(stashItem)
+    );
+
     const refreshShelvesCommand = vscode.commands.registerCommand(
         'gitmaster.refreshShelves',
         () => stashCommands.refreshShelves()
@@ -274,6 +279,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         applyShelfCommand,
         popShelfCommand,
         deleteShelfCommand,
+        mergeIntoShelfCommand,
         refreshShelvesCommand,
         showStashFileDiffCommand,
         checkoutFromReflogCommand,

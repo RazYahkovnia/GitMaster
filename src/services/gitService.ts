@@ -331,14 +331,51 @@ export class GitService {
      */
     private async getStashFileCount(stashIndex: string, repoRoot: string): Promise<number> {
         try {
-            const { stdout } = await execAsync(
-                `git stash show --numstat ${stashIndex}`,
-                { cwd: repoRoot }
-            );
-            const lines = stdout.trim().split('\n').filter(line => line.trim());
-            return lines.length;
+            let count = 0;
+            
+            // Count tracked files
+            try {
+                const { stdout } = await execAsync(
+                    `git stash show --numstat ${stashIndex}`,
+                    { cwd: repoRoot }
+                );
+                const lines = stdout.trim().split('\n').filter(line => line.trim());
+                count += lines.length;
+            } catch (error) {
+                // Stash might be empty of tracked changes
+            }
+            
+            // Count untracked files (in third parent)
+            try {
+                const { stdout } = await execAsync(
+                    `git ls-tree -r ${stashIndex}^3 --name-only`,
+                    { cwd: repoRoot }
+                );
+                const untrackedFiles = stdout.trim().split('\n').filter(line => line.trim());
+                count += untrackedFiles.length;
+            } catch (error) {
+                // No third parent means no untracked files
+            }
+            
+            return count;
         } catch (error) {
             return 0;
+        }
+    }
+
+    /**
+     * Check if a stash has untracked files (third parent exists)
+     */
+    async stashHasUntrackedFiles(stashIndex: string, repoRoot: string): Promise<boolean> {
+        try {
+            await execAsync(
+                `git rev-parse --verify ${stashIndex}^3`,
+                { cwd: repoRoot }
+            );
+            return true;
+        } catch (error) {
+            // Third parent doesn't exist, no untracked files
+            return false;
         }
     }
 
@@ -385,10 +422,11 @@ export class GitService {
 
     /**
      * Apply a stash (keeps it in the stash list)
+     * Uses --index to restore the staging state
      */
     async applyStash(stashIndex: string, repoRoot: string): Promise<void> {
         try {
-            await execAsync(`git stash apply ${stashIndex}`, { cwd: repoRoot });
+            await execAsync(`git stash apply --index ${stashIndex}`, { cwd: repoRoot });
         } catch (error) {
             throw new Error(`Failed to apply stash: ${error}`);
         }
@@ -396,10 +434,11 @@ export class GitService {
 
     /**
      * Pop a stash (applies and removes from stash list)
+     * Uses --index to restore the staging state
      */
     async popStash(stashIndex: string, repoRoot: string): Promise<void> {
         try {
-            await execAsync(`git stash pop ${stashIndex}`, { cwd: repoRoot });
+            await execAsync(`git stash pop --index ${stashIndex}`, { cwd: repoRoot });
         } catch (error) {
             throw new Error(`Failed to pop stash: ${error}`);
         }
@@ -421,28 +460,72 @@ export class GitService {
      */
     async getStashFiles(stashIndex: string, repoRoot: string): Promise<ChangedFile[]> {
         try {
-            const { stdout } = await execAsync(
-                `git stash show --numstat ${stashIndex}`,
-                { cwd: repoRoot }
-            );
-
             const files: ChangedFile[] = [];
-            const lines = stdout.trim().split('\n').filter(line => line.trim());
+            
+            // Get tracked changes (modified, deleted files)
+            try {
+                const { stdout } = await execAsync(
+                    `git stash show --numstat ${stashIndex}`,
+                    { cwd: repoRoot }
+                );
 
-            for (const line of lines) {
-                const parts = line.split('\t');
-                if (parts.length >= 3) {
-                    const additions = parts[0] === '-' ? 0 : parseInt(parts[0]) || 0;
-                    const deletions = parts[1] === '-' ? 0 : parseInt(parts[1]) || 0;
-                    const filePath = parts[2];
+                const lines = stdout.trim().split('\n').filter(line => line.trim());
 
-                    files.push({
-                        path: filePath,
-                        status: 'M',
-                        additions,
-                        deletions
-                    });
+                for (const line of lines) {
+                    const parts = line.split('\t');
+                    if (parts.length >= 3) {
+                        const additions = parts[0] === '-' ? 0 : parseInt(parts[0]) || 0;
+                        const deletions = parts[1] === '-' ? 0 : parseInt(parts[1]) || 0;
+                        const filePath = parts[2];
+
+                        files.push({
+                            path: filePath,
+                            status: 'M',
+                            additions,
+                            deletions
+                        });
+                    }
                 }
+            } catch (error) {
+                // Stash might be empty of tracked changes
+            }
+
+            // Check for untracked files (stored in third parent)
+            try {
+                const { stdout: untrackedStdout } = await execAsync(
+                    `git ls-tree -r ${stashIndex}^3 --name-only`,
+                    { cwd: repoRoot }
+                );
+
+                const untrackedFiles = untrackedStdout.trim().split('\n').filter(line => line.trim());
+                
+                for (const filePath of untrackedFiles) {
+                    // Get file size for additions count
+                    try {
+                        const { stdout: content } = await execAsync(
+                            `git show ${stashIndex}^3:"${filePath}"`,
+                            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                        );
+                        const lineCount = content.split('\n').length;
+                        
+                        files.push({
+                            path: filePath,
+                            status: 'A', // Untracked files shown as Added
+                            additions: lineCount,
+                            deletions: 0
+                        });
+                    } catch {
+                        // If we can't read the file, still show it
+                        files.push({
+                            path: filePath,
+                            status: 'A',
+                            additions: 0,
+                            deletions: 0
+                        });
+                    }
+                }
+            } catch (error) {
+                // No third parent means no untracked files were stashed
             }
 
             return files;
@@ -456,11 +539,21 @@ export class GitService {
      */
     async getStashFileContent(relativePath: string, stashIndex: string, repoRoot: string): Promise<string> {
         try {
-            const { stdout } = await execAsync(
-                `git show ${stashIndex}:"${relativePath}"`,
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
-            );
-            return stdout;
+            // Try to get from main stash (tracked changes)
+            try {
+                const { stdout } = await execAsync(
+                    `git show ${stashIndex}:"${relativePath}"`,
+                    { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                );
+                return stdout;
+            } catch (error) {
+                // File might be in untracked files (third parent)
+                const { stdout } = await execAsync(
+                    `git show ${stashIndex}^3:"${relativePath}"`,
+                    { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                );
+                return stdout;
+            }
         } catch (error) {
             throw new Error(`Failed to get stash file content: ${error}`);
         }

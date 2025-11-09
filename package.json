@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.4",
+    "version": "0.0.6",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -126,6 +126,11 @@
                 "command": "gitmaster.deleteShelf",
                 "title": "Delete Shelf",
                 "icon": "$(trash)"
+            },
+            {
+                "command": "gitmaster.mergeIntoShelf",
+                "title": "Add Current Changes to Shelf",
+                "icon": "$(add)"
             },
             {
                 "command": "gitmaster.refreshShelves",
@@ -281,9 +286,14 @@
                     "group": "inline@2"
                 },
                 {
-                    "command": "gitmaster.deleteShelf",
+                    "command": "gitmaster.mergeIntoShelf",
                     "when": "view == gitmaster.shelves && viewItem == stash",
                     "group": "inline@3"
+                },
+                {
+                    "command": "gitmaster.deleteShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "inline@4"
                 },
                 {
                     "command": "gitmaster.applyShelf",
@@ -292,6 +302,11 @@
                 },
                 {
                     "command": "gitmaster.popShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "1_stash"
+                },
+                {
+                    "command": "gitmaster.mergeIntoShelf",
                     "when": "view == gitmaster.shelves && viewItem == stash",
                     "group": "1_stash"
                 },

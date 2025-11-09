@@ -174,6 +174,78 @@ export class StashCommands {
     }
 
     /**
+     * Merge current changes into an existing shelf
+     */
+    async mergeIntoShelf(stashItem: StashTreeItem): Promise<void> {
+        try {
+            const repoRoot = stashItem.repoRoot;
+
+            // Check if there are uncommitted changes
+            const hasChanges = await this.gitService.hasChangesToStash(repoRoot);
+            if (!hasChanges) {
+                vscode.window.showWarningMessage('No changes to add to the shelf');
+                return;
+            }
+
+            // Check if the original stash has untracked files
+            const stashHasUntracked = await this.gitService.stashHasUntrackedFiles(stashItem.stash.index, repoRoot);
+
+            // Confirm the action
+            const confirm = await vscode.window.showWarningMessage(
+                `Add your current changes to "${stashItem.stash.message}"?\n\nThis will:\n1. Pop the existing shelf\n2. Combine with your current changes\n3. Create a new shelf with the combined changes`,
+                { modal: true },
+                'Add Changes'
+            );
+
+            if (confirm !== 'Add Changes') {
+                return;
+            }
+
+            const originalMessage = stashItem.stash.message;
+            const stashIndex = stashItem.stash.index;
+
+            // Pop the existing stash to combine with current changes
+            await this.gitService.popStash(stashIndex, repoRoot);
+
+            // Determine if we should include untracked files
+            // If the original stash had untracked files, always include them
+            // Otherwise, ask the user if there are new untracked files
+            let includeUntracked = stashHasUntracked;
+
+            if (!includeUntracked) {
+                const hasUntracked = await this.gitService.hasUntrackedFiles(repoRoot);
+                if (hasUntracked) {
+                    const untrackedChoice = await vscode.window.showQuickPick(
+                        ['No', 'Yes'],
+                        {
+                            placeHolder: 'Include untracked files in the shelf?',
+                            title: 'Untracked Files Detected'
+                        }
+                    );
+
+                    if (!untrackedChoice) {
+                        // User cancelled, revert by re-stashing
+                        await this.gitService.createStash(repoRoot, originalMessage, stashHasUntracked);
+                        this.shelvesProvider.refresh();
+                        return;
+                    }
+
+                    includeUntracked = untrackedChoice === 'Yes';
+                }
+            }
+
+            // Now create a new stash with the combined changes
+            await this.gitService.createStash(repoRoot, originalMessage, includeUntracked);
+
+            this.shelvesProvider.refresh();
+            vscode.window.showInformationMessage(`Added current changes to shelf "${originalMessage}"`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to merge into shelf: ${error}`);
+            console.error('Error merging into shelf:', error);
+        }
+    }
+
+    /**
      * Refresh the shelves view
      */
     refreshShelves(): void {
