@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { RebaseProvider, RebaseTreeItem } from '../providers/rebaseProvider';
-import { RebaseCommit, RebaseState, BranchInfo } from '../types/git';
+import { CommitDetailsProvider } from '../providers/commitDetailsProvider';
+import { RebaseCommit, RebaseState, BranchInfo, CommitInfo } from '../types/git';
 
 /**
  * Command handlers for interactive rebase operations
@@ -9,7 +10,8 @@ import { RebaseCommit, RebaseState, BranchInfo } from '../types/git';
 export class RebaseCommands {
     constructor(
         private gitService: GitService,
-        private rebaseProvider: RebaseProvider
+        private rebaseProvider: RebaseProvider,
+        private commitDetailsProvider: CommitDetailsProvider
     ) { }
 
     /**
@@ -753,6 +755,40 @@ export class RebaseCommands {
 
         vscode.window.showErrorMessage('No Git repository found');
         return null;
+    }
+
+    /**
+     * Show commit details from rebase view
+     */
+    async showCommitDetails(treeItem: RebaseTreeItem): Promise<void> {
+        try {
+            if (!treeItem.commit || !treeItem.repoRoot) {
+                vscode.window.showErrorMessage('No commit information available');
+                return;
+            }
+
+            const commit = treeItem.commit;
+            const repoRoot = treeItem.repoRoot;
+
+            // Convert RebaseCommit to CommitInfo
+            const commitInfo: CommitInfo = {
+                hash: commit.hash,
+                shortHash: commit.shortHash,
+                message: commit.message,
+                author: commit.author,
+                date: commit.date,
+                relativeDate: commit.date // Use same date as relative for now
+            };
+
+            // Update the commit details view in sidebar
+            await this.commitDetailsProvider.setCommit(commitInfo, repoRoot);
+
+            // Show the commit details view
+            vscode.commands.executeCommand('setContext', 'gitmaster.commitSelected', true);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);
+            console.error('Error showing commit details:', error);
+        }
     }
 }
 

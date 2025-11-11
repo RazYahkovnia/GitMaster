@@ -79,7 +79,7 @@ function initializeServices(): void {
     reflogCommands = new ReflogCommands(gitService, reflogProvider);
     repositoryLogCommands = new RepositoryLogCommands(gitService, repositoryLogProvider);
     branchCommands = new BranchCommands(gitService, branchesProvider);
-    rebaseCommands = new RebaseCommands(gitService, rebaseProvider);
+    rebaseCommands = new RebaseCommands(gitService, rebaseProvider, commitDetailsProvider);
 }
 
 /**
@@ -353,6 +353,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async () => await rebaseCommands.resetRebase()
     );
 
+    const showRebaseCommitDetailsCommand = vscode.commands.registerCommand(
+        'gitmaster.showRebaseCommitDetails',
+        async (treeItem) => await rebaseCommands.showCommitDetails(treeItem)
+    );
+
     context.subscriptions.push(
         refreshCommand,
         showCommitDiffCommand,
@@ -393,7 +398,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         abortRebaseCommand,
         refreshRebaseCommand,
         changeBaseBranchCommand,
-        resetRebaseCommand
+        resetRebaseCommand,
+        showRebaseCommitDetailsCommand
     );
 }
 

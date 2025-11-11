@@ -49,15 +49,15 @@
         "views": {
             "gitmaster": [
                 {
-                    "id": "gitmaster.fileHistory",
-                    "name": "File History",
-                    "contextualTitle": "GitMaster File History"
-                },
-                {
                     "id": "gitmaster.commitDetails",
                     "name": "Commit Details",
                     "contextualTitle": "Commit Files",
                     "when": "gitmaster.commitSelected"
+                },
+                {
+                    "id": "gitmaster.fileHistory",
+                    "name": "File History",
+                    "contextualTitle": "GitMaster File History"
                 },
                 {
                     "id": "gitmaster.shelves",

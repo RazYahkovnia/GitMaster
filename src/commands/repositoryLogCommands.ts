@@ -10,7 +10,7 @@ export class RepositoryLogCommands {
     constructor(
         private gitService: GitService,
         private repositoryLogProvider: RepositoryLogProvider
-    ) {}
+    ) { }
 
     /**
      * Revert a commit in a new branch
@@ -61,11 +61,11 @@ export class RepositoryLogCommands {
 
             // Perform the revert in new branch
             await this.gitService.revertCommitInNewBranch(commit.hash, branchName, actualRepoRoot);
-            
+
             vscode.window.showInformationMessage(
                 `Successfully reverted commit ${commit.shortHash} in branch "${branchName}"`
             );
-            
+
             // Refresh the repository log
             this.repositoryLogProvider.refresh();
         } catch (error) {
@@ -102,7 +102,7 @@ export class RepositoryLogCommands {
 
             await this.gitService.checkoutCommit(commit.hash, actualRepoRoot);
             vscode.window.showInformationMessage(`Checked out to commit ${commit.shortHash}`);
-            
+
             // Refresh the repository log
             this.repositoryLogProvider.refresh();
         } catch (error) {
@@ -141,7 +141,7 @@ export class RepositoryLogCommands {
             vscode.window.showInformationMessage(
                 `Successfully cherry-picked commit ${commit.shortHash}`
             );
-            
+
             // Refresh the repository log
             this.repositoryLogProvider.refresh();
         } catch (error) {
@@ -193,7 +193,7 @@ export class RepositoryLogCommands {
 
             // Create the branch
             await this.gitService.createBranchFromCommit(branchName, commit.hash, actualRepoRoot);
-            
+
             // Ask if user wants to checkout to the new branch
             const checkoutAction = await vscode.window.showInformationMessage(
                 `Branch "${branchName}" created from commit ${commit.shortHash}. Do you want to switch to it?`,
@@ -218,7 +218,7 @@ export class RepositoryLogCommands {
                 await this.gitService.checkoutBranch(branchName, actualRepoRoot);
                 vscode.window.showInformationMessage(`Switched to branch "${branchName}"`);
             }
-            
+
             // Refresh the repository log
             this.repositoryLogProvider.refresh();
         } catch (error) {

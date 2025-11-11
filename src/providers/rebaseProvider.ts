@@ -11,7 +11,8 @@ export class RebaseTreeItem extends vscode.TreeItem {
         public readonly label: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly commit?: RebaseCommit,
-        public readonly type?: 'header' | 'commit' | 'info' | 'status'
+        public readonly type?: 'header' | 'commit' | 'info' | 'status',
+        public readonly repoRoot?: string
     ) {
         super(label, collapsibleState);
 
@@ -20,6 +21,13 @@ export class RebaseTreeItem extends vscode.TreeItem {
             this.tooltip = this.createTooltip(commit);
             this.description = this.createDescription(commit);
             this.iconPath = this.getIconForAction(commit.action);
+
+            // Set the command to execute when the item is clicked
+            this.command = {
+                command: 'gitmaster.showRebaseCommitDetails',
+                title: 'Show Commit Details',
+                arguments: [this]
+            };
         } else if (type === 'header') {
             this.contextValue = 'rebaseHeader';
         } else if (type === 'status') {
@@ -340,7 +348,8 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                     commit.message,
                     vscode.TreeItemCollapsibleState.None,
                     commit,
-                    'commit'
+                    'commit',
+                    this.rebaseState.repoRoot
                 );
 
                 // Add color coding by author
