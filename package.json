@@ -84,7 +84,7 @@
                 },
                 {
                     "id": "gitmaster.rebase",
-                    "name": "Interactive Rebase",
+                    "name": "Interactive Rebase (Beta)",
                     "contextualTitle": "Interactive Rebase",
                     "visibility": "collapsed"
                 }
