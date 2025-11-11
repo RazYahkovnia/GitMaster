@@ -358,6 +358,43 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (treeItem) => await rebaseCommands.showCommitDetails(treeItem)
     );
 
+    // Copy remote line URL command
+    const copyRemoteLineUrlCommand = vscode.commands.registerCommand(
+        'gitmaster.copyRemoteLineUrl',
+        async () => {
+            const editor = vscode.window.activeTextEditor;
+            if (!editor) {
+                vscode.window.showErrorMessage('No active editor');
+                return;
+            }
+
+            const filePath = editor.document.uri.fsPath;
+            const selection = editor.selection;
+            const startLine = selection.start.line + 1; // Convert to 1-based
+            const endLine = selection.end.line + 1;
+
+            // Get the remote URL with line numbers
+            const url = await gitService.getRemoteFileUrl(
+                filePath,
+                startLine,
+                selection.isEmpty ? undefined : endLine
+            );
+
+            if (!url) {
+                vscode.window.showErrorMessage('Could not generate remote URL. Make sure the file is in a Git repository with a remote.');
+                return;
+            }
+
+            // Copy to clipboard
+            await vscode.env.clipboard.writeText(url);
+
+            const lineInfo = selection.isEmpty
+                ? `line ${startLine}`
+                : `lines ${startLine}-${endLine}`;
+            vscode.window.showInformationMessage(`Copied remote URL for ${lineInfo} to clipboard`);
+        }
+    );
+
     context.subscriptions.push(
         refreshCommand,
         showCommitDiffCommand,
@@ -399,7 +436,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshRebaseCommand,
         changeBaseBranchCommand,
         resetRebaseCommand,
-        showRebaseCommitDetailsCommand
+        showRebaseCommitDetailsCommand,
+        copyRemoteLineUrlCommand
     );
 }
 

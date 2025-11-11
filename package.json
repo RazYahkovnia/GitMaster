@@ -114,6 +114,11 @@
                 "icon": "$(copy)"
             },
             {
+                "command": "gitmaster.copyRemoteLineUrl",
+                "title": "Git Master: Copy Remote Line URL",
+                "icon": "$(link)"
+            },
+            {
                 "command": "gitmaster.createShelf",
                 "title": "Create Shelf",
                 "icon": "$(add)"
@@ -523,7 +528,15 @@
                     "group": "1_modification"
                 }
             ]
-        }
+        },
+        "keybindings": [
+            {
+                "command": "gitmaster.copyRemoteLineUrl",
+                "key": "ctrl+shift+alt+c",
+                "mac": "cmd+shift+alt+c",
+                "when": "editorTextFocus"
+            }
+        ]
     },
     "scripts": {
         "vscode:prepublish": "npm run compile",
