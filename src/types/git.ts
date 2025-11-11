@@ -102,3 +102,52 @@ export interface BranchInfo {
     upstream?: string;
 }
 
+/**
+ * Rebase action type
+ */
+export type RebaseAction = 'pick' | 'reword' | 'edit' | 'squash' | 'fixup' | 'drop';
+
+/**
+ * Information about a commit in an interactive rebase
+ */
+export interface RebaseCommit {
+    /** Full commit hash */
+    hash: string;
+    /** Short commit hash */
+    shortHash: string;
+    /** Commit author name */
+    author: string;
+    /** Commit date (relative) */
+    date: string;
+    /** Commit message (first line) */
+    message: string;
+    /** Rebase action to perform */
+    action: RebaseAction;
+    /** Number of files changed in this commit */
+    fileCount?: number;
+    /** Number of lines added */
+    additions?: number;
+    /** Number of lines deleted */
+    deletions?: number;
+}
+
+/**
+ * Current state of an interactive rebase session
+ */
+export interface RebaseState {
+    /** Repository root path */
+    repoRoot: string;
+    /** Current branch name */
+    currentBranch: string;
+    /** Base branch to rebase onto */
+    baseBranch: string;
+    /** List of commits to rebase (in order from oldest to newest) */
+    commits: RebaseCommit[];
+    /** Whether a rebase is currently in progress */
+    isInProgress: boolean;
+    /** Whether there are conflicts */
+    hasConflicts: boolean;
+    /** Conflict message if any */
+    conflictMessage?: string;
+}
+

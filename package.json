@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.7",
+    "version": "0.0.5",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -80,6 +80,12 @@
                     "id": "gitmaster.reflog",
                     "name": "Git Operations",
                     "contextualTitle": "Git Operations History",
+                    "visibility": "collapsed"
+                },
+                {
+                    "id": "gitmaster.rebase",
+                    "name": "Interactive Rebase",
+                    "contextualTitle": "Interactive Rebase",
                     "visibility": "collapsed"
                 }
             ]
@@ -214,6 +220,70 @@
                 "command": "gitmaster.clearBranchFilter",
                 "title": "Show All Branches",
                 "icon": "$(clear-all)"
+            },
+            {
+                "command": "gitmaster.startRebase",
+                "title": "Start Interactive Rebase",
+                "icon": "$(git-branch)"
+            },
+            {
+                "command": "gitmaster.startRebaseOnDefault",
+                "title": "Quick Rebase on Default Branch",
+                "icon": "$(arrow-up)"
+            },
+            {
+                "command": "gitmaster.fetchAndRebase",
+                "title": "Fetch & Rebase",
+                "icon": "$(cloud-download)"
+            },
+            {
+                "command": "gitmaster.changeRebaseAction",
+                "title": "Change Commit Action"
+            },
+            {
+                "command": "gitmaster.moveCommitUp",
+                "title": "Move Commit Up",
+                "icon": "$(arrow-up)"
+            },
+            {
+                "command": "gitmaster.moveCommitDown",
+                "title": "Move Commit Down",
+                "icon": "$(arrow-down)"
+            },
+            {
+                "command": "gitmaster.rewordCommit",
+                "title": "Reword Commit Message",
+                "icon": "$(edit)"
+            },
+            {
+                "command": "gitmaster.executeRebase",
+                "title": "Execute Rebase",
+                "icon": "$(play)"
+            },
+            {
+                "command": "gitmaster.continueRebase",
+                "title": "Continue Rebase",
+                "icon": "$(debug-continue)"
+            },
+            {
+                "command": "gitmaster.abortRebase",
+                "title": "Abort Rebase",
+                "icon": "$(close)"
+            },
+            {
+                "command": "gitmaster.refreshRebase",
+                "title": "Refresh Rebase",
+                "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.changeBaseBranch",
+                "title": "Change Base Branch",
+                "icon": "$(git-branch)"
+            },
+            {
+                "command": "gitmaster.resetRebase",
+                "title": "Reset Rebase Configuration",
+                "icon": "$(discard)"
             }
         ],
         "menus": {
@@ -266,6 +336,36 @@
                 {
                     "command": "gitmaster.refreshBranches",
                     "when": "view == gitmaster.branches",
+                    "group": "navigation@5"
+                },
+                {
+                    "command": "gitmaster.executeRebase",
+                    "when": "view == gitmaster.rebase && !gitmaster.rebaseInProgress",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.continueRebase",
+                    "when": "view == gitmaster.rebase && gitmaster.rebaseInProgress",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.abortRebase",
+                    "when": "view == gitmaster.rebase && gitmaster.rebaseInProgress",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "gitmaster.changeBaseBranch",
+                    "when": "view == gitmaster.rebase && !gitmaster.rebaseInProgress",
+                    "group": "navigation@3"
+                },
+                {
+                    "command": "gitmaster.resetRebase",
+                    "when": "view == gitmaster.rebase && !gitmaster.rebaseInProgress && gitmaster.rebaseHasChanges",
+                    "group": "navigation@4"
+                },
+                {
+                    "command": "gitmaster.refreshRebase",
+                    "when": "view == gitmaster.rebase",
                     "group": "navigation@5"
                 }
             ],
@@ -374,6 +474,41 @@
                     "command": "gitmaster.checkoutBranch",
                     "when": "view == gitmaster.branches && viewItem == remoteBranch",
                     "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.changeRebaseAction",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.moveCommitUp",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "gitmaster.moveCommitDown",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "gitmaster.changeRebaseAction",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.rewordCommit",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.moveCommitUp",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "2_reorder"
+                },
+                {
+                    "command": "gitmaster.moveCommitDown",
+                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "2_reorder"
                 }
             ],
             "scm/resourceState/context": [

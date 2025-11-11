@@ -7,11 +7,13 @@ import { ShelvesProvider } from './providers/shelvesProvider';
 import { ReflogProvider } from './providers/reflogProvider';
 import { RepositoryLogProvider } from './providers/repositoryLogProvider';
 import { BranchesProvider } from './providers/branchesProvider';
+import { RebaseProvider } from './providers/rebaseProvider';
 import { CommitCommands } from './commands/commitCommands';
 import { StashCommands } from './commands/stashCommands';
 import { ReflogCommands } from './commands/reflogCommands';
 import { RepositoryLogCommands } from './commands/repositoryLogCommands';
 import { BranchCommands } from './commands/branchCommands';
+import { RebaseCommands } from './commands/rebaseCommands';
 
 // Global service instances
 let gitService: GitService;
@@ -22,11 +24,13 @@ let shelvesProvider: ShelvesProvider;
 let reflogProvider: ReflogProvider;
 let repositoryLogProvider: RepositoryLogProvider;
 let branchesProvider: BranchesProvider;
+let rebaseProvider: RebaseProvider;
 let commitCommands: CommitCommands;
 let stashCommands: StashCommands;
 let reflogCommands: ReflogCommands;
 let repositoryLogCommands: RepositoryLogCommands;
 let branchCommands: BranchCommands;
+let rebaseCommands: RebaseCommands;
 
 /**
  * Activate the GitMaster extension
@@ -69,11 +73,13 @@ function initializeServices(): void {
     reflogProvider = new ReflogProvider();
     repositoryLogProvider = new RepositoryLogProvider(gitService);
     branchesProvider = new BranchesProvider(gitService);
+    rebaseProvider = new RebaseProvider(gitService);
     commitCommands = new CommitCommands(gitService, diffService, commitDetailsProvider);
     stashCommands = new StashCommands(gitService, diffService, shelvesProvider);
     reflogCommands = new ReflogCommands(gitService, reflogProvider);
     repositoryLogCommands = new RepositoryLogCommands(gitService, repositoryLogProvider);
     branchCommands = new BranchCommands(gitService, branchesProvider);
+    rebaseCommands = new RebaseCommands(gitService, rebaseProvider);
 }
 
 /**
@@ -116,13 +122,20 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         showCollapseAll: false
     });
 
+    // Interactive Rebase tree view
+    const rebaseTreeView = vscode.window.createTreeView('gitmaster.rebase', {
+        treeDataProvider: rebaseProvider,
+        showCollapseAll: false
+    });
+
     context.subscriptions.push(
         fileHistoryTreeView,
         commitDetailsTreeView,
         shelvesTreeView,
         reflogTreeView,
         repositoryLogTreeView,
-        branchesTreeView
+        branchesTreeView,
+        rebaseTreeView
     );
 }
 
@@ -274,6 +287,72 @@ function registerCommands(context: vscode.ExtensionContext): void {
         () => branchCommands.clearBranchFilter()
     );
 
+    // Rebase commands
+    const startRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.startRebase',
+        async () => await rebaseCommands.startRebase()
+    );
+
+    const startRebaseOnDefaultCommand = vscode.commands.registerCommand(
+        'gitmaster.startRebaseOnDefault',
+        async () => await rebaseCommands.startRebaseOnDefault()
+    );
+
+    const fetchAndRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.fetchAndRebase',
+        async () => await rebaseCommands.fetchAndRebase()
+    );
+
+    const changeRebaseActionCommand = vscode.commands.registerCommand(
+        'gitmaster.changeRebaseAction',
+        async (item) => await rebaseCommands.changeCommitAction(item)
+    );
+
+    const moveCommitUpCommand = vscode.commands.registerCommand(
+        'gitmaster.moveCommitUp',
+        async (item) => await rebaseCommands.moveCommitUp(item)
+    );
+
+    const moveCommitDownCommand = vscode.commands.registerCommand(
+        'gitmaster.moveCommitDown',
+        async (item) => await rebaseCommands.moveCommitDown(item)
+    );
+
+    const rewordCommitCommand = vscode.commands.registerCommand(
+        'gitmaster.rewordCommit',
+        async (item) => await rebaseCommands.rewordCommit(item)
+    );
+
+    const executeRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.executeRebase',
+        async () => await rebaseCommands.executeRebase()
+    );
+
+    const continueRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.continueRebase',
+        async () => await rebaseCommands.continueRebase()
+    );
+
+    const abortRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.abortRebase',
+        async () => await rebaseCommands.abortRebase()
+    );
+
+    const refreshRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.refreshRebase',
+        () => rebaseCommands.refreshRebase()
+    );
+
+    const changeBaseBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.changeBaseBranch',
+        async () => await rebaseCommands.changeBaseBranch()
+    );
+
+    const resetRebaseCommand = vscode.commands.registerCommand(
+        'gitmaster.resetRebase',
+        async () => await rebaseCommands.resetRebase()
+    );
+
     context.subscriptions.push(
         refreshCommand,
         showCommitDiffCommand,
@@ -301,7 +380,20 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshBranchesCommand,
         filterByMyBranchesCommand,
         filterByAuthorCommand,
-        clearBranchFilterCommand
+        clearBranchFilterCommand,
+        startRebaseCommand,
+        startRebaseOnDefaultCommand,
+        fetchAndRebaseCommand,
+        changeRebaseActionCommand,
+        moveCommitUpCommand,
+        moveCommitDownCommand,
+        rewordCommitCommand,
+        executeRebaseCommand,
+        continueRebaseCommand,
+        abortRebaseCommand,
+        refreshRebaseCommand,
+        changeBaseBranchCommand,
+        resetRebaseCommand
     );
 }
 
@@ -324,10 +416,45 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
         () => initializeFromWorkspace()
     );
 
+    // Listen to Git repository changes (commits, checkouts, etc.)
+    const gitChangeDisposable = vscode.workspace.onDidChangeTextDocument(async (event) => {
+        // Check if the changed file is in .git directory or is a git-related operation
+        if (event.document.uri.path.includes('.git/')) {
+            // Git state changed, refresh providers
+            const repoRoot = await gitService.getRepoRoot(event.document.uri.fsPath);
+            if (repoRoot) {
+                await rebaseProvider.setRepoRoot(repoRoot);
+            }
+        }
+    });
+
+    // Listen to file system changes for better git detection
+    const fsWatcher = vscode.workspace.createFileSystemWatcher('**/.git/refs/heads/**');
+    fsWatcher.onDidChange(async () => {
+        // Branch or commit changed, refresh rebase view
+        if (vscode.window.activeTextEditor) {
+            const repoRoot = await gitService.getRepoRoot(vscode.window.activeTextEditor.document.uri.fsPath);
+            if (repoRoot) {
+                await rebaseProvider.setRepoRoot(repoRoot);
+            }
+        }
+    });
+    fsWatcher.onDidCreate(async () => {
+        // New branch created, refresh rebase view
+        if (vscode.window.activeTextEditor) {
+            const repoRoot = await gitService.getRepoRoot(vscode.window.activeTextEditor.document.uri.fsPath);
+            if (repoRoot) {
+                await rebaseProvider.setRepoRoot(repoRoot);
+            }
+        }
+    });
+
     context.subscriptions.push(
-        editorChangeDisposable, 
+        editorChangeDisposable,
         visibleEditorsChangeDisposable,
-        workspaceFoldersChangeDisposable
+        workspaceFoldersChangeDisposable,
+        gitChangeDisposable,
+        fsWatcher
     );
 }
 
@@ -348,13 +475,14 @@ async function initializeFromWorkspace(): Promise<void> {
         for (const folder of workspaceFolders) {
             const folderPath = folder.uri.fsPath;
             const repoRoot = await gitService.getRepoRoot(folderPath);
-            
+
             if (repoRoot) {
                 // Found a git repo, initialize all providers
                 shelvesProvider.setRepoRoot(repoRoot);
                 reflogProvider.setRepoRoot(repoRoot);
                 repositoryLogProvider.setRepoRoot(repoRoot);
                 branchesProvider.setRepoRoot(repoRoot);
+                await rebaseProvider.setRepoRoot(repoRoot);
                 return;
             }
         }
@@ -366,6 +494,7 @@ async function initializeFromWorkspace(): Promise<void> {
     reflogProvider.setRepoRoot(undefined);
     repositoryLogProvider.setRepoRoot(undefined);
     branchesProvider.setRepoRoot(undefined);
+    await rebaseProvider.setRepoRoot(undefined);
 }
 
 /**
@@ -376,12 +505,13 @@ async function updateFileHistory(editor: vscode.TextEditor | undefined): Promise
         const filePath = editor.document.uri.fsPath;
         fileHistoryProvider.setCurrentFile(filePath);
 
-        // Update shelves, reflog, repository log, and branches providers with repo root
+        // Update shelves, reflog, repository log, branches, and rebase providers with repo root
         const repoRoot = await gitService.getRepoRoot(filePath);
         shelvesProvider.setRepoRoot(repoRoot || undefined);
         reflogProvider.setRepoRoot(repoRoot || undefined);
         repositoryLogProvider.setRepoRoot(repoRoot || undefined);
         branchesProvider.setRepoRoot(repoRoot || undefined);
+        await rebaseProvider.setRepoRoot(repoRoot || undefined);
     } else {
         // No active editor, fall back to workspace initialization
         await initializeFromWorkspace();
