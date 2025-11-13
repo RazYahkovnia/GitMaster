@@ -69,15 +69,12 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
-    private gitService: GitService;
     private currentCommit: CommitInfo | undefined;
     private currentRepoRoot: string | undefined;
     private changedFiles: ChangedFile[] = [];
     private githubUrl: string | null = null;
 
-    constructor() {
-        this.gitService = new GitService();
-    }
+    constructor(private gitService: GitService) { }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();

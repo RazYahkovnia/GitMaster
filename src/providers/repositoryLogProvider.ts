@@ -57,7 +57,7 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<Repository
 
     private currentRepoRoot: string | undefined;
 
-    constructor(private gitService: GitService = new GitService()) { }
+    constructor(private gitService: GitService) { }
 
     /**
      * Set the current repository root

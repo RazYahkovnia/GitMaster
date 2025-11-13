@@ -59,12 +59,9 @@ export class ShelvesProvider implements vscode.TreeDataProvider<vscode.TreeItem>
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
-    private gitService: GitService;
     private currentRepoRoot: string | undefined;
 
-    constructor() {
-        this.gitService = new GitService();
-    }
+    constructor(private gitService: GitService) { }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();

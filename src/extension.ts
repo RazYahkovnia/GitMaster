@@ -67,10 +67,10 @@ export function deactivate() {
 function initializeServices(): void {
     gitService = new GitService();
     diffService = new DiffService(gitService);
-    fileHistoryProvider = new FileHistoryProvider();
-    commitDetailsProvider = new CommitDetailsProvider();
-    shelvesProvider = new ShelvesProvider();
-    reflogProvider = new ReflogProvider();
+    fileHistoryProvider = new FileHistoryProvider(gitService);
+    commitDetailsProvider = new CommitDetailsProvider(gitService);
+    shelvesProvider = new ShelvesProvider(gitService);
+    reflogProvider = new ReflogProvider(gitService);
     repositoryLogProvider = new RepositoryLogProvider(gitService);
     branchesProvider = new BranchesProvider(gitService);
     rebaseProvider = new RebaseProvider(gitService);

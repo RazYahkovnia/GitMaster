@@ -45,12 +45,9 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
     readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
-    private gitService: GitService;
     private currentFilePath: string | undefined;
 
-    constructor() {
-        this.gitService = new GitService();
-    }
+    constructor(private gitService: GitService) { }
 
     refresh(filePath?: string): void {
         if (filePath) {

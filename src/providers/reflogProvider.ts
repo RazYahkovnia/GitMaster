@@ -62,12 +62,9 @@ export class ReflogProvider implements vscode.TreeDataProvider<ReflogTreeItem> {
     readonly onDidChangeTreeData: vscode.Event<ReflogTreeItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
-    private gitService: GitService;
     private currentRepoRoot: string | undefined;
 
-    constructor() {
-        this.gitService = new GitService();
-    }
+    constructor(private gitService: GitService) { }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();

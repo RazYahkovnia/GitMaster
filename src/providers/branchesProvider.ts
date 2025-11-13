@@ -76,7 +76,7 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
     private currentRepoRoot: string | undefined;
     private filterAuthor: string | null = null;
 
-    constructor(private gitService: GitService = new GitService()) { }
+    constructor(private gitService: GitService) { }
 
     /**
      * Set the current repository root
