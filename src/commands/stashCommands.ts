@@ -69,6 +69,66 @@ export class StashCommands {
     }
 
     /**
+     * Show advanced file picker for per-file selection
+     */
+    private async showAdvancedFilePicker(
+        preview: { staged: any[]; unstaged: any[]; untracked: string[] },
+        repoRoot: string
+    ): Promise<{ files: string[]; includeUntracked: boolean } | null> {
+        interface FilePickItem extends vscode.QuickPickItem {
+            filePath?: string;
+            type: 'unstaged' | 'untracked-option';
+        }
+
+        const items: FilePickItem[] = [];
+
+        // Add each unstaged file
+        preview.unstaged.forEach(f => {
+            items.push({
+                label: `$(circle-outline) ${f.file}`,
+                description: `Unstaged • +${f.additions} -${f.deletions}`,
+                filePath: f.file,
+                type: 'unstaged',
+                picked: true  // Pre-checked
+            });
+        });
+
+        // Add untracked option
+        if (preview.untracked.length > 0) {
+            const fileList = preview.untracked.slice(0, 3).join(', ');
+            const more = preview.untracked.length > 3 ? '...' : '';
+            items.push({
+                label: `$(new-file) Include ALL Untracked Files`,
+                description: `${preview.untracked.length} file(s): ${fileList}${more}`,
+                type: 'untracked-option',
+                picked: false  // Not checked by default
+            });
+        }
+
+        if (items.length === 0) {
+            vscode.window.showErrorMessage('No files available for advanced selection');
+            return null;
+        }
+
+        const selected = await vscode.window.showQuickPick(items, {
+            canPickMany: true,
+            title: 'Select Files to Stash',
+            placeHolder: 'Choose specific files (all selected by default)'
+        });
+
+        if (!selected || selected.length === 0) {
+            return null; // User cancelled or selected nothing
+        }
+
+        const files = selected
+            .filter(s => s.type === 'unstaged')
+            .map(s => s.filePath!);
+        const includeUntracked = selected.some(s => s.type === 'untracked-option');
+
+        return { files, includeUntracked };
+    }
+
+    /**
      * Create a new stash with a custom message - Preset approach
      */
     async createShelf(): Promise<void> {
@@ -157,15 +217,19 @@ export class StashCommands {
                 });
             }
 
-            // Advanced options separator
-            presets.push({
-                id: 'advanced',
-                label: '$(gear) Advanced Options...',
-                description: '',
-                detail: 'Custom selection of what to stash'
-            });
+            // Advanced options - only show when safe and useful (no staged, no mixed changes, and has unstaged files)
+            const canShowAdvanced = preview.staged.length === 0 && !hasMixedChanges && preview.unstaged.length > 0;
 
-            if (presets.length === 1) { // Only "Advanced" option
+            if (canShowAdvanced) {
+                presets.push({
+                    id: 'advanced',
+                    label: '$(gear) Advanced Options...',
+                    description: '',
+                    detail: 'Select specific files to stash'
+                });
+            }
+
+            if (presets.length === 0) {
                 vscode.window.showErrorMessage('No changes to shelve');
                 return;
             }
@@ -180,13 +244,46 @@ export class StashCommands {
                 return; // User cancelled
             }
 
-            // If advanced selected, show old UI (we'll implement advanced mode later)
+            // Handle advanced mode
             if (selectedPreset.id === 'advanced') {
-                vscode.window.showInformationMessage('Advanced mode coming soon! Please use a preset for now.');
+                const selection = await this.showAdvancedFilePicker(preview, repoRoot);
+                if (!selection) {
+                    return; // User cancelled
+                }
+
+                // Ask for shelf name
+                const message = await vscode.window.showInputBox({
+                    prompt: 'Enter shelf name',
+                    placeHolder: 'e.g., Work in progress on feature X',
+                    validateInput: (value) => value?.trim() ? null : 'Shelf name cannot be empty'
+                });
+
+                if (!message) {
+                    return; // User cancelled
+                }
+
+                // Stash selected files
+                if (selection.files.length === 0 && selection.includeUntracked) {
+                    // Only untracked files selected
+                    await this.gitService.stashUntrackedOnly(repoRoot, message);
+                } else {
+                    // Specific files with or without untracked
+                    await this.gitService.createStash(
+                        repoRoot,
+                        message,
+                        selection.includeUntracked,
+                        false,
+                        false,
+                        selection.files.length > 0 ? selection.files : undefined
+                    );
+                }
+
+                this.shelvesProvider.refresh();
+                vscode.window.showInformationMessage(`Shelf "${message}" created successfully`);
                 return;
             }
 
-            // Ask for shelf name
+            // Ask for shelf name for presets
             const message = await vscode.window.showInputBox({
                 prompt: 'Enter shelf name',
                 placeHolder: 'e.g., Work in progress on feature X',
