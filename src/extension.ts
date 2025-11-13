@@ -314,16 +314,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (item) => await rebaseCommands.changeCommitAction(item)
     );
 
-    const moveCommitUpCommand = vscode.commands.registerCommand(
-        'gitmaster.moveCommitUp',
-        async (item) => await rebaseCommands.moveCommitUp(item)
-    );
-
-    const moveCommitDownCommand = vscode.commands.registerCommand(
-        'gitmaster.moveCommitDown',
-        async (item) => await rebaseCommands.moveCommitDown(item)
-    );
-
     const rewordCommitCommand = vscode.commands.registerCommand(
         'gitmaster.rewordCommit',
         async (item) => await rebaseCommands.rewordCommit(item)
@@ -434,8 +424,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
         startRebaseOnDefaultCommand,
         fetchAndRebaseCommand,
         changeRebaseActionCommand,
-        moveCommitUpCommand,
-        moveCommitDownCommand,
         rewordCommitCommand,
         executeRebaseCommand,
         continueRebaseCommand,

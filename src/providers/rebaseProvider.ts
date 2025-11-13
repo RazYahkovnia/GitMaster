@@ -231,42 +231,6 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
         }
     }
 
-    /**
-     * Move a commit up in the list
-     */
-    moveCommitUp(commitHash: string): void {
-        if (!this.rebaseState) {
-            return;
-        }
-
-        const index = this.rebaseState.commits.findIndex(c => c.hash === commitHash);
-        if (index > 0) {
-            const temp = this.rebaseState.commits[index];
-            this.rebaseState.commits[index] = this.rebaseState.commits[index - 1];
-            this.rebaseState.commits[index - 1] = temp;
-            this.updateHasChangesContext();
-            this.refresh();
-        }
-    }
-
-    /**
-     * Move a commit down in the list
-     */
-    moveCommitDown(commitHash: string): void {
-        if (!this.rebaseState) {
-            return;
-        }
-
-        const index = this.rebaseState.commits.findIndex(c => c.hash === commitHash);
-        if (index >= 0 && index < this.rebaseState.commits.length - 1) {
-            const temp = this.rebaseState.commits[index];
-            this.rebaseState.commits[index] = this.rebaseState.commits[index + 1];
-            this.rebaseState.commits[index + 1] = temp;
-            this.updateHasChangesContext();
-            this.refresh();
-        }
-    }
-
     getTreeItem(element: RebaseTreeItem): vscode.TreeItem {
         return element;
     }

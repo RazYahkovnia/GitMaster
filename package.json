@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.5",
+    "version": "0.0.6",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -246,16 +246,6 @@
                 "title": "Change Commit Action"
             },
             {
-                "command": "gitmaster.moveCommitUp",
-                "title": "Move Commit Up",
-                "icon": "$(arrow-up)"
-            },
-            {
-                "command": "gitmaster.moveCommitDown",
-                "title": "Move Commit Down",
-                "icon": "$(arrow-down)"
-            },
-            {
                 "command": "gitmaster.rewordCommit",
                 "title": "Reword Commit Message",
                 "icon": "$(edit)"
@@ -486,16 +476,6 @@
                     "group": "inline@1"
                 },
                 {
-                    "command": "gitmaster.moveCommitUp",
-                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
-                    "group": "inline@2"
-                },
-                {
-                    "command": "gitmaster.moveCommitDown",
-                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
-                    "group": "inline@3"
-                },
-                {
                     "command": "gitmaster.changeRebaseAction",
                     "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
                     "group": "1_actions"
@@ -504,16 +484,6 @@
                     "command": "gitmaster.rewordCommit",
                     "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
                     "group": "1_actions"
-                },
-                {
-                    "command": "gitmaster.moveCommitUp",
-                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
-                    "group": "2_reorder"
-                },
-                {
-                    "command": "gitmaster.moveCommitDown",
-                    "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
-                    "group": "2_reorder"
                 }
             ],
             "scm/resourceState/context": [

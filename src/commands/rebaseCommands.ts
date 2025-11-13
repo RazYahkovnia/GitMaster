@@ -297,66 +297,6 @@ export class RebaseCommands {
     }
 
     /**
-     * Move commit up in the list
-     */
-    async moveCommitUp(item: RebaseTreeItem): Promise<void> {
-        try {
-            if (!item.commit) {
-                return;
-            }
-
-            const rebaseState = this.rebaseProvider.getRebaseState();
-            if (rebaseState && item.commit) {
-                const commitIndex = rebaseState.commits.findIndex(c => c.hash === item.commit!.hash);
-                if (commitIndex === 0) {
-                    vscode.window.showInformationMessage('Commit is already at the top');
-                    return;
-                }
-            }
-
-            this.rebaseProvider.moveCommitUp(item.commit.hash);
-            vscode.window.showInformationMessage('⬆ Commit moved up. Click Execute to apply.', 'Execute Now').then(choice => {
-                if (choice === 'Execute Now') {
-                    this.executeRebase();
-                }
-            });
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to move commit: ${error}`);
-            console.error('Error moving commit up:', error);
-        }
-    }
-
-    /**
-     * Move commit down in the list
-     */
-    async moveCommitDown(item: RebaseTreeItem): Promise<void> {
-        try {
-            if (!item.commit) {
-                return;
-            }
-
-            const rebaseState = this.rebaseProvider.getRebaseState();
-            if (rebaseState && item.commit) {
-                const commitIndex = rebaseState.commits.findIndex(c => c.hash === item.commit!.hash);
-                if (commitIndex === rebaseState.commits.length - 1) {
-                    vscode.window.showInformationMessage('Commit is already at the bottom');
-                    return;
-                }
-            }
-
-            this.rebaseProvider.moveCommitDown(item.commit.hash);
-            vscode.window.showInformationMessage('⬇ Commit moved down. Click Execute to apply.', 'Execute Now').then(choice => {
-                if (choice === 'Execute Now') {
-                    this.executeRebase();
-                }
-            });
-        } catch (error) {
-            vscode.window.showErrorMessage(`Failed to move commit: ${error}`);
-            console.error('Error moving commit down:', error);
-        }
-    }
-
-    /**
      * Reword a commit message
      */
     async rewordCommit(item: RebaseTreeItem): Promise<void> {
