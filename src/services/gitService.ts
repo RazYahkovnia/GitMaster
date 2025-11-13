@@ -535,6 +535,20 @@ export class GitService {
     }
 
     /**
+     * Check if there are tracked changes (staged or unstaged, excluding untracked files)
+     */
+    async hasTrackedChanges(repoRoot: string): Promise<boolean> {
+        try {
+            const { stdout } = await execAsync('git status --porcelain', { cwd: repoRoot });
+            const lines = stdout.trim().split('\n').filter(line => line.length > 0);
+            // Tracked changes are any lines that DON'T start with '??'
+            return lines.some(line => !line.startsWith('??'));
+        } catch (error) {
+            return false;
+        }
+    }
+
+    /**
      * Check if there are staged changes
      */
     async hasStagedChanges(repoRoot: string): Promise<boolean> {
@@ -662,10 +676,10 @@ export class GitService {
                 fileArgs = ` -- ${quotedPaths}`;
             }
 
-            await execAsync(
-                `git stash push ${flagsStr} -m "${message}"${fileArgs}`,
-                { cwd: repoRoot }
-            );
+            const command = `git stash push ${flagsStr} -m "${message}"${fileArgs}`;
+            console.log('Executing git command:', command);
+
+            await execAsync(command, { cwd: repoRoot });
         } catch (error) {
             throw new Error(`Failed to create stash: ${error}`);
         }
@@ -690,14 +704,23 @@ export class GitService {
      */
     async stashUntrackedOnly(repoRoot: string, message: string): Promise<void> {
         try {
-            // Step 1: Stash tracked changes
-            await execAsync(`git stash push -m "temp-tracked"`, { cwd: repoRoot });
+            // Check if there are any tracked changes (staged or unstaged)
+            const hasTracked = await this.hasTrackedChanges(repoRoot);
 
-            // Step 2: Stash everything including untracked
-            await execAsync(`git stash push -u -m "${message}"`, { cwd: repoRoot });
+            if (!hasTracked) {
+                // No tracked changes - can directly stash untracked files with -u flag
+                await execAsync(`git stash push -u -m "${message}"`, { cwd: repoRoot });
+            } else {
+                // There are tracked changes - use the 3-step technique
+                // Step 1: Stash tracked changes temporarily
+                await execAsync(`git stash push -m "temp-tracked"`, { cwd: repoRoot });
 
-            // Step 3: Pop the tracked changes back
-            await execAsync(`git stash pop stash@{1}`, { cwd: repoRoot });
+                // Step 2: Stash everything including untracked
+                await execAsync(`git stash push -u -m "${message}"`, { cwd: repoRoot });
+
+                // Step 3: Pop the tracked changes back
+                await execAsync(`git stash pop stash@{1}`, { cwd: repoRoot });
+            }
         } catch (error) {
             throw new Error(`Failed to stash untracked files: ${error}`);
         }

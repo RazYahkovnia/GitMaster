@@ -69,7 +69,7 @@ export class StashCommands {
     }
 
     /**
-     * Create a new stash with a custom message
+     * Create a new stash with a custom message - Preset approach
      */
     async createShelf(): Promise<void> {
         try {
@@ -90,122 +90,138 @@ export class StashCommands {
             const hasUntracked = await this.gitService.hasUntrackedFiles(repoRoot);
             const preview = await this.gitService.getStashPreview(repoRoot, hasUntracked);
 
-            // Build quick pick items for file selection
-            interface FilePickItem extends vscode.QuickPickItem {
-                filePath?: string;
-                type: 'staged' | 'unstaged' | 'untracked-option';
+            // Build preset options
+            interface StashPreset extends vscode.QuickPickItem {
+                id: 'save-all' | 'keep-staged' | 'tracked-only' | 'untracked-only' | 'advanced';
             }
 
-            const items: FilePickItem[] = [];
+            const presets: StashPreset[] = [];
+            const totalFiles = preview.staged.length + preview.unstaged.length + preview.untracked.length;
+            const trackedFiles = preview.staged.length + preview.unstaged.length;
+            const unstagedAndUntracked = preview.unstaged.length + preview.untracked.length;
 
-            // Add staged files
-            preview.staged.forEach(f => {
-                items.push({
-                    label: `$(check) ${f.file}`,
-                    description: `Staged • +${f.additions} -${f.deletions}`,
-                    filePath: f.file,
-                    type: 'staged',
-                    picked: true
-                });
-            });
+            // Determine recommended preset
+            let recommendedId: string | null = null;
+            const hasMixedChanges = await this.gitService.hasFilesWithMixedChanges(repoRoot);
 
-            // Add unstaged files
-            preview.unstaged.forEach(f => {
-                items.push({
-                    label: `$(circle-outline) ${f.file}`,
-                    description: `Unstaged • +${f.additions} -${f.deletions}`,
-                    filePath: f.file,
-                    type: 'unstaged',
-                    picked: true
-                });
-            });
+            if (hasMixedChanges) {
+                // Files have both staged and unstaged changes - can't use keep-staged
+                recommendedId = 'save-all';
+            } else if (preview.unstaged.length > 0 && preview.staged.length === 0) {
+                recommendedId = 'keep-staged'; // Only unstaged, no mixed changes
+            } else if (preview.untracked.length > trackedFiles && trackedFiles > 0) {
+                recommendedId = 'tracked-only'; // Mostly untracked
+            } else if (trackedFiles === 0 && preview.untracked.length > 0) {
+                recommendedId = 'untracked-only'; // Only untracked
+            } else {
+                recommendedId = 'save-all'; // Default safe option
+            }
 
-            // Add untracked files option as a checkbox at the bottom
-            if (hasUntracked) {
-                items.push({
-                    label: `$(new-file) Include ALL Untracked Files`,
-                    description: `${preview.untracked.length} untracked file(s): ${preview.untracked.slice(0, 3).join(', ')}${preview.untracked.length > 3 ? '...' : ''}`,
-                    type: 'untracked-option',
-                    picked: false
+            // Preset 1: Save All Changes (only if there are tracked files)
+            if (totalFiles > 0 && trackedFiles > 0) {
+                presets.push({
+                    id: 'save-all',
+                    label: `$(package) Save All Changes${recommendedId === 'save-all' ? ' ⭐' : ''}`,
+                    description: `${totalFiles} file(s)`,
+                    detail: 'Stash everything for a clean workspace'
                 });
             }
 
-            if (items.length === 0) {
+            // Preset 2: Keep Staged Work (only if there are staged files and no mixed changes)
+            if (preview.staged.length > 0 && unstagedAndUntracked > 0 && !hasMixedChanges) {
+                presets.push({
+                    id: 'keep-staged',
+                    label: `$(sync) Keep Staged Work${recommendedId === 'keep-staged' ? ' ⭐' : ''}`,
+                    description: `${unstagedAndUntracked} file(s)`,
+                    detail: 'Stash unstaged/untracked, keep staged changes'
+                });
+            }
+
+            // Preset 3: Tracked Only
+            if (trackedFiles > 0 && preview.untracked.length > 0) {
+                presets.push({
+                    id: 'tracked-only',
+                    label: `$(file-code) Tracked Only${recommendedId === 'tracked-only' ? ' ⭐' : ''}`,
+                    description: `${trackedFiles} file(s)`,
+                    detail: 'Stash tracked files, leave untracked'
+                });
+            }
+
+            // Preset 4: Untracked Only (only if ONLY untracked files exist)
+            if (trackedFiles === 0 && preview.untracked.length > 0) {
+                presets.push({
+                    id: 'untracked-only',
+                    label: `$(new-file) Untracked Only${recommendedId === 'untracked-only' ? ' ⭐' : ''}`,
+                    description: `${preview.untracked.length} file(s)`,
+                    detail: 'Stash only untracked files'
+                });
+            }
+
+            // Advanced options separator
+            presets.push({
+                id: 'advanced',
+                label: '$(gear) Advanced Options...',
+                description: '',
+                detail: 'Custom selection of what to stash'
+            });
+
+            if (presets.length === 1) { // Only "Advanced" option
                 vscode.window.showErrorMessage('No changes to shelve');
                 return;
             }
 
-            // Show file picker
-            const selectedItems = await vscode.window.showQuickPick(items, {
-                canPickMany: true,
-                placeHolder: 'Select files to shelve (all selected by default)',
-                title: 'Create Shelf - Select Files'
+            // Show preset picker
+            const selectedPreset = await vscode.window.showQuickPick(presets, {
+                placeHolder: 'Choose what to stash',
+                title: 'Create Shelf'
             });
 
-            if (selectedItems === undefined) {
+            if (!selectedPreset) {
                 return; // User cancelled
             }
 
-            if (selectedItems.length === 0) {
-                vscode.window.showErrorMessage('No files selected');
+            // If advanced selected, show old UI (we'll implement advanced mode later)
+            if (selectedPreset.id === 'advanced') {
+                vscode.window.showInformationMessage('Advanced mode coming soon! Please use a preset for now.');
                 return;
             }
 
-            // Extract selected files and untracked option
-            const selectedFiles = selectedItems
-                .filter(item => item.type !== 'untracked-option')
-                .map(item => item.filePath!);
-
-            const includeUntracked = selectedItems.some(item => item.type === 'untracked-option');
-
-            // Check if we have anything to stash
-            if (selectedFiles.length === 0 && !includeUntracked) {
-                vscode.window.showErrorMessage('No files to stash');
-                return;
-            }
-
-            // Ask for shelf name/message
+            // Ask for shelf name
             const message = await vscode.window.showInputBox({
                 prompt: 'Enter shelf name',
                 placeHolder: 'e.g., Work in progress on feature X',
-                validateInput: (value) => {
-                    if (!value || value.trim().length === 0) {
-                        return 'Shelf name cannot be empty';
-                    }
-                    return null;
-                }
+                validateInput: (value) => value?.trim() ? null : 'Shelf name cannot be empty'
             });
 
             if (!message) {
                 return; // User cancelled
             }
 
-            // Create stash with selected files
-            if (selectedFiles.length === 0 && includeUntracked) {
-                // Special case: Only untracked files
-                // Use the stash-untracked technique: stash tracked, stash all with -u, pop tracked back
-                await this.gitService.stashUntrackedOnly(repoRoot, message);
-            } else {
-                // Normal case: tracked files (with or without untracked)
-                const filesToStash = selectedFiles.length > 0 ? selectedFiles : undefined;
-                await this.gitService.createStash(repoRoot, message, includeUntracked, false, false, filesToStash);
+            // Execute the appropriate stash command based on preset
+            switch (selectedPreset.id) {
+                case 'save-all':
+                    // Stash everything with -u flag
+                    await this.gitService.createStash(repoRoot, message, true, false, false);
+                    break;
+
+                case 'keep-staged':
+                    // Stash all but keep staged in working directory
+                    await this.gitService.createStash(repoRoot, message, true, true, false);
+                    break;
+
+                case 'tracked-only':
+                    // Stash only tracked files (no -u flag)
+                    await this.gitService.createStash(repoRoot, message, false, false, false);
+                    break;
+
+                case 'untracked-only':
+                    // Special technique for untracked only
+                    await this.gitService.stashUntrackedOnly(repoRoot, message);
+                    break;
             }
 
             this.shelvesProvider.refresh();
-
-            // Build success message
-            let statusMsg = `Shelf "${message}" created`;
-            if (selectedFiles.length > 0 && selectedFiles.length < items.length) {
-                statusMsg += ` with ${selectedFiles.length} of ${items.length} tracked file(s)`;
-            } else if (selectedFiles.length > 0) {
-                statusMsg += ` with ${selectedFiles.length} tracked file(s)`;
-            }
-            if (includeUntracked) {
-                statusMsg += ` + ${preview.untracked.length} untracked file(s)`;
-            } else if (selectedFiles.length === 0) {
-                statusMsg = `Shelf "${message}" created with ${preview.untracked.length} untracked file(s) only`;
-            }
-            vscode.window.showInformationMessage(statusMsg);
+            vscode.window.showInformationMessage(`Shelf "${message}" created successfully`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create shelf: ${error}`);
             console.error('Error creating shelf:', error);
