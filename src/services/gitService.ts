@@ -639,7 +639,7 @@ export class GitService {
     /**
      * Create a new stash with a custom message
      */
-    async createStash(repoRoot: string, message: string, includeUntracked: boolean = false, keepIndex: boolean = false, stagedOnly: boolean = false): Promise<void> {
+    async createStash(repoRoot: string, message: string, includeUntracked: boolean = false, keepIndex: boolean = false, stagedOnly: boolean = false, specificFiles?: string[]): Promise<void> {
         try {
             const flags: string[] = [];
             if (stagedOnly) {
@@ -654,8 +654,16 @@ export class GitService {
                 }
             }
             const flagsStr = flags.join(' ');
+
+            // Build file path arguments if specific files are provided
+            let fileArgs = '';
+            if (specificFiles && specificFiles.length > 0) {
+                const quotedPaths = specificFiles.map(p => `"${p}"`).join(' ');
+                fileArgs = ` -- ${quotedPaths}`;
+            }
+
             await execAsync(
-                `git stash push ${flagsStr} -m "${message}"`,
+                `git stash push ${flagsStr} -m "${message}"${fileArgs}`,
                 { cwd: repoRoot }
             );
         } catch (error) {
@@ -673,6 +681,25 @@ export class GitService {
             await execAsync(`git stash push -m "temp-file-stash" -- ${quotedPaths}`, { cwd: repoRoot });
         } catch (error) {
             throw new Error(`Failed to stash specific files: ${error}`);
+        }
+    }
+
+    /**
+     * Stash only untracked files using the stash-untracked technique
+     * This works by: stash tracked, stash all with -u, pop tracked back
+     */
+    async stashUntrackedOnly(repoRoot: string, message: string): Promise<void> {
+        try {
+            // Step 1: Stash tracked changes
+            await execAsync(`git stash push -m "temp-tracked"`, { cwd: repoRoot });
+
+            // Step 2: Stash everything including untracked
+            await execAsync(`git stash push -u -m "${message}"`, { cwd: repoRoot });
+
+            // Step 3: Pop the tracked changes back
+            await execAsync(`git stash pop stash@{1}`, { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to stash untracked files: ${error}`);
         }
     }
 

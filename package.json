@@ -124,16 +124,6 @@
                 "icon": "$(add)"
             },
             {
-                "command": "gitmaster.createShelfKeepIndex",
-                "title": "Shelf All (Keep Staged)",
-                "icon": "$(file-add)"
-            },
-            {
-                "command": "gitmaster.createShelfStagedOnly",
-                "title": "Shelf Only Staged",
-                "icon": "$(diff-added)"
-            },
-            {
                 "command": "gitmaster.applyShelf",
                 "title": "Apply Shelf",
                 "icon": "$(export)"
@@ -314,19 +304,9 @@
                     "group": "navigation@1"
                 },
                 {
-                    "command": "gitmaster.createShelfKeepIndex",
-                    "when": "view == gitmaster.shelves",
-                    "group": "navigation@2"
-                },
-                {
-                    "command": "gitmaster.createShelfStagedOnly",
-                    "when": "view == gitmaster.shelves",
-                    "group": "navigation@3"
-                },
-                {
                     "command": "gitmaster.refreshShelves",
                     "when": "view == gitmaster.shelves",
-                    "group": "navigation@4"
+                    "group": "navigation@2"
                 },
                 {
                     "command": "gitmaster.refreshReflog",

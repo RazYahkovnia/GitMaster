@@ -185,16 +185,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async () => await stashCommands.createShelf()
     );
 
-    const createShelfKeepIndexCommand = vscode.commands.registerCommand(
-        'gitmaster.createShelfKeepIndex',
-        async () => await stashCommands.createShelfKeepIndex()
-    );
-
-    const createShelfStagedOnlyCommand = vscode.commands.registerCommand(
-        'gitmaster.createShelfStagedOnly',
-        async () => await stashCommands.createShelfStagedOnly()
-    );
-
     const applyShelfCommand = vscode.commands.registerCommand(
         'gitmaster.applyShelf',
         async (stashItem) => await stashCommands.applyShelf(stashItem)
@@ -419,8 +409,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
         openGitHubCommand,
         copyCommitIdCommand,
         createShelfCommand,
-        createShelfKeepIndexCommand,
-        createShelfStagedOnlyCommand,
         applyShelfCommand,
         popShelfCommand,
         deleteShelfCommand,
