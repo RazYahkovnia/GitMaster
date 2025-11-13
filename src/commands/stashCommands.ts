@@ -17,6 +17,58 @@ export class StashCommands {
     ) { }
 
     /**
+     * Format stash preview for display in dialogs
+     */
+    private formatStashPreview(preview: {
+        staged: Array<{ file: string; additions: number; deletions: number }>;
+        unstaged: Array<{ file: string; additions: number; deletions: number }>;
+        untracked: string[];
+    }, showStaged: boolean = true, showUnstaged: boolean = true, showUntracked: boolean = true): string {
+        const lines: string[] = [];
+        let totalFiles = 0;
+        let totalAdditions = 0;
+        let totalDeletions = 0;
+
+        if (showStaged && preview.staged.length > 0) {
+            lines.push('📋 Staged:');
+            preview.staged.forEach(f => {
+                lines.push(`   ✓ ${f.file} (+${f.additions} -${f.deletions})`);
+                totalFiles++;
+                totalAdditions += f.additions;
+                totalDeletions += f.deletions;
+            });
+            lines.push('');
+        }
+
+        if (showUnstaged && preview.unstaged.length > 0) {
+            lines.push('📝 Unstaged:');
+            preview.unstaged.forEach(f => {
+                lines.push(`   • ${f.file} (+${f.additions} -${f.deletions})`);
+                totalFiles++;
+                totalAdditions += f.additions;
+                totalDeletions += f.deletions;
+            });
+            lines.push('');
+        }
+
+        if (showUntracked && preview.untracked.length > 0) {
+            lines.push('🆕 Untracked:');
+            preview.untracked.forEach(f => {
+                lines.push(`   + ${f}`);
+                totalFiles++;
+            });
+            lines.push('');
+        }
+
+        // Add summary
+        if (totalFiles > 0) {
+            lines.push(`Total: ${totalFiles} file(s), +${totalAdditions} -${totalDeletions}`);
+        }
+
+        return lines.join('\n');
+    }
+
+    /**
      * Create a new stash with a custom message
      */
     async createShelf(): Promise<void> {
@@ -32,6 +84,41 @@ export class StashCommands {
             if (!hasChanges) {
                 vscode.window.showErrorMessage('No changes to shelve');
                 return;
+            }
+
+            // Get preview of what will be stashed
+            const hasUntracked = await this.gitService.hasUntrackedFiles(repoRoot);
+            const preview = await this.gitService.getStashPreview(repoRoot, hasUntracked);
+            const previewText = this.formatStashPreview(preview);
+
+            // Show confirmation with preview
+            const confirmMessage = 'Create Shelf\n\n' + previewText +
+                (hasUntracked ? '\n\nInclude untracked files?' : '');
+
+            let includeUntracked = false;
+            if (hasUntracked) {
+                const choice = await vscode.window.showInformationMessage(
+                    confirmMessage,
+                    { modal: true },
+                    'Shelve (without untracked)',
+                    'Shelve All (with untracked)'
+                );
+
+                if (!choice) {
+                    return; // User cancelled
+                }
+
+                includeUntracked = choice === 'Shelve All (with untracked)';
+            } else {
+                const proceed = await vscode.window.showInformationMessage(
+                    confirmMessage,
+                    { modal: true },
+                    'Create Shelf'
+                );
+
+                if (!proceed) {
+                    return; // User cancelled
+                }
             }
 
             // Ask for shelf name/message
@@ -50,33 +137,200 @@ export class StashCommands {
                 return; // User cancelled
             }
 
-            // Check if there are untracked files
-            const hasUntracked = await this.gitService.hasUntrackedFiles(repoRoot);
-            let includeUntracked = false;
-
-            // Only ask about untracked files if they exist
-            if (hasUntracked) {
-                const includeUntrackedChoice = await vscode.window.showQuickPick(
-                    ['No', 'Yes'],
-                    {
-                        placeHolder: 'Include untracked files?',
-                        canPickMany: false
-                    }
-                );
-
-                if (includeUntrackedChoice === undefined) {
-                    return; // User cancelled
-                }
-
-                includeUntracked = includeUntrackedChoice === 'Yes';
-            }
-
             await this.gitService.createStash(repoRoot, message, includeUntracked);
             this.shelvesProvider.refresh();
             vscode.window.showInformationMessage(`Shelf "${message}" created`);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to create shelf: ${error}`);
             console.error('Error creating shelf:', error);
+        }
+    }
+
+    /**
+     * Create a new stash with --keep-index flag
+     * This keeps staged changes in the index while stashing everything
+     */
+    async createShelfKeepIndex(): Promise<void> {
+        try {
+            const repoRoot = this.shelvesProvider.getRepoRoot();
+            if (!repoRoot) {
+                vscode.window.showErrorMessage('Not in a git repository');
+                return;
+            }
+
+            // Check if there are changes to stash
+            const hasChanges = await this.gitService.hasChangesToStash(repoRoot);
+            if (!hasChanges) {
+                vscode.window.showErrorMessage('No changes to shelve');
+                return;
+            }
+
+            // Get preview of what will be stashed
+            const hasUntracked = await this.gitService.hasUntrackedFiles(repoRoot);
+            const preview = await this.gitService.getStashPreview(repoRoot, hasUntracked);
+            const previewText = this.formatStashPreview(preview);
+
+            // Show confirmation with preview and explanation
+            const confirmMessage = 'Shelf All (Keep Staged)\n\n' +
+                'What this does:\n' +
+                '• Stash ALL changes as a backup\n' +
+                '• Keep staged changes in working directory\n' +
+                '• Staged files remain ready to commit\n\n' +
+                previewText +
+                (hasUntracked ? '\n\nInclude untracked files?' : '');
+
+            let includeUntracked = false;
+            if (hasUntracked) {
+                const choice = await vscode.window.showInformationMessage(
+                    confirmMessage,
+                    { modal: true },
+                    'Shelve (without untracked)',
+                    'Shelve All (with untracked)'
+                );
+
+                if (!choice) {
+                    return; // User cancelled
+                }
+
+                includeUntracked = choice === 'Shelve All (with untracked)';
+            } else {
+                const proceed = await vscode.window.showInformationMessage(
+                    confirmMessage,
+                    { modal: true },
+                    'Create Shelf'
+                );
+
+                if (!proceed) {
+                    return; // User cancelled
+                }
+            }
+
+            // Ask for shelf name/message
+            const message = await vscode.window.showInputBox({
+                prompt: 'Enter shelf name (all changes will be stashed, but staged ones will remain)',
+                placeHolder: 'e.g., Work in progress on feature X',
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Shelf name cannot be empty';
+                    }
+                    return null;
+                }
+            });
+
+            if (!message) {
+                return; // User cancelled
+            }
+
+            await this.gitService.createStash(repoRoot, message, includeUntracked, true);
+            this.shelvesProvider.refresh();
+            vscode.window.showInformationMessage(`Shelf "${message}" created\n\nAll changes backed up in shelf, staged changes remain in working directory`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to create shelf: ${error}`);
+            console.error('Error creating shelf:', error);
+        }
+    }
+
+    /**
+     * Create a new stash with only staged changes
+     * This stashes only what's in the index, leaving unstaged changes in working directory
+     */
+    async createShelfStagedOnly(): Promise<void> {
+        try {
+            const repoRoot = this.shelvesProvider.getRepoRoot();
+            if (!repoRoot) {
+                vscode.window.showErrorMessage('Not in a git repository');
+                return;
+            }
+
+            // Check if there are staged changes
+            const hasStagedChanges = await this.gitService.hasStagedChanges(repoRoot);
+            if (!hasStagedChanges) {
+                vscode.window.showErrorMessage('No staged changes to shelve');
+                return;
+            }
+
+            // Get preview of what will be stashed
+            const preview = await this.gitService.getStashPreview(repoRoot, false);
+
+            // Check for files with both staged and unstaged changes
+            const hasMixedChanges = await this.gitService.hasFilesWithMixedChanges(repoRoot);
+            if (hasMixedChanges) {
+                // Find which files have mixed changes
+                const stagedFiles = new Set(preview.staged.map(f => f.file));
+                const unstagedFiles = new Set(preview.unstaged.map(f => f.file));
+                const mixedFiles = Array.from(stagedFiles).filter(f => unstagedFiles.has(f));
+
+                const mixedFilesText = mixedFiles.map(f => `  • ${f}`).join('\n');
+
+                const action = await vscode.window.showWarningMessage(
+                    'Cannot Shelf Only Staged\n\n' +
+                    'These files have BOTH staged and unstaged changes:\n\n' +
+                    mixedFilesText + '\n\n' +
+                    'The --staged flag cannot handle this situation.\n\n' +
+                    'Try "Shelf All (Keep Staged)" instead?\n' +
+                    'This stashes everything but keeps staged changes in your working directory.',
+                    { modal: true },
+                    'Use "Shelf All (Keep Staged)"'
+                );
+
+                if (action === 'Use "Shelf All (Keep Staged)"') {
+                    // Call the keep-index method instead
+                    await this.createShelfKeepIndex();
+                }
+                return;
+            }
+
+            // Show confirmation with preview - only staged files
+            const previewText = this.formatStashPreview(preview, true, false, false);
+            const confirmMessage = 'Shelf Only Staged\n\n' +
+                'What this does:\n' +
+                '• Stash ONLY staged changes\n' +
+                '• Unstaged changes remain in working directory\n\n' +
+                previewText;
+
+            const proceed = await vscode.window.showInformationMessage(
+                confirmMessage,
+                { modal: true },
+                'Create Shelf'
+            );
+
+            if (!proceed) {
+                return;
+            }
+
+            // Ask for shelf name/message
+            const message = await vscode.window.showInputBox({
+                prompt: 'Enter shelf name (only staged changes will be stashed)',
+                placeHolder: 'e.g., Ready to deploy',
+                validateInput: (value) => {
+                    if (!value || value.trim().length === 0) {
+                        return 'Shelf name cannot be empty';
+                    }
+                    return null;
+                }
+            });
+
+            if (!message) {
+                return; // User cancelled
+            }
+
+            await this.gitService.createStash(repoRoot, message, false, false, true);
+            this.shelvesProvider.refresh();
+            vscode.window.showInformationMessage(`Shelf "${message}" created\n\nStaged changes shelved, unstaged changes remain in working directory`);
+        } catch (error) {
+            const errorMsg = String(error);
+
+            // Handle Git version error (Git < 2.35 doesn't support --staged)
+            if (errorMsg.includes('--staged') && errorMsg.includes('unknown option')) {
+                vscode.window.showErrorMessage('Failed to create shelf: Git 2.35+ required for --staged flag');
+            }
+            // Generic error
+            else {
+                vscode.window.showErrorMessage(`Failed to create shelf: ${error}`);
+            }
+
+            console.error('Error creating shelf with staged only:', error);
+            this.shelvesProvider.refresh();
         }
     }
 

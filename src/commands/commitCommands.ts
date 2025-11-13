@@ -3,7 +3,7 @@ import * as path from 'path';
 import { GitService } from '../services/gitService';
 import { DiffService } from '../services/diffService';
 import { CommitDetailsProvider } from '../providers/commitDetailsProvider';
-import { CommitInfo, ChangedFile } from '../types/git';
+import { CommitInfo, ChangedFile, RepositoryCommit } from '../types/git';
 
 /**
  * Command handlers for commit-related operations
@@ -64,6 +64,42 @@ export class CommitCommands {
     async openCommitInGitHub(githubUrl: string, commitHash: string): Promise<void> {
         const url = `${githubUrl}/commit/${commitHash}`;
         vscode.env.openExternal(vscode.Uri.parse(url));
+    }
+
+    /**
+     * Show detailed information about a commit from repository log
+     * Displays commit details in sidebar without opening a specific file diff
+     */
+    async showRepositoryCommitDetails(commitOrTreeItem: RepositoryCommit | any, repoRoot: string): Promise<void> {
+        try {
+            // Extract commit from tree item if needed
+            const repoCommit = commitOrTreeItem.commit || commitOrTreeItem;
+            const actualRepoRoot = commitOrTreeItem.repoRoot || repoRoot;
+
+            if (!actualRepoRoot) {
+                vscode.window.showErrorMessage('No repository found');
+                return;
+            }
+
+            // Convert RepositoryCommit to CommitInfo
+            const commitInfo: CommitInfo = {
+                hash: repoCommit.hash,
+                shortHash: repoCommit.shortHash,
+                message: repoCommit.message,
+                author: repoCommit.author,
+                date: repoCommit.date,
+                relativeDate: repoCommit.date // Use date as relative date for now
+            };
+
+            // Update the commit details view in sidebar
+            await this.commitDetailsProvider.setCommit(commitInfo, actualRepoRoot);
+
+            // Show the commit details view
+            vscode.commands.executeCommand('setContext', 'gitmaster.commitSelected', true);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);
+            console.error('Error showing commit details:', error);
+        }
     }
 
     /**

@@ -155,6 +155,12 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (commit, filePath) => await commitCommands.showCommitDetails(commit, filePath)
     );
 
+    // Show repository commit details command
+    const showRepositoryCommitDetailsCommand = vscode.commands.registerCommand(
+        'gitmaster.showRepositoryCommitDetails',
+        async (commitOrTreeItem, repoRoot) => await commitCommands.showRepositoryCommitDetails(commitOrTreeItem, repoRoot)
+    );
+
     // Show file diff command
     const showFileDiffCommand = vscode.commands.registerCommand(
         'gitmaster.showFileDiff',
@@ -177,6 +183,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const createShelfCommand = vscode.commands.registerCommand(
         'gitmaster.createShelf',
         async () => await stashCommands.createShelf()
+    );
+
+    const createShelfKeepIndexCommand = vscode.commands.registerCommand(
+        'gitmaster.createShelfKeepIndex',
+        async () => await stashCommands.createShelfKeepIndex()
+    );
+
+    const createShelfStagedOnlyCommand = vscode.commands.registerCommand(
+        'gitmaster.createShelfStagedOnly',
+        async () => await stashCommands.createShelfStagedOnly()
     );
 
     const applyShelfCommand = vscode.commands.registerCommand(
@@ -398,10 +414,13 @@ function registerCommands(context: vscode.ExtensionContext): void {
     context.subscriptions.push(
         refreshCommand,
         showCommitDiffCommand,
+        showRepositoryCommitDetailsCommand,
         showFileDiffCommand,
         openGitHubCommand,
         copyCommitIdCommand,
         createShelfCommand,
+        createShelfKeepIndexCommand,
+        createShelfStagedOnlyCommand,
         applyShelfCommand,
         popShelfCommand,
         deleteShelfCommand,

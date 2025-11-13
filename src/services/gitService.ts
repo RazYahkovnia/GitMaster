@@ -535,13 +535,127 @@ export class GitService {
     }
 
     /**
+     * Check if there are staged changes
+     */
+    async hasStagedChanges(repoRoot: string): Promise<boolean> {
+        try {
+            // git diff --cached --quiet exits with 1 if there are staged changes, 0 if none
+            await execAsync('git diff --cached --quiet', { cwd: repoRoot });
+            return false; // Exit code 0 means no staged changes
+        } catch (error) {
+            return true; // Exit code 1 means there are staged changes
+        }
+    }
+
+    /**
+     * Check if any files have both staged and unstaged changes
+     * Returns true if there are files that cannot be stashed with --staged
+     */
+    async hasFilesWithMixedChanges(repoRoot: string): Promise<boolean> {
+        try {
+            // Get files with staged changes
+            const { stdout: stagedFiles } = await execAsync('git diff --cached --name-only', { cwd: repoRoot });
+            const stagedSet = new Set(stagedFiles.trim().split('\n').filter(f => f.length > 0));
+
+            // Get files with unstaged changes
+            const { stdout: unstagedFiles } = await execAsync('git diff --name-only', { cwd: repoRoot });
+            const unstagedSet = new Set(unstagedFiles.trim().split('\n').filter(f => f.length > 0));
+
+            // Check for intersection - files in both sets have mixed changes
+            for (const file of stagedSet) {
+                if (unstagedSet.has(file)) {
+                    return true;
+                }
+            }
+
+            return false;
+        } catch (error) {
+            console.error('Error checking for mixed changes:', error);
+            return false;
+        }
+    }
+
+    /**
+     * Get detailed file status for stash preview
+     * Returns information about files to be stashed with their changes and status
+     */
+    async getStashPreview(repoRoot: string, includeUntracked: boolean = false): Promise<{
+        staged: Array<{ file: string; additions: number; deletions: number }>;
+        unstaged: Array<{ file: string; additions: number; deletions: number }>;
+        untracked: string[];
+    }> {
+        try {
+            const result = {
+                staged: [] as Array<{ file: string; additions: number; deletions: number }>,
+                unstaged: [] as Array<{ file: string; additions: number; deletions: number }>,
+                untracked: [] as string[]
+            };
+
+            // Get staged files with stats
+            const { stdout: stagedStats } = await execAsync('git diff --cached --numstat', { cwd: repoRoot });
+            if (stagedStats.trim()) {
+                stagedStats.trim().split('\n').forEach(line => {
+                    const parts = line.split('\t');
+                    if (parts.length >= 3) {
+                        result.staged.push({
+                            file: parts[2],
+                            additions: parseInt(parts[0]) || 0,
+                            deletions: parseInt(parts[1]) || 0
+                        });
+                    }
+                });
+            }
+
+            // Get unstaged files with stats
+            const { stdout: unstagedStats } = await execAsync('git diff --numstat', { cwd: repoRoot });
+            if (unstagedStats.trim()) {
+                unstagedStats.trim().split('\n').forEach(line => {
+                    const parts = line.split('\t');
+                    if (parts.length >= 3) {
+                        result.unstaged.push({
+                            file: parts[2],
+                            additions: parseInt(parts[0]) || 0,
+                            deletions: parseInt(parts[1]) || 0
+                        });
+                    }
+                });
+            }
+
+            // Get untracked files if requested
+            if (includeUntracked) {
+                const { stdout: untrackedFiles } = await execAsync('git ls-files --others --exclude-standard', { cwd: repoRoot });
+                if (untrackedFiles.trim()) {
+                    result.untracked = untrackedFiles.trim().split('\n').filter(f => f.length > 0);
+                }
+            }
+
+            return result;
+        } catch (error) {
+            console.error('Error getting stash preview:', error);
+            return { staged: [], unstaged: [], untracked: [] };
+        }
+    }
+
+    /**
      * Create a new stash with a custom message
      */
-    async createStash(repoRoot: string, message: string, includeUntracked: boolean = false): Promise<void> {
+    async createStash(repoRoot: string, message: string, includeUntracked: boolean = false, keepIndex: boolean = false, stagedOnly: boolean = false): Promise<void> {
         try {
-            const flags = includeUntracked ? '-u' : '';
+            const flags: string[] = [];
+            if (stagedOnly) {
+                // --staged requires Git 2.35+
+                flags.push('--staged');
+            } else {
+                if (includeUntracked) {
+                    flags.push('-u');
+                }
+                if (keepIndex) {
+                    flags.push('--keep-index');
+                }
+            }
+            const flagsStr = flags.join(' ');
             await execAsync(
-                `git stash push ${flags} -m "${message}"`,
+                `git stash push ${flagsStr} -m "${message}"`,
                 { cwd: repoRoot }
             );
         } catch (error) {

@@ -61,7 +61,7 @@
                 },
                 {
                     "id": "gitmaster.shelves",
-                    "name": "Shelves",
+                    "name": "Shelves (Beta)",
                     "contextualTitle": "Git Shelves"
                 },
                 {
@@ -122,6 +122,16 @@
                 "command": "gitmaster.createShelf",
                 "title": "Create Shelf",
                 "icon": "$(add)"
+            },
+            {
+                "command": "gitmaster.createShelfKeepIndex",
+                "title": "Shelf All (Keep Staged)",
+                "icon": "$(file-add)"
+            },
+            {
+                "command": "gitmaster.createShelfStagedOnly",
+                "title": "Shelf Only Staged",
+                "icon": "$(diff-added)"
             },
             {
                 "command": "gitmaster.applyShelf",
@@ -301,12 +311,22 @@
                 {
                     "command": "gitmaster.createShelf",
                     "when": "view == gitmaster.shelves",
-                    "group": "navigation"
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.createShelfKeepIndex",
+                    "when": "view == gitmaster.shelves",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "gitmaster.createShelfStagedOnly",
+                    "when": "view == gitmaster.shelves",
+                    "group": "navigation@3"
                 },
                 {
                     "command": "gitmaster.refreshShelves",
                     "when": "view == gitmaster.shelves",
-                    "group": "navigation"
+                    "group": "navigation@4"
                 },
                 {
                     "command": "gitmaster.refreshReflog",

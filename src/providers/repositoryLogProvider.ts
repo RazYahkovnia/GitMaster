@@ -13,14 +13,21 @@ export class RepositoryCommitTreeItem extends vscode.TreeItem {
         public readonly collapsibleState: vscode.TreeItemCollapsibleState
     ) {
         super(commit.message, collapsibleState);
-        
+
         this.description = `${commit.shortHash} • ${commit.author} • ${commit.date}`;
         this.tooltip = this.buildTooltip();
         this.contextValue = 'repositoryCommit';
-        
+
         // Use author-specific color
         const authorColor = getAuthorColor(commit.author);
         this.iconPath = new vscode.ThemeIcon('git-commit', authorColor);
+
+        // Set command to show commit details when clicked
+        this.command = {
+            command: 'gitmaster.showRepositoryCommitDetails',
+            title: 'Show Commit Details',
+            arguments: [this]
+        };
     }
 
     private buildTooltip(): string {
@@ -43,14 +50,14 @@ export class RepositoryCommitTreeItem extends vscode.TreeItem {
  * Provider for repository commit log tree view
  */
 export class RepositoryLogProvider implements vscode.TreeDataProvider<RepositoryCommitTreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<RepositoryCommitTreeItem | undefined | null> = 
+    private _onDidChangeTreeData: vscode.EventEmitter<RepositoryCommitTreeItem | undefined | null> =
         new vscode.EventEmitter<RepositoryCommitTreeItem | undefined | null>();
-    readonly onDidChangeTreeData: vscode.Event<RepositoryCommitTreeItem | undefined | null> = 
+    readonly onDidChangeTreeData: vscode.Event<RepositoryCommitTreeItem | undefined | null> =
         this._onDidChangeTreeData.event;
 
     private currentRepoRoot: string | undefined;
 
-    constructor(private gitService: GitService = new GitService()) {}
+    constructor(private gitService: GitService = new GitService()) { }
 
     /**
      * Set the current repository root
@@ -120,10 +127,10 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<Repository
                 return [emptyItem];
             }
 
-            return commits.map(commit => 
+            return commits.map(commit =>
                 new RepositoryCommitTreeItem(
-                    commit, 
-                    this.currentRepoRoot!, 
+                    commit,
+                    this.currentRepoRoot!,
                     vscode.TreeItemCollapsibleState.None
                 )
             );
