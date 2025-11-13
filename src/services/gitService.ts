@@ -137,7 +137,7 @@ export class GitService {
             );
 
             const url = stdout.trim();
-            return this.normalizeGitHubUrl(url);
+            return this.normalizeRemoteUrl(url);
         } catch (error) {
             return null;
         }
@@ -269,25 +269,6 @@ export class GitService {
         }
 
         return { path: filePath };
-    }
-
-    /**
-     * Normalize GitHub URL to HTTPS format
-     */
-    private normalizeGitHubUrl(url: string): string | null {
-        // Convert git@github.com:user/repo.git to https://github.com/user/repo
-        if (url.startsWith('git@github.com:')) {
-            return url
-                .replace('git@github.com:', 'https://github.com/')
-                .replace(/\.git$/, '');
-        }
-
-        // Handle https://github.com/user/repo.git
-        if (url.includes('github.com')) {
-            return url.replace(/\.git$/, '');
-        }
-
-        return null;
     }
 
     /**

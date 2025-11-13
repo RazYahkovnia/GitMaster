@@ -65,11 +65,3 @@ function hashString(str: string): number {
     }
     return Math.abs(hash);
 }
-
-/**
- * Clear the author color cache (useful for testing or reset)
- */
-export function clearAuthorColorCache(): void {
-    authorColorCache.clear();
-}
-

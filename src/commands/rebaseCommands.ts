@@ -252,21 +252,6 @@ export class RebaseCommands {
                 return;
             }
 
-            // For squash/fixup, show helpful message about order
-            if (selected.action === 'squash' || selected.action === 'fixup') {
-                const rebaseState = this.rebaseProvider.getRebaseState();
-                if (rebaseState && item.commit) {
-                    const commitIndex = rebaseState.commits.findIndex(c => c.hash === item.commit!.hash);
-                    if (commitIndex === rebaseState.commits.length - 1) {
-                        // This is the oldest commit (last in descending order)
-                        vscode.window.showWarningMessage(
-                            'Cannot squash/fixup the oldest commit - there is no previous commit to merge into.'
-                        );
-                        return;
-                    }
-                }
-            }
-
             // Update the action
             this.rebaseProvider.updateCommitAction(item.commit.hash, selected.action);
 

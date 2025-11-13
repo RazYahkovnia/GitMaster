@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { GitService } from '../services/gitService';
-import { DiffService } from '../services/diffService';
-import { DiffContentProvider } from '../services/diffService';
+import { DiffService, DiffContentProvider } from '../services/diffService';
 import { ShelvesProvider, StashTreeItem } from '../providers/shelvesProvider';
 import { ChangedFile } from '../types/git';
 
