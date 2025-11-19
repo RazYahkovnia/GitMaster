@@ -1,243 +1,254 @@
-# GitMaster Code Guide
+# GitMaster Developer Guide
 
-Quick reference for understanding the codebase.
+Quick reference for developers. Read this first, then explore the code.
 
-## File Structure
+---
+
+## 🏗️ Architecture
 
 ```
 src/
-├── extension.ts                           # 🚀 START HERE - Main entry point
-│
-├── types/                                 # 📝 Type Definitions
-│   └── git.ts                            # CommitInfo, ChangedFile interfaces
-│
-├── services/                             # ⚙️ Business Logic
-│   ├── gitService.ts                     # All Git operations (exec commands)
-│   └── diffService.ts                    # Show file diffs in VS Code
-│
-├── providers/                            # 📊 UI Components (Sidebar)
-│   ├── fileHistoryProvider.ts           # "File History" tree view
-│   └── commitDetailsProvider.ts         # "Commit Details" tree view
-│
-└── commands/                             # 🎯 Command Handlers
-    └── commitCommands.ts                 # Handles user actions on commits
+├── extension.ts           # Registration only (NO business logic)
+├── types/git.ts          # All interfaces (9 types)
+├── services/             # Git operations (throw errors)
+│   ├── gitService.ts     # All Git commands
+│   └── diffService.ts    # Diff views
+├── providers/            # TreeDataProvider (UI, use services)
+│   ├── fileHistoryProvider.ts
+│   ├── commitDetailsProvider.ts
+│   ├── shelvesProvider.ts
+│   ├── branchesProvider.ts
+│   ├── repositoryLogProvider.ts
+│   ├── reflogProvider.ts
+│   └── rebaseProvider.ts
+├── commands/             # Orchestration (catch errors, show messages)
+│   ├── commitCommands.ts
+│   ├── stashCommands.ts
+│   ├── branchCommands.ts
+│   ├── repositoryLogCommands.ts
+│   ├── reflogCommands.ts
+│   └── rebaseCommands.ts
+└── utils/
+    └── colorUtils.ts     # Author colors
 ```
 
-## Quick File Reference
+### Data Flow
+```
+User Action → Command → Service → Git → Parse → Provider → UI
+```
 
-### 🚀 `extension.ts` (150 lines)
-**What it does**: Entry point that wires everything together  
-**Key functions**:
-- `activate()` - Initialize extension
-- `registerTreeViews()` - Setup sidebar views
-- `registerCommands()` - Register all commands
-- `registerEventListeners()` - Listen to file changes
+### Layer Rules
 
-**When to edit**: Adding new views, commands, or services
-
----
-
-### 📝 `types/git.ts` (30 lines)
-**What it does**: Defines data structures  
-**Types**:
-- `CommitInfo` - Commit data (hash, message, author, date)
-- `ChangedFile` - File data (path, status, additions, deletions)
-
-**When to edit**: Adding new Git-related data structures
+| Layer | Do | Don't |
+|-------|----|----|
+| **types/** | Define interfaces | Add implementation |
+| **services/** | Execute Git, throw errors | Use VS Code API (except diffService) |
+| **providers/** | Display data, use services | Execute Git directly |
+| **commands/** | Catch errors, show messages | Contain business logic |
+| **extension.ts** | Register components | Add business logic |
 
 ---
 
-### ⚙️ `services/gitService.ts` (300 lines)
-**What it does**: Executes Git commands and parses results  
-**Key methods**:
-- `getRepoRoot()` - Find Git repo root
-- `getFileHistory()` - Get commits for a file
-- `getFileContentAtCommit()` - Get file at specific commit
-- `getChangedFilesInCommit()` - Get all changed files in commit
-- `getGitHubRepoUrl()` - Get GitHub URL
+## 📊 Feature Matrix
 
-**When to edit**: Adding new Git operations
-
----
-
-### ⚙️ `services/diffService.ts` (160 lines)
-**What it does**: Creates and displays file diffs  
-**Key methods**:
-- `showFileDiff()` - Main method to show diff
-- `getLeftSideContent()` - Get parent commit content
-- `getRightSideContent()` - Get current commit content
-- `openDiffView()` - Open VS Code diff viewer
-
-**When to edit**: Changing diff display logic
+| Feature | Provider | Commands | Service |
+|---------|----------|----------|---------|
+| File History | fileHistoryProvider | commitCommands | getFileHistory |
+| Commit Details | commitDetailsProvider | commitCommands | getChangedFilesInCommit |
+| Shelves | shelvesProvider | stashCommands | getStashes, createStash |
+| Branches | branchesProvider | branchCommands | getBranches, checkoutBranch |
+| Repository Log | repositoryLogProvider | repositoryLogCommands | getRepositoryLog |
+| Reflog | reflogProvider | reflogCommands | getReflog |
+| Rebase | rebaseProvider | rebaseCommands | getRebaseCommits |
 
 ---
 
-### 📊 `providers/fileHistoryProvider.ts` (110 lines)
-**What it does**: Shows commit history for active file  
-**Key methods**:
-- `setCurrentFile()` - Update when file changes
-- `getChildren()` - Return commit list
-- `refresh()` - Reload the view
+## 🎯 Adding Features
 
-**When to edit**: Changing how commits are displayed in sidebar
-
----
-
-### 📊 `providers/commitDetailsProvider.ts` (145 lines)
-**What it does**: Shows details of selected commit  
-**Key methods**:
-- `setCommit()` - Load commit details
-- `getChildren()` - Return commit info + file list
-
-**When to edit**: Changing commit details UI
-
----
-
-### 🎯 `commands/commitCommands.ts` (90 lines)
-**What it does**: Handles user actions (clicking commits/files)  
-**Key methods**:
-- `showCommitDetails()` - When user clicks a commit
-- `showFileDiff()` - When user clicks a file
-- `openCommitInGitHub()` - When user clicks GitHub link
-
-**When to edit**: Adding new user interactions
-
----
-
-## Common Tasks
-
-### Adding a New Git Command
-
-1. Add method to `services/gitService.ts`:
+### New Git Operation
 ```typescript
-async getMyNewData(commitHash: string): Promise<MyType> {
-    const { stdout } = await execAsync(`git my-command ${commitHash}`);
-    return this.parseMyData(stdout);
+// 1. Add to services/gitService.ts
+async getCommitAuthor(hash: string): Promise<string> {
+    const { stdout } = await execAsync(
+        `git show -s --format=%an ${hash}`,
+        { cwd: await this.getRepoRoot() }
+    );
+    return stdout.trim();
 }
+
+// 2. Use in command/provider
 ```
 
-2. Use it in a command or provider
-
-### Adding a New UI View
-
-1. Create provider in `providers/myNewProvider.ts`
-2. Register in `extension.ts`:
+### New Tree View
 ```typescript
-const myView = vscode.window.createTreeView('gitmaster.myView', {
-    treeDataProvider: myNewProvider
-});
-```
-
-3. Add to `package.json`:
-```json
-"views": {
-    "gitmaster": [
-        {
-            "id": "gitmaster.myView",
-            "name": "My View"
-        }
-    ]
+// 1. Create providers/myProvider.ts
+export class MyProvider implements vscode.TreeDataProvider<MyItem> {
+    private _onDidChangeTreeData = new vscode.EventEmitter<MyItem | undefined>();
+    readonly onDidChangeTreeData = this._onDidChangeTreeData.event;
+    
+    refresh() { this._onDidChangeTreeData.fire(undefined); }
+    getTreeItem(element: MyItem) { return element; }
+    async getChildren() { return await this.gitService.getMyData(); }
 }
+
+// 2. Register in extension.ts
+const myProvider = new MyProvider(gitService);
+vscode.window.createTreeView('gitmaster.myView', { treeDataProvider: myProvider });
+
+// 3. Add to package.json
+"views": { "gitmaster": [{ "id": "gitmaster.myView", "name": "My View" }] }
 ```
 
-### Adding a New Command
-
-1. Add method to `commands/commitCommands.ts`
-2. Register in `extension.ts`:
+### New Command
 ```typescript
-const myCommand = vscode.commands.registerCommand(
-    'gitmaster.myCommand',
-    async () => await commitCommands.myAction()
-);
-```
-
-3. Add to `package.json`:
-```json
-"commands": [
-    {
-        "command": "gitmaster.myCommand",
-        "title": "My Command"
+// 1. Add to commands/myCommands.ts
+async myAction(): Promise<void> {
+    try {
+        await this.gitService.doSomething();
+        vscode.window.showInformationMessage('Success!');
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed: ${error}`);
     }
-]
+}
+
+// 2. Register in extension.ts
+vscode.commands.registerCommand('gitmaster.myAction', () => myCommands.myAction());
+
+// 3. Add to package.json
+"commands": [{ "command": "gitmaster.myAction", "title": "My Action" }]
 ```
 
-## Code Flow Examples
-
-### User Opens a File
-```
-extension.ts: onDidChangeActiveTextEditor
-    ↓
-updateFileHistory()
-    ↓
-fileHistoryProvider.setCurrentFile()
-    ↓
-gitService.getFileHistory()
-    ↓
-Sidebar updates with commits
+### New Type
+```typescript
+// Add to types/git.ts
+export interface TagInfo {
+    name: string;
+    commitHash: string;
+    message?: string;
+}
 ```
 
-### User Clicks a Commit
-```
-Click commit in sidebar
-    ↓
-Command: gitmaster.showCommitDiff
-    ↓
-commitCommands.showCommitDetails()
-    ↓
-├─ gitService.getChangedFilesInCommit()
-│  → commitDetailsProvider.setCommit()
-└─ diffService.showFileDiff()
-   → Open diff in editor
+---
+
+## 🎨 Common Patterns
+
+### Author Colors
+```typescript
+import { getAuthorColor } from '../utils/colorUtils';
+const color = getAuthorColor(commit.author);
+this.iconPath = new vscode.ThemeIcon('git-commit', color);
 ```
 
-### User Clicks a File in Commit Details
-```
-Click file in Commit Details
-    ↓
-Command: gitmaster.showFileDiff
-    ↓
-commitCommands.showFileDiff()
-    ↓
-diffService.showFileDiff()
-    ↓
-├─ gitService.getFileContentAtCommit() (parent)
-├─ gitService.getFileContentAtCommit() (current)
-└─ VS Code diff view opens
+### Tree Item with Command
+```typescript
+this.command = {
+    command: 'gitmaster.showCommitDiff',
+    title: 'Show Commit',
+    arguments: [this]
+};
 ```
 
-## Key Concepts
+### Context Values (for menus)
+```typescript
+this.contextValue = 'commit';        // Regular commit
+this.contextValue = 'stash';         // Stash item
+this.contextValue = 'localBranch';   // Local branch
+```
 
-### File Status Codes
-- **A** - Added (new file)
-- **M** - Modified (changed file)
-- **D** - Deleted (removed file)
-- **R** - Renamed (moved/renamed file)
+### Error Handling
+```typescript
+// Service: throw
+async getData(): Promise<Data> {
+    try {
+        // ... git command
+    } catch {
+        throw new Error('Operation failed');
+    }
+}
 
-### Handling Renames
-When a file is renamed, Git shows it as `oldfile => newfile`.  
-We parse this in `gitService.parseRenamedPath()` to extract both paths.
+// Command: catch and show
+async action(): Promise<void> {
+    try {
+        await this.service.getData();
+    } catch (error) {
+        vscode.window.showErrorMessage(`Failed: ${error}`);
+    }
+}
+```
 
-### Diff Display
-For different statuses:
-- **Added**: Empty file vs new content
-- **Modified**: Old content vs new content
-- **Deleted**: Old content vs empty file
-- **Renamed**: Old file content vs new file content
+### User Confirmations
+```typescript
+const answer = await vscode.window.showWarningMessage(
+    'Delete branch?',
+    { modal: true },
+    'Delete'
+);
+if (answer !== 'Delete') return;
+```
 
-## Debugging Tips
+---
 
-1. **Check Git commands**: Look at `gitService.ts` to see exact Git commands
-2. **Log output**: Add `console.log()` in command handlers
-3. **Debug Console**: Check "Debug Console" in VS Code when running extension
-4. **Git output**: Test Git commands manually in terminal first
+## 🔍 Quick Reference
 
-## Best Practices
+### Most Edited Files
+1. `services/gitService.ts` - Adding Git operations
+2. `extension.ts` - Registering new features
+3. `package.json` - Adding commands/views/menus
 
-1. ✅ Keep services pure (no VS Code API calls)
-2. ✅ Handle errors in command handlers
-3. ✅ Use TypeScript types everywhere
-4. ✅ Add JSDoc comments for public methods
-5. ✅ Keep functions small and focused
-6. ✅ Use descriptive variable names
-7. ✅ Extract magic strings/numbers to constants
+### Rarely Changed
+- `types/git.ts` - Only for new data structures
+- `utils/colorUtils.ts` - Stable utility
+- `services/diffService.ts` - Stable diff logic
 
+### Core Types (9)
+`CommitInfo`, `ChangedFile`, `StashInfo`, `ReflogEntry`, `RepositoryCommit`, `BranchInfo`, `RebaseCommit`, `RebaseState`, `RebaseAction`
+
+### Key Service Methods
+- **File**: `getFileHistory`, `getFileContentAtCommit`, `isFileTracked`
+- **Commit**: `getChangedFilesInCommit`, `getParentCommit`, `getCommitDetails`
+- **Stash**: `getStashes`, `createStash`, `applyStash`, `popStash`, `dropStash`
+- **Branch**: `getBranches`, `checkoutBranch`, `createBranch`, `deleteBranch`
+- **Rebase**: `getRebaseCommits`, `isRebaseInProgress`, `continueRebase`, `abortRebase`
+
+---
+
+## 💡 Development Tips
+
+1. **Test Manually First**: Run Git commands in terminal before coding
+2. **Use Large Buffers**: `maxBuffer: 10 * 1024 * 1024` for big repos
+3. **Hot Reload**: Press F5 to test, Ctrl+R to reload
+4. **Debug Console**: Check VS Code Debug Console for errors
+5. **Edge Cases**: Test with empty repos, conflicts, detached HEAD
+
+### Commands
+```bash
+npm run compile    # Build
+npm run watch      # Auto-build
+npm run package    # Create .vsix
+npm run publish    # Publish to marketplace
+```
+
+---
+
+## ✅ Pre-Commit Checklist
+
+- [ ] Code compiles (`npm run compile`)
+- [ ] All public methods have JSDoc
+- [ ] Tested in real Git repository
+- [ ] Updated README.md (if user-facing)
+- [ ] Updated this file (if new patterns)
+- [ ] Updated package.json (if new UI)
+
+---
+
+## 📚 Documentation Files
+
+- **CODE_GUIDE.md** (this file) - Developer reference
+- **README.md** - User documentation
+- **BUILD.md** - Build, test, and publish commands
+- **package.json** - VS Code configuration
+- **.cursorrules** - AI development rules
+
+---
+
+**Remember**: Follow layer rules, document as you go, keep it simple!
