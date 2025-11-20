@@ -118,6 +118,24 @@ export class CommitCommands {
     }
 
     /**
+     * Copy file relative path to clipboard
+     * @param treeItem CommitFileTreeItem
+     */
+    async copyCommitFileRelativePath(treeItem: any): Promise<void> {
+        try {
+            const file = treeItem.file;
+            if (!file) {
+                vscode.window.showErrorMessage('No file information available');
+                return;
+            }
+            await vscode.env.clipboard.writeText(file.path);
+            vscode.window.showInformationMessage(`Copied "${file.path}" to clipboard`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to copy file path: ${error}`);
+        }
+    }
+
+    /**
      * Find a file in the list of changed files
      * Handles both current path and old path (for renamed files)
      */

@@ -114,6 +114,11 @@
                 "icon": "$(copy)"
             },
             {
+                "command": "gitmaster.copyCommitFileRelativePath",
+                "title": "Copy Relative Path",
+                "icon": "$(copy)"
+            },
+            {
                 "command": "gitmaster.copyRemoteLineUrl",
                 "title": "Git Master: Copy Remote Line URL",
                 "icon": "$(link)"
@@ -194,7 +199,7 @@
             {
                 "command": "gitmaster.checkoutBranch",
                 "title": "Checkout Branch",
-                "icon": "$(check)"
+                "icon": "$(debug-restart)"
             },
             {
                 "command": "gitmaster.deleteBranch",
@@ -365,6 +370,11 @@
                 }
             ],
             "view/item/context": [
+                {
+                    "command": "gitmaster.copyCommitFileRelativePath",
+                    "when": "view == gitmaster.commitDetails && viewItem == commitFile",
+                    "group": "9_cutcopypaste"
+                },
                 {
                     "command": "gitmaster.copyCommitId",
                     "when": "view == gitmaster.fileHistory && viewItem == commit",

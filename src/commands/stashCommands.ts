@@ -655,12 +655,12 @@ export class StashCommands {
             const rightContent = await this.gitService.getStashFileContent(file.path, stashIndex, repoRoot);
             const rightTitle = `${fileName} (in stash)`;
 
-            // Create URIs for diff
-            const leftUri = vscode.Uri.parse(`gitmaster-diff:${leftTitle}`).with({
+            // Create URIs for diff with file path to enable syntax highlighting
+            const leftUri = vscode.Uri.parse(`gitmaster-diff:/${file.path}`).with({
                 query: Buffer.from(leftContent).toString('base64')
             });
 
-            const rightUri = vscode.Uri.parse(`gitmaster-diff:${rightTitle}`).with({
+            const rightUri = vscode.Uri.parse(`gitmaster-diff:/${file.path}`).with({
                 query: Buffer.from(rightContent).toString('base64')
             });
 

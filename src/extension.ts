@@ -179,6 +179,12 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (commit) => await commitCommands.copyCommitId(commit)
     );
 
+    // Copy commit file relative path command
+    const copyCommitFileRelativePathCommand = vscode.commands.registerCommand(
+        'gitmaster.copyCommitFileRelativePath',
+        async (treeItem) => await commitCommands.copyCommitFileRelativePath(treeItem)
+    );
+
     // Stash/Shelf commands
     const createShelfCommand = vscode.commands.registerCommand(
         'gitmaster.createShelf',
@@ -398,6 +404,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         showFileDiffCommand,
         openGitHubCommand,
         copyCommitIdCommand,
+        copyCommitFileRelativePathCommand,
         createShelfCommand,
         applyShelfCommand,
         popShelfCommand,

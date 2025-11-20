@@ -36,7 +36,9 @@ export class DiffService {
             );
 
             const title = this.getDiffTitle(relativePath, commit, oldPath, status);
-            await this.openDiffView(leftContent, leftTitle, rightContent, rightTitle, title);
+            const leftPath = oldPath || relativePath;
+            const rightPath = relativePath;
+            await this.openDiffView(leftContent, leftTitle, rightContent, rightTitle, title, leftPath, rightPath);
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show diff: ${error}`);
         }
@@ -134,13 +136,16 @@ export class DiffService {
         leftTitle: string,
         rightContent: string,
         rightTitle: string,
-        title: string
+        title: string,
+        leftPath: string,
+        rightPath: string
     ): Promise<void> {
-        const leftUri = vscode.Uri.parse(`gitmaster-diff:${leftTitle}`).with({
+        // Use the actual file paths to enable syntax highlighting based on file extension
+        const leftUri = vscode.Uri.parse(`gitmaster-diff:/${leftPath}`).with({
             query: Buffer.from(leftContent).toString('base64')
         });
 
-        const rightUri = vscode.Uri.parse(`gitmaster-diff:${rightTitle}`).with({
+        const rightUri = vscode.Uri.parse(`gitmaster-diff:/${rightPath}`).with({
             query: Buffer.from(rightContent).toString('base64')
         });
 
