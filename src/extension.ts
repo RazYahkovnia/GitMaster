@@ -237,6 +237,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         () => reflogCommands.refreshReflog()
     );
 
+    const loadMoreReflogCommand = vscode.commands.registerCommand(
+        'gitmaster.loadMoreReflog',
+        () => reflogCommands.loadMoreReflog()
+    );
+
     // Repository Log commands
     const revertCommitInNewBranchCommand = vscode.commands.registerCommand(
         'gitmaster.revertCommitInNewBranch',
@@ -261,6 +266,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const refreshRepositoryLogCommand = vscode.commands.registerCommand(
         'gitmaster.refreshRepositoryLog',
         () => repositoryLogCommands.refreshRepositoryLog()
+    );
+
+    const loadMoreRepositoryLogCommand = vscode.commands.registerCommand(
+        'gitmaster.loadMoreRepositoryLog',
+        () => repositoryLogCommands.loadMoreRepositoryLog()
     );
 
     // Branch commands
@@ -415,11 +425,13 @@ function registerCommands(context: vscode.ExtensionContext): void {
         shelveFileToCommand,
         checkoutFromReflogCommand,
         refreshReflogCommand,
+        loadMoreReflogCommand,
         revertCommitInNewBranchCommand,
         checkoutCommitFromRepoLogCommand,
         cherryPickCommitCommand,
         createBranchFromCommitCommand,
         refreshRepositoryLogCommand,
+        loadMoreRepositoryLogCommand,
         checkoutBranchCommand,
         deleteBranchCommand,
         createNewBranchCommand,

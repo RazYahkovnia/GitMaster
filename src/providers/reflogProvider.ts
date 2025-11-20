@@ -54,15 +54,32 @@ export class ReflogTreeItem extends vscode.TreeItem {
 }
 
 /**
+ * Tree item for load more button
+ */
+export class LoadMoreReflogTreeItem extends vscode.TreeItem {
+    constructor() {
+        super('Load More Operations...', vscode.TreeItemCollapsibleState.None);
+        this.contextValue = 'loadMoreReflog';
+        this.iconPath = new vscode.ThemeIcon('fold-down');
+        this.command = {
+            command: 'gitmaster.loadMoreReflog',
+            title: 'Load More Operations'
+        };
+    }
+}
+
+/**
  * Provider for the Git Operations (Reflog) tree view
  */
-export class ReflogProvider implements vscode.TreeDataProvider<ReflogTreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<ReflogTreeItem | undefined | null | void> =
-        new vscode.EventEmitter<ReflogTreeItem | undefined | null | void>();
-    readonly onDidChangeTreeData: vscode.Event<ReflogTreeItem | undefined | null | void> =
+export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null | void> =
+        new vscode.EventEmitter<vscode.TreeItem | undefined | null | void>();
+    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null | void> =
         this._onDidChangeTreeData.event;
 
     private currentRepoRoot: string | undefined;
+    private entryLimit: number = 50;
+    private readonly LOAD_MORE_INCREMENT = 50;
 
     constructor(private gitService: GitService) { }
 
@@ -70,15 +87,15 @@ export class ReflogProvider implements vscode.TreeDataProvider<ReflogTreeItem> {
         this._onDidChangeTreeData.fire();
     }
 
-    getTreeItem(element: ReflogTreeItem): vscode.TreeItem {
+    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
-    async getChildren(element?: ReflogTreeItem): Promise<ReflogTreeItem[]> {
+    async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
         if (!this.currentRepoRoot) {
             const emptyItem = new vscode.TreeItem('No repository opened');
             emptyItem.contextValue = 'empty';
-            return [emptyItem as any];
+            return [emptyItem];
         }
 
         // Only show root level items (no children)
@@ -87,21 +104,29 @@ export class ReflogProvider implements vscode.TreeDataProvider<ReflogTreeItem> {
         }
 
         try {
-            const entries = await this.gitService.getReflog(this.currentRepoRoot);
+            const entries = await this.gitService.getReflog(this.currentRepoRoot, this.entryLimit);
 
             if (entries.length === 0) {
                 const emptyItem = new vscode.TreeItem('No git operations found');
                 emptyItem.contextValue = 'empty';
-                return [emptyItem as any];
+                return [emptyItem];
             }
 
-            return entries.map(entry =>
+            const items: vscode.TreeItem[] = entries.map(entry =>
                 new ReflogTreeItem(
                     entry,
                     this.currentRepoRoot!,
                     vscode.TreeItemCollapsibleState.None
                 )
             );
+
+            // Add "Load More" button at the bottom if we have entries equal to the limit
+            // (suggesting there might be more entries available)
+            if (entries.length === this.entryLimit) {
+                items.push(new LoadMoreReflogTreeItem());
+            }
+
+            return items;
         } catch (error) {
             console.error('Error getting reflog:', error);
             return [];
@@ -110,6 +135,15 @@ export class ReflogProvider implements vscode.TreeDataProvider<ReflogTreeItem> {
 
     setRepoRoot(repoRoot: string | undefined): void {
         this.currentRepoRoot = repoRoot;
+        this.entryLimit = 50; // Reset entry limit when changing repos
+        this.refresh();
+    }
+
+    /**
+     * Load more reflog entries
+     */
+    loadMore(): void {
+        this.entryLimit += this.LOAD_MORE_INCREMENT;
         this.refresh();
     }
 

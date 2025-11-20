@@ -47,15 +47,32 @@ export class RepositoryCommitTreeItem extends vscode.TreeItem {
 }
 
 /**
+ * Tree item for load more button
+ */
+export class LoadMoreTreeItem extends vscode.TreeItem {
+    constructor() {
+        super('Load More Commits...', vscode.TreeItemCollapsibleState.None);
+        this.contextValue = 'loadMore';
+        this.iconPath = new vscode.ThemeIcon('fold-down');
+        this.command = {
+            command: 'gitmaster.loadMoreRepositoryLog',
+            title: 'Load More Commits'
+        };
+    }
+}
+
+/**
  * Provider for repository commit log tree view
  */
-export class RepositoryLogProvider implements vscode.TreeDataProvider<RepositoryCommitTreeItem> {
-    private _onDidChangeTreeData: vscode.EventEmitter<RepositoryCommitTreeItem | undefined | null> =
-        new vscode.EventEmitter<RepositoryCommitTreeItem | undefined | null>();
-    readonly onDidChangeTreeData: vscode.Event<RepositoryCommitTreeItem | undefined | null> =
+export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<vscode.TreeItem | undefined | null> =
+        new vscode.EventEmitter<vscode.TreeItem | undefined | null>();
+    readonly onDidChangeTreeData: vscode.Event<vscode.TreeItem | undefined | null> =
         this._onDidChangeTreeData.event;
 
     private currentRepoRoot: string | undefined;
+    private commitLimit: number = 50;
+    private readonly LOAD_MORE_INCREMENT = 50;
 
     constructor(private gitService: GitService) { }
 
@@ -64,6 +81,7 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<Repository
      */
     setRepoRoot(repoRoot: string | undefined): void {
         this.currentRepoRoot = repoRoot;
+        this.commitLimit = 50; // Reset commit limit when changing repos
         this.refresh();
     }
 
@@ -75,16 +93,24 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<Repository
     }
 
     /**
+     * Load more commits
+     */
+    loadMore(): void {
+        this.commitLimit += this.LOAD_MORE_INCREMENT;
+        this.refresh();
+    }
+
+    /**
      * Get tree item for display
      */
-    getTreeItem(element: RepositoryCommitTreeItem): vscode.TreeItem {
+    getTreeItem(element: vscode.TreeItem): vscode.TreeItem {
         return element;
     }
 
     /**
      * Get children (commits) for the tree view
      */
-    async getChildren(element?: RepositoryCommitTreeItem): Promise<RepositoryCommitTreeItem[]> {
+    async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
         // Repository log only has root level items (no nested structure)
         if (element) {
             return [];
@@ -108,7 +134,7 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<Repository
         }
 
         try {
-            const commits = await this.gitService.getRepositoryLog(this.currentRepoRoot, 20);
+            const commits = await this.gitService.getRepositoryLog(this.currentRepoRoot, this.commitLimit);
 
             if (commits.length === 0) {
                 const emptyItem = new RepositoryCommitTreeItem(
@@ -127,13 +153,21 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<Repository
                 return [emptyItem];
             }
 
-            return commits.map(commit =>
+            const items: vscode.TreeItem[] = commits.map(commit =>
                 new RepositoryCommitTreeItem(
                     commit,
                     this.currentRepoRoot!,
                     vscode.TreeItemCollapsibleState.None
                 )
             );
+
+            // Add "Load More" button at the bottom if we have commits equal to the limit
+            // (suggesting there might be more commits available)
+            if (commits.length === this.commitLimit) {
+                items.push(new LoadMoreTreeItem());
+            }
+
+            return items;
         } catch (error) {
             console.error('Error getting repository log:', error);
             return [];

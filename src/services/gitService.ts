@@ -171,8 +171,9 @@ export class GitService {
      * Get file statistics (additions/deletions) for a commit
      */
     private async getChangedFilesStats(commitHash: string, repoRoot: string): Promise<ChangedFile[]> {
+        // Add --root flag to handle the initial commit (which has no parent)
         const { stdout } = await execAsync(
-            `git diff-tree --no-commit-id --numstat -M -r ${commitHash}`,
+            `git diff-tree --root --no-commit-id --numstat -M -r ${commitHash}`,
             { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
         );
 
@@ -203,8 +204,9 @@ export class GitService {
      * Get file statuses (A, M, D, R) for a commit
      */
     private async getFileStatuses(commitHash: string, repoRoot: string): Promise<Map<string, { status: string, oldPath?: string }>> {
+        // Add --root flag to handle the initial commit (which has no parent)
         const { stdout } = await execAsync(
-            `git diff-tree --no-commit-id --name-status -M -r ${commitHash}`,
+            `git diff-tree --root --no-commit-id --name-status -M -r ${commitHash}`,
             { cwd: repoRoot }
         );
 

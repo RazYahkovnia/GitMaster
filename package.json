@@ -172,9 +172,13 @@
                 "icon": "$(refresh)"
             },
             {
+                "command": "gitmaster.loadMoreReflog",
+                "title": "Load More Operations"
+            },
+            {
                 "command": "gitmaster.revertCommitInNewBranch",
                 "title": "Revert in New Branch",
-                "icon": "$(debug-reverse-continue)"
+                "icon": "$(discard)"
             },
             {
                 "command": "gitmaster.checkoutCommitFromRepoLog",
@@ -195,6 +199,10 @@
                 "command": "gitmaster.refreshRepositoryLog",
                 "title": "Refresh Git Log",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.loadMoreRepositoryLog",
+                "title": "Load More Commits"
             },
             {
                 "command": "gitmaster.checkoutBranch",

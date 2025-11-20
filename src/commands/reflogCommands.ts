@@ -61,5 +61,12 @@ export class ReflogCommands {
     refreshReflog(): void {
         this.reflogProvider.refresh();
     }
+
+    /**
+     * Load more reflog entries
+     */
+    loadMoreReflog(): void {
+        this.reflogProvider.loadMore();
+    }
 }
 

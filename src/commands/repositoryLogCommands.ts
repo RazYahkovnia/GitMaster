@@ -233,5 +233,12 @@ export class RepositoryLogCommands {
     refreshRepositoryLog(): void {
         this.repositoryLogProvider.refresh();
     }
+
+    /**
+     * Load more commits in the repository log
+     */
+    loadMoreRepositoryLog(): void {
+        this.repositoryLogProvider.loadMore();
+    }
 }
 
