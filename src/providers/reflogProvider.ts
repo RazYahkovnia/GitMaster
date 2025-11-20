@@ -18,10 +18,10 @@ export class ReflogTreeItem extends vscode.TreeItem {
         this.contextValue = 'reflogEntry';
         this.iconPath = this.getIcon();
 
-        // Set command to checkout when clicked
+        // Set command to show commit details when clicked
         this.command = {
-            command: 'gitmaster.checkoutFromReflog',
-            title: 'Checkout to Commit',
+            command: 'gitmaster.showReflogCommitDetails',
+            title: 'Show Commit Details',
             arguments: [this.entry, this.repoRoot]
         };
     }

@@ -164,7 +164,12 @@
             },
             {
                 "command": "gitmaster.checkoutFromReflog",
-                "title": "Checkout to Commit"
+                "title": "Checkout to Commit",
+                "icon": "$(debug-restart)"
+            },
+            {
+                "command": "gitmaster.showReflogCommitDetails",
+                "title": "Show Commit Details"
             },
             {
                 "command": "gitmaster.refreshReflog",
@@ -382,6 +387,16 @@
                     "command": "gitmaster.copyCommitFileRelativePath",
                     "when": "view == gitmaster.commitDetails && viewItem == commitFile",
                     "group": "9_cutcopypaste"
+                },
+                {
+                    "command": "gitmaster.checkoutFromReflog",
+                    "when": "view == gitmaster.reflog && viewItem == reflogEntry",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.checkoutFromReflog",
+                    "when": "view == gitmaster.reflog && viewItem == reflogEntry",
+                    "group": "1_actions"
                 },
                 {
                     "command": "gitmaster.copyCommitId",

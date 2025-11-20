@@ -76,7 +76,7 @@ function initializeServices(): void {
     rebaseProvider = new RebaseProvider(gitService);
     commitCommands = new CommitCommands(gitService, diffService, commitDetailsProvider);
     stashCommands = new StashCommands(gitService, diffService, shelvesProvider);
-    reflogCommands = new ReflogCommands(gitService, reflogProvider);
+    reflogCommands = new ReflogCommands(gitService, reflogProvider, commitDetailsProvider);
     repositoryLogCommands = new RepositoryLogCommands(gitService, repositoryLogProvider);
     branchCommands = new BranchCommands(gitService, branchesProvider);
     rebaseCommands = new RebaseCommands(gitService, rebaseProvider, commitDetailsProvider);
@@ -229,7 +229,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
     // Reflog commands
     const checkoutFromReflogCommand = vscode.commands.registerCommand(
         'gitmaster.checkoutFromReflog',
-        async (entry, repoRoot) => await reflogCommands.checkoutFromReflog(entry, repoRoot)
+        async (entryOrTreeItem, repoRoot) => await reflogCommands.checkoutFromReflog(entryOrTreeItem, repoRoot)
     );
 
     const refreshReflogCommand = vscode.commands.registerCommand(
@@ -240,6 +240,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const loadMoreReflogCommand = vscode.commands.registerCommand(
         'gitmaster.loadMoreReflog',
         () => reflogCommands.loadMoreReflog()
+    );
+
+    const showReflogCommitDetailsCommand = vscode.commands.registerCommand(
+        'gitmaster.showReflogCommitDetails',
+        async (entryOrTreeItem, repoRoot) => await reflogCommands.showReflogCommitDetails(entryOrTreeItem, repoRoot)
     );
 
     // Repository Log commands
@@ -426,6 +431,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         checkoutFromReflogCommand,
         refreshReflogCommand,
         loadMoreReflogCommand,
+        showReflogCommitDetailsCommand,
         revertCommitInNewBranchCommand,
         checkoutCommitFromRepoLogCommand,
         cherryPickCommitCommand,

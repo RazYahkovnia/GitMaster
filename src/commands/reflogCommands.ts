@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { ReflogProvider } from '../providers/reflogProvider';
-import { ReflogEntry } from '../types/git';
+import { CommitDetailsProvider } from '../providers/commitDetailsProvider';
+import { ReflogEntry, CommitInfo } from '../types/git';
 
 /**
  * Command handlers for reflog (git operations) operations
@@ -9,16 +10,26 @@ import { ReflogEntry } from '../types/git';
 export class ReflogCommands {
     constructor(
         private gitService: GitService,
-        private reflogProvider: ReflogProvider
+        private reflogProvider: ReflogProvider,
+        private commitDetailsProvider: CommitDetailsProvider
     ) { }
 
     /**
      * Checkout to a commit from reflog
      */
-    async checkoutFromReflog(entry: ReflogEntry, repoRoot: string): Promise<void> {
+    async checkoutFromReflog(entryOrTreeItem: any, repoRoot?: string): Promise<void> {
         try {
+            // Extract entry and repoRoot from tree item if needed
+            const entry: ReflogEntry = entryOrTreeItem.entry || entryOrTreeItem;
+            const actualRepoRoot = repoRoot || entryOrTreeItem.repoRoot;
+
+            if (!actualRepoRoot) {
+                vscode.window.showErrorMessage('No repository found');
+                return;
+            }
+
             // Check if there are uncommitted changes
-            const hasChanges = await this.gitService.hasChangesToStash(repoRoot);
+            const hasChanges = await this.gitService.hasChangesToStash(actualRepoRoot);
 
             if (hasChanges) {
                 vscode.window.showErrorMessage(
@@ -40,7 +51,7 @@ export class ReflogCommands {
             }
 
             // Perform checkout
-            await this.gitService.checkoutCommit(entry.hash, repoRoot);
+            await this.gitService.checkoutCommit(entry.hash, actualRepoRoot);
 
             vscode.window.showInformationMessage(
                 `Checked out to ${entry.shortHash}. You are now in detached HEAD state.`
@@ -67,6 +78,49 @@ export class ReflogCommands {
      */
     loadMoreReflog(): void {
         this.reflogProvider.loadMore();
+    }
+
+    /**
+     * Show commit details from reflog entry
+     */
+    async showReflogCommitDetails(entryOrTreeItem: any, repoRoot?: string): Promise<void> {
+        try {
+            // Extract entry and repoRoot from tree item if needed
+            const entry: ReflogEntry = entryOrTreeItem.entry || entryOrTreeItem;
+            const actualRepoRoot = repoRoot || entryOrTreeItem.repoRoot;
+
+            if (!actualRepoRoot) {
+                vscode.window.showErrorMessage('No repository found');
+                return;
+            }
+
+            // Convert ReflogEntry to CommitInfo
+            const commitInfo: CommitInfo = {
+                hash: entry.hash,
+                shortHash: entry.shortHash,
+                message: entry.message,
+                author: '', // Will be fetched from git
+                date: '',
+                relativeDate: ''
+            };
+
+            // Get full commit details including author and date
+            const fullCommitInfo = await this.gitService.getCommitInfo(entry.hash, actualRepoRoot);
+            if (fullCommitInfo) {
+                commitInfo.author = fullCommitInfo.author;
+                commitInfo.date = fullCommitInfo.date;
+                commitInfo.relativeDate = fullCommitInfo.relativeDate;
+            }
+
+            // Update the commit details view in sidebar
+            await this.commitDetailsProvider.setCommit(commitInfo, actualRepoRoot);
+
+            // Show the commit details view
+            vscode.commands.executeCommand('setContext', 'gitmaster.commitSelected', true);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);
+            console.error('Error showing commit details from reflog:', error);
+        }
     }
 }
 

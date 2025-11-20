@@ -93,6 +93,29 @@ export class GitService {
     }
 
     /**
+     * Get detailed information about a single commit
+     */
+    async getCommitInfo(commitHash: string, repoRoot: string): Promise<CommitInfo | null> {
+        try {
+            const format = '%H|%h|%an|%ai|%ar|%s';
+            const { stdout } = await execAsync(
+                `git show --no-patch --format="${format}" ${commitHash}`,
+                { cwd: repoRoot }
+            );
+
+            if (!stdout.trim()) {
+                return null;
+            }
+
+            const commits = this.parseCommitLog(stdout);
+            return commits.length > 0 ? commits[0] : null;
+        } catch (error) {
+            console.error('Error getting commit info:', error);
+            return null;
+        }
+    }
+
+    /**
      * Get the parent commit hash
      */
     async getParentCommit(commitHash: string, repoRoot: string): Promise<string | null> {
