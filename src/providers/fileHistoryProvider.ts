@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { CommitInfo } from '../types/git';
 import { getAuthorColor } from '../utils/colorUtils';
+import { MessageFilter } from '../utils/filterUtils';
 
 export class CommitTreeItem extends vscode.TreeItem {
     constructor(
@@ -46,6 +47,7 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
         this._onDidChangeTreeData.event;
 
     private currentFilePath: string | undefined;
+    private messageFilter = new MessageFilter();
 
     constructor(private gitService: GitService) { }
 
@@ -83,11 +85,15 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
                 return [emptyItem];
             }
 
-            // Get commit history for the current file
-            const commits = await this.gitService.getFileHistory(this.currentFilePath);
+            // Get commit history for the current file (with filter applied at git level)
+            const commits = await this.gitService.getFileHistory(
+                this.currentFilePath,
+                this.messageFilter.getFilter()
+            );
 
             if (commits.length === 0) {
-                const emptyItem = new vscode.TreeItem('No commits found for this file');
+                const message = this.messageFilter.getNoResultsMessage('No commits found for this file');
+                const emptyItem = new vscode.TreeItem(message);
                 emptyItem.contextValue = 'empty';
                 emptyItem.iconPath = new vscode.ThemeIcon('info');
                 return [emptyItem];
@@ -112,11 +118,37 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
 
     setCurrentFile(filePath: string | undefined): void {
         this.currentFilePath = filePath;
+        this.messageFilter.clear(); // Reset filter when file changes
         this.refresh();
     }
 
     getCurrentFile(): string | undefined {
         return this.currentFilePath;
+    }
+
+    /**
+     * Set commit message filter
+     */
+    async setMessageFilter(): Promise<void> {
+        const result = await this.messageFilter.promptForFilter(this.messageFilter.getFilter());
+        if (result !== undefined) {
+            this.refresh();
+        }
+    }
+
+    /**
+     * Clear commit message filter
+     */
+    clearMessageFilter(): void {
+        this.messageFilter.clear();
+        this.refresh();
+    }
+
+    /**
+     * Check if filter is active
+     */
+    hasFilter(): boolean {
+        return this.messageFilter.isActive();
     }
 }
 

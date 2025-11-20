@@ -97,6 +97,16 @@
                 "icon": "$(refresh)"
             },
             {
+                "command": "gitmaster.filterFileHistoryByMessage",
+                "title": "Filter by Commit Message",
+                "icon": "$(filter)"
+            },
+            {
+                "command": "gitmaster.clearFileHistoryFilter",
+                "title": "Clear Message Filter",
+                "icon": "$(clear-all)"
+            },
+            {
                 "command": "gitmaster.showCommitDiff",
                 "title": "Show Commit Details"
             },
@@ -210,6 +220,16 @@
                 "title": "Load More Commits"
             },
             {
+                "command": "gitmaster.filterRepositoryLogByMessage",
+                "title": "Filter by Commit Message",
+                "icon": "$(filter)"
+            },
+            {
+                "command": "gitmaster.clearRepositoryLogFilter",
+                "title": "Clear Message Filter",
+                "icon": "$(clear-all)"
+            },
+            {
                 "command": "gitmaster.checkoutBranch",
                 "title": "Checkout Branch",
                 "icon": "$(debug-restart)"
@@ -302,9 +322,19 @@
         "menus": {
             "view/title": [
                 {
+                    "command": "gitmaster.filterFileHistoryByMessage",
+                    "when": "view == gitmaster.fileHistory",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.clearFileHistoryFilter",
+                    "when": "view == gitmaster.fileHistory",
+                    "group": "navigation@2"
+                },
+                {
                     "command": "gitmaster.refreshFileHistory",
                     "when": "view == gitmaster.fileHistory",
-                    "group": "navigation"
+                    "group": "navigation@3"
                 },
                 {
                     "command": "gitmaster.createShelf",
@@ -322,9 +352,19 @@
                     "group": "navigation"
                 },
                 {
+                    "command": "gitmaster.filterRepositoryLogByMessage",
+                    "when": "view == gitmaster.repositoryLog",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.clearRepositoryLogFilter",
+                    "when": "view == gitmaster.repositoryLog",
+                    "group": "navigation@2"
+                },
+                {
                     "command": "gitmaster.refreshRepositoryLog",
                     "when": "view == gitmaster.repositoryLog",
-                    "group": "navigation"
+                    "group": "navigation@3"
                 },
                 {
                     "command": "gitmaster.createNewBranch",

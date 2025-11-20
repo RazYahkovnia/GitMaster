@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { RepositoryCommit } from '../types/git';
 import { getAuthorColor } from '../utils/colorUtils';
+import { MessageFilter } from '../utils/filterUtils';
 
 /**
  * Tree item for a repository commit
@@ -73,6 +74,7 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
     private currentRepoRoot: string | undefined;
     private commitLimit: number = 50;
     private readonly LOAD_MORE_INCREMENT = 50;
+    private messageFilter = new MessageFilter();
 
     constructor(private gitService: GitService) { }
 
@@ -82,6 +84,7 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
     setRepoRoot(repoRoot: string | undefined): void {
         this.currentRepoRoot = repoRoot;
         this.commitLimit = 50; // Reset commit limit when changing repos
+        this.messageFilter.clear(); // Reset filter when changing repos
         this.refresh();
     }
 
@@ -98,6 +101,32 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
     loadMore(): void {
         this.commitLimit += this.LOAD_MORE_INCREMENT;
         this.refresh();
+    }
+
+    /**
+     * Set commit message filter
+     */
+    async setMessageFilter(): Promise<void> {
+        const result = await this.messageFilter.promptForFilter(this.messageFilter.getFilter());
+        if (result !== undefined) {
+            this.commitLimit = 50; // Reset limit when filter changes
+            this.refresh();
+        }
+    }
+
+    /**
+     * Clear commit message filter
+     */
+    clearMessageFilter(): void {
+        this.messageFilter.clear();
+        this.refresh();
+    }
+
+    /**
+     * Check if filter is active
+     */
+    hasFilter(): boolean {
+        return this.messageFilter.isActive();
     }
 
     /**
@@ -134,16 +163,22 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
         }
 
         try {
-            const commits = await this.gitService.getRepositoryLog(this.currentRepoRoot, this.commitLimit);
+            // Get commits with filter applied at git level
+            const commits = await this.gitService.getRepositoryLog(
+                this.currentRepoRoot,
+                this.commitLimit,
+                this.messageFilter.getFilter()
+            );
 
             if (commits.length === 0) {
+                const message = this.messageFilter.getNoResultsMessage('No commits found');
                 const emptyItem = new RepositoryCommitTreeItem(
                     {
                         hash: '',
                         shortHash: '',
                         author: '',
                         date: '',
-                        message: 'No commits found',
+                        message,
                         parentHashes: []
                     },
                     this.currentRepoRoot,

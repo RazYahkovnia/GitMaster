@@ -53,7 +53,7 @@ export class GitService {
     /**
      * Get the commit history for a specific file
      */
-    async getFileHistory(filePath: string): Promise<CommitInfo[]> {
+    async getFileHistory(filePath: string, messageFilter?: string): Promise<CommitInfo[]> {
         try {
             const repoRoot = await this.getRepoRoot(filePath);
             if (!repoRoot) {
@@ -61,8 +61,9 @@ export class GitService {
             }
 
             const format = '%H|%h|%an|%ai|%ar|%s';
+            const grepOption = messageFilter ? ` --grep="${messageFilter}" -i` : '';
             const { stdout } = await execAsync(
-                `git log --follow --format="${format}" -- "${filePath}"`,
+                `git log --follow --format="${format}"${grepOption} -- "${filePath}"`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 
@@ -944,11 +945,12 @@ export class GitService {
     /**
      * Get repository commit log (all commits, not file-specific)
      */
-    async getRepositoryLog(repoRoot: string, limit: number = 20): Promise<RepositoryCommit[]> {
+    async getRepositoryLog(repoRoot: string, limit: number = 20, messageFilter?: string): Promise<RepositoryCommit[]> {
         try {
             const format = '%H|%h|%an|%ad|%s|%P';
+            const grepOption = messageFilter ? ` --grep="${messageFilter}" -i` : '';
             const { stdout } = await execAsync(
-                `git log --format="${format}" --date=short -n ${limit}`,
+                `git log --format="${format}" --date=short -n ${limit}${grepOption}`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 

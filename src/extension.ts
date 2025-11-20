@@ -143,10 +143,20 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
  * Register all extension commands
  */
 function registerCommands(context: vscode.ExtensionContext): void {
-    // Refresh file history command
+    // File History commands
     const refreshCommand = vscode.commands.registerCommand(
         'gitmaster.refreshFileHistory',
         () => fileHistoryProvider.refresh()
+    );
+
+    const filterFileHistoryByMessageCommand = vscode.commands.registerCommand(
+        'gitmaster.filterFileHistoryByMessage',
+        async () => await fileHistoryProvider.setMessageFilter()
+    );
+
+    const clearFileHistoryFilterCommand = vscode.commands.registerCommand(
+        'gitmaster.clearFileHistoryFilter',
+        () => fileHistoryProvider.clearMessageFilter()
     );
 
     // Show commit details command
@@ -276,6 +286,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const loadMoreRepositoryLogCommand = vscode.commands.registerCommand(
         'gitmaster.loadMoreRepositoryLog',
         () => repositoryLogCommands.loadMoreRepositoryLog()
+    );
+
+    const filterRepositoryLogByMessageCommand = vscode.commands.registerCommand(
+        'gitmaster.filterRepositoryLogByMessage',
+        async () => await repositoryLogProvider.setMessageFilter()
+    );
+
+    const clearRepositoryLogFilterCommand = vscode.commands.registerCommand(
+        'gitmaster.clearRepositoryLogFilter',
+        () => repositoryLogProvider.clearMessageFilter()
     );
 
     // Branch commands
@@ -414,6 +434,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
 
     context.subscriptions.push(
         refreshCommand,
+        filterFileHistoryByMessageCommand,
+        clearFileHistoryFilterCommand,
         showCommitDiffCommand,
         showRepositoryCommitDetailsCommand,
         showFileDiffCommand,
@@ -438,6 +460,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         createBranchFromCommitCommand,
         refreshRepositoryLogCommand,
         loadMoreRepositoryLogCommand,
+        filterRepositoryLogByMessageCommand,
+        clearRepositoryLogFilterCommand,
         checkoutBranchCommand,
         deleteBranchCommand,
         createNewBranchCommand,
