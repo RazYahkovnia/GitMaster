@@ -10,18 +10,27 @@ export class BranchTreeItem extends vscode.TreeItem {
     constructor(
         public readonly branch: BranchInfo,
         public readonly repoRoot: string,
+        public readonly isPinned: boolean,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState
     ) {
         super(branch.name, collapsibleState);
 
         this.description = this.buildDescription();
         this.tooltip = this.buildTooltip();
-        this.contextValue = this.branch.isCurrent ? 'currentBranch' : (this.branch.isRemote ? 'remoteBranch' : 'localBranch');
+
+        // Set context value based on state
+        let contextValue = this.branch.isCurrent ? 'currentBranch' : (this.branch.isRemote ? 'remoteBranch' : 'localBranch');
+        if (this.isPinned) {
+            contextValue += 'Pinned';
+        }
+        this.contextValue = contextValue;
 
         // Use author-specific color for the icon
         const authorColor = getAuthorColor(this.branch.lastCommitAuthor);
 
-        if (this.branch.isCurrent) {
+        if (this.isPinned) {
+            this.iconPath = new vscode.ThemeIcon('pinned', authorColor);
+        } else if (this.branch.isCurrent) {
             this.iconPath = new vscode.ThemeIcon('check', authorColor);
         } else if (this.branch.isRemote) {
             this.iconPath = new vscode.ThemeIcon('cloud', authorColor);
@@ -75,8 +84,12 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
 
     private currentRepoRoot: string | undefined;
     private filterAuthor: string | null = null;
+    private readonly pinnedBranchesKey = 'gitmaster.pinnedBranches';
 
-    constructor(private gitService: GitService) { }
+    constructor(
+        private gitService: GitService,
+        private context: vscode.ExtensionContext
+    ) { }
 
     /**
      * Set the current repository root
@@ -99,6 +112,56 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
      */
     getAuthorFilter(): string | null {
         return this.filterAuthor;
+    }
+
+    /**
+     * Get pinned branches for current repo
+     */
+    private getPinnedBranches(): Set<string> {
+        if (!this.currentRepoRoot) {
+            return new Set();
+        }
+        const allPinned = this.context.workspaceState.get<Record<string, string[]>>(this.pinnedBranchesKey, {});
+        return new Set(allPinned[this.currentRepoRoot] || []);
+    }
+
+    /**
+     * Save pinned branches for current repo
+     */
+    private async savePinnedBranches(pinnedBranches: Set<string>): Promise<void> {
+        if (!this.currentRepoRoot) {
+            return;
+        }
+        const allPinned = this.context.workspaceState.get<Record<string, string[]>>(this.pinnedBranchesKey, {});
+        allPinned[this.currentRepoRoot] = Array.from(pinnedBranches);
+        await this.context.workspaceState.update(this.pinnedBranchesKey, allPinned);
+    }
+
+    /**
+     * Pin a branch
+     */
+    async pinBranch(branchName: string): Promise<void> {
+        const pinned = this.getPinnedBranches();
+        pinned.add(branchName);
+        await this.savePinnedBranches(pinned);
+        this.refresh();
+    }
+
+    /**
+     * Unpin a branch
+     */
+    async unpinBranch(branchName: string): Promise<void> {
+        const pinned = this.getPinnedBranches();
+        pinned.delete(branchName);
+        await this.savePinnedBranches(pinned);
+        this.refresh();
+    }
+
+    /**
+     * Check if a branch is pinned
+     */
+    isBranchPinned(branchName: string): boolean {
+        return this.getPinnedBranches().has(branchName);
     }
 
     /**
@@ -149,10 +212,31 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
                 return [emptyItem];
             }
 
-            return branches.map(branch =>
+            // Get pinned branches
+            const pinnedBranches = this.getPinnedBranches();
+
+            // Sort branches: pinned first, then by current, then alphabetically
+            const sortedBranches = branches.sort((a, b) => {
+                const aIsPinned = pinnedBranches.has(a.name);
+                const bIsPinned = pinnedBranches.has(b.name);
+
+                // Pinned branches come first
+                if (aIsPinned && !bIsPinned) { return -1; }
+                if (!aIsPinned && bIsPinned) { return 1; }
+
+                // Current branch comes next
+                if (a.isCurrent && !b.isCurrent) { return -1; }
+                if (!a.isCurrent && b.isCurrent) { return 1; }
+
+                // Otherwise alphabetically
+                return a.name.localeCompare(b.name);
+            });
+
+            return sortedBranches.map(branch =>
                 new BranchTreeItem(
                     branch,
                     this.currentRepoRoot!,
+                    pinnedBranches.has(branch.name),
                     vscode.TreeItemCollapsibleState.None
                 )
             );

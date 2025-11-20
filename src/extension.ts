@@ -39,7 +39,7 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('GitMaster extension is now active!');
 
     // Initialize services
-    initializeServices();
+    initializeServices(context);
 
     // Register tree views
     registerTreeViews(context);
@@ -64,7 +64,7 @@ export function deactivate() {
 /**
  * Initialize all services
  */
-function initializeServices(): void {
+function initializeServices(context: vscode.ExtensionContext): void {
     gitService = new GitService();
     diffService = new DiffService(gitService);
     fileHistoryProvider = new FileHistoryProvider(gitService);
@@ -72,7 +72,7 @@ function initializeServices(): void {
     shelvesProvider = new ShelvesProvider(gitService);
     reflogProvider = new ReflogProvider(gitService);
     repositoryLogProvider = new RepositoryLogProvider(gitService);
-    branchesProvider = new BranchesProvider(gitService);
+    branchesProvider = new BranchesProvider(gitService, context);
     rebaseProvider = new RebaseProvider(gitService);
     commitCommands = new CommitCommands(gitService, diffService, commitDetailsProvider);
     stashCommands = new StashCommands(gitService, diffService, shelvesProvider);
@@ -334,6 +334,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
         () => branchCommands.clearBranchFilter()
     );
 
+    const pinBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.pinBranch',
+        async (branchOrTreeItem) => await branchCommands.pinBranch(branchOrTreeItem)
+    );
+
+    const unpinBranchCommand = vscode.commands.registerCommand(
+        'gitmaster.unpinBranch',
+        async (branchOrTreeItem) => await branchCommands.unpinBranch(branchOrTreeItem)
+    );
+
     // Rebase commands
     const startRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.startRebase',
@@ -469,6 +479,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         filterByMyBranchesCommand,
         filterByAuthorCommand,
         clearBranchFilterCommand,
+        pinBranchCommand,
+        unpinBranchCommand,
         startRebaseCommand,
         startRebaseOnDefaultCommand,
         fetchAndRebaseCommand,

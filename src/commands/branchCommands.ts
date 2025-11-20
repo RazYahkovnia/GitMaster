@@ -249,5 +249,33 @@ export class BranchCommands {
         this.branchesProvider.setAuthorFilter(null);
         vscode.window.showInformationMessage('Showing all branches');
     }
+
+    /**
+     * Pin a branch
+     */
+    async pinBranch(branchOrTreeItem: BranchInfo | BranchTreeItem): Promise<void> {
+        try {
+            const branch = (branchOrTreeItem as BranchTreeItem).branch || (branchOrTreeItem as BranchInfo);
+            await this.branchesProvider.pinBranch(branch.name);
+            vscode.window.showInformationMessage(`Pinned branch "${branch.name}"`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to pin branch: ${error}`);
+            console.error('Error pinning branch:', error);
+        }
+    }
+
+    /**
+     * Unpin a branch
+     */
+    async unpinBranch(branchOrTreeItem: BranchInfo | BranchTreeItem): Promise<void> {
+        try {
+            const branch = (branchOrTreeItem as BranchTreeItem).branch || (branchOrTreeItem as BranchInfo);
+            await this.branchesProvider.unpinBranch(branch.name);
+            vscode.window.showInformationMessage(`Unpinned branch "${branch.name}"`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to unpin branch: ${error}`);
+            console.error('Error unpinning branch:', error);
+        }
+    }
 }
 

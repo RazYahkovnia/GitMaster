@@ -265,6 +265,16 @@
                 "icon": "$(clear-all)"
             },
             {
+                "command": "gitmaster.pinBranch",
+                "title": "Pin Branch",
+                "icon": "$(pin)"
+            },
+            {
+                "command": "gitmaster.unpinBranch",
+                "title": "Unpin Branch",
+                "icon": "$(pinned)"
+            },
+            {
                 "command": "gitmaster.startRebase",
                 "title": "Start Interactive Rebase",
                 "icon": "$(git-branch)"
@@ -514,34 +524,44 @@
                     "group": "2_branch"
                 },
                 {
-                    "command": "gitmaster.checkoutBranch",
-                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "command": "gitmaster.pinBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /^(localBranch|remoteBranch|currentBranch)$/",
                     "group": "inline@1"
                 },
                 {
-                    "command": "gitmaster.deleteBranch",
-                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "command": "gitmaster.unpinBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /Pinned$/",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.checkoutBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /^(localBranch|remoteBranch)/",
                     "group": "inline@2"
                 },
                 {
+                    "command": "gitmaster.deleteBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /^localBranch/",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "gitmaster.pinBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /^(localBranch|remoteBranch|currentBranch)$/",
+                    "group": "0_pin"
+                },
+                {
+                    "command": "gitmaster.unpinBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /Pinned$/",
+                    "group": "0_pin"
+                },
+                {
                     "command": "gitmaster.checkoutBranch",
-                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /^(localBranch|remoteBranch)/",
                     "group": "1_actions"
                 },
                 {
                     "command": "gitmaster.deleteBranch",
-                    "when": "view == gitmaster.branches && viewItem == localBranch",
+                    "when": "view == gitmaster.branches && viewItem =~ /^localBranch/",
                     "group": "2_danger"
-                },
-                {
-                    "command": "gitmaster.checkoutBranch",
-                    "when": "view == gitmaster.branches && viewItem == remoteBranch",
-                    "group": "inline@1"
-                },
-                {
-                    "command": "gitmaster.checkoutBranch",
-                    "when": "view == gitmaster.branches && viewItem == remoteBranch",
-                    "group": "1_actions"
                 },
                 {
                     "command": "gitmaster.changeRebaseAction",
