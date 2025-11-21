@@ -943,6 +943,66 @@ export class GitService {
     }
 
     /**
+     * Get commits for graph visualization with parent and ref information
+     */
+    async getGraphCommits(repoRoot: string, limit: number = 50): Promise<any[]> {
+        try {
+            // Get commits from current branch (HEAD) only, with branch/tag decorations
+            // Use null byte as delimiter to avoid issues with | in commit messages
+            const { stdout } = await execAsync(
+                `git log HEAD --format="%H%x00%h%x00%s%x00%an%x00%ad%x00%P%x00%D%x00" --date=short -n ${limit}`,
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            const commits: any[] = [];
+            const lines = stdout.trim().split('\n');
+
+            for (const line of lines) {
+                const parts = line.split('\x00');
+                if (parts.length >= 7) {
+                    const [hash, shortHash, message, author, date, parentsStr, refsStr] = parts;
+
+                    // Skip stash entries (WIP on, index on)
+                    if (message.startsWith('WIP on ') || message.startsWith('index on ')) {
+                        continue;
+                    }
+
+                    const parents = parentsStr.trim() ? parentsStr.trim().split(' ') : [];
+
+                    // Parse refs (branches, tags)
+                    const refs = refsStr ? refsStr.split(',').map(r => r.trim()) : [];
+                    const branches = refs.filter(r =>
+                        r.startsWith('HEAD ->') ||
+                        (!r.startsWith('tag:') && !r.includes('/'))
+                    ).map(r => r.replace('HEAD -> ', ''));
+                    const tags = refs.filter(r => r.startsWith('tag:')).map(r => r.replace('tag: ', ''));
+
+                    commits.push({
+                        hash,
+                        shortHash,
+                        message,
+                        author,
+                        date,
+                        parents,
+                        branches,
+                        tags,
+                        refs
+                    });
+                }
+            }
+
+            return commits;
+        } catch (error) {
+            console.error('Error getting graph commits:', error);
+            return [];
+        }
+    }
+
+    /**
      * Get repository commit log (all commits, not file-specific)
      */
     async getRepositoryLog(repoRoot: string, limit: number = 20, messageFilter?: string): Promise<RepositoryCommit[]> {

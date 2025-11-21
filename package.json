@@ -230,6 +230,11 @@
                 "icon": "$(clear-all)"
             },
             {
+                "command": "gitmaster.showGitGraph",
+                "title": "Show Git Graph",
+                "icon": "$(graph)"
+            },
+            {
                 "command": "gitmaster.checkoutBranch",
                 "title": "Checkout Branch",
                 "icon": "$(debug-restart)"
@@ -372,9 +377,14 @@
                     "group": "navigation@2"
                 },
                 {
-                    "command": "gitmaster.refreshRepositoryLog",
+                    "command": "gitmaster.showGitGraph",
                     "when": "view == gitmaster.repositoryLog",
                     "group": "navigation@3"
+                },
+                {
+                    "command": "gitmaster.refreshRepositoryLog",
+                    "when": "view == gitmaster.repositoryLog",
+                    "group": "navigation@4"
                 },
                 {
                     "command": "gitmaster.createNewBranch",

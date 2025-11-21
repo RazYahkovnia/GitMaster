@@ -14,6 +14,7 @@ import { ReflogCommands } from './commands/reflogCommands';
 import { RepositoryLogCommands } from './commands/repositoryLogCommands';
 import { BranchCommands } from './commands/branchCommands';
 import { RebaseCommands } from './commands/rebaseCommands';
+import { GitGraphView } from './views/gitGraphView';
 
 // Global service instances
 let gitService: GitService;
@@ -31,6 +32,7 @@ let reflogCommands: ReflogCommands;
 let repositoryLogCommands: RepositoryLogCommands;
 let branchCommands: BranchCommands;
 let rebaseCommands: RebaseCommands;
+let gitGraphView: GitGraphView;
 
 /**
  * Activate the GitMaster extension
@@ -80,6 +82,7 @@ function initializeServices(context: vscode.ExtensionContext): void {
     repositoryLogCommands = new RepositoryLogCommands(gitService, repositoryLogProvider);
     branchCommands = new BranchCommands(gitService, branchesProvider);
     rebaseCommands = new RebaseCommands(gitService, rebaseProvider, commitDetailsProvider);
+    gitGraphView = new GitGraphView(context, gitService);
 }
 
 /**
@@ -298,6 +301,18 @@ function registerCommands(context: vscode.ExtensionContext): void {
         () => repositoryLogProvider.clearMessageFilter()
     );
 
+    const showGitGraphCommand = vscode.commands.registerCommand(
+        'gitmaster.showGitGraph',
+        async () => {
+            const repoRoot = repositoryLogProvider['currentRepoRoot'];
+            if (!repoRoot) {
+                vscode.window.showErrorMessage('No repository opened');
+                return;
+            }
+            await gitGraphView.show(repoRoot);
+        }
+    );
+
     // Branch commands
     const checkoutBranchCommand = vscode.commands.registerCommand(
         'gitmaster.checkoutBranch',
@@ -472,6 +487,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         loadMoreRepositoryLogCommand,
         filterRepositoryLogByMessageCommand,
         clearRepositoryLogFilterCommand,
+        showGitGraphCommand,
         checkoutBranchCommand,
         deleteBranchCommand,
         createNewBranchCommand,
