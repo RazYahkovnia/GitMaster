@@ -1,83 +1,83 @@
 # GitMaster 🎯
 
-> **Advanced Git visualization and management for VS Code**
+> **Investigate your Git history like a detective. Manage stashes like a pro.**
 
-Stop wrestling with Git commands in the terminal. GitMaster brings powerful Git features directly into your VS Code sidebar with beautiful visualizations, intuitive controls, and author color-coding across all views.
+Stop wrestling with Git commands. GitMaster brings powerful Git investigation tools and visual stash management (Shelves) directly into VS Code. Beautiful visualizations, author color-coding, and intuitive controls make understanding your codebase effortless.
 
-Perfect for developers who want to understand their repository's history, manage branches efficiently, and work with stashes visually.
+Perfect for code investigators, reviewers, and developers who need to track down changes, understand history, and manage work-in-progress efficiently.
 
 ## ✨ Key Features
 
-### 📜 **File History - Know Your Code's Story**
+### 🔍 **Git Investigation Tools**
 
-Ever wonder when a line was changed or who modified a file? Open any file and instantly see its complete commit history.
+**File History - Track Every Change**  
+Open any file and see its complete commit history with syntax-highlighted diffs.
+- 🎨 Color-coded by author - spot patterns instantly
+- 🔍 Click to view exact changes with syntax highlighting
+- 🔎 Filter commits by message
+- 📋 Copy commit IDs and file paths
+- ⚡ Auto-updates when switching files
 
-- 🎨 **Color-coded by author** - spot patterns at a glance
-- 🔍 **Click any commit** to view the exact changes
-- 📋 **Copy commit IDs** with one click
-- ⚡ **Auto-updates** when switching files
-- 🕐 **Relative dates** - "2 hours ago" is clearer than timestamps
+**Git Graph - Visualize Your Repository**  
+See your commit history as an interactive graph with branches, tags, and merge visualization.
+- 🌳 Visual branch flow from top to bottom
+- 🏷️ Branches and tags displayed on commits
+- 🔍 Click any commit to inspect details
+- 🎯 Zoom controls for large histories
+- 📊 Shows merged branches and relationships
 
-### 📦 **Shelves - Stash with Style**
+**Git Log - Search & Investigate**  
+Repository timeline with powerful filtering and operations.
+- 🔎 Filter commits by message across entire history
+- 🎨 Author color-coding
+- 📜 Load more commits on demand (50 at a time)
+- 🍒 Cherry-pick to current branch
+- 🔄 Revert in new branch (safe)
+- 🌿 Create branches from any commit
 
-WebStorm-inspired stash management. Save your work-in-progress changes with meaningful names.
+**Git Operations (Reflog) - Time Travel**  
+Every action you've taken, visualized with icons. Jump to any point in history.
+- 📝 Commits • 🌿 Checkouts • ☁️ Pulls • 🔀 Merges • 📚 Rebases • ❌ Resets
 
-- ✍️ **Named stashes** - no more "stash@{0}" confusion
-- 👁️ **Preview changes** - see what's in each shelf before applying
-- 📊 **File counts** - know how much is stashed
-- ⚠️ **Smart warnings** - won't let you lose work
-- 🗂️ **Include untracked** - stash those new files too
+### 📦 **Shelves - WebStorm-Style Stash Management**
 
-### 🌿 **Branches - Your Way**
+Save your WIP changes with meaningful names. No more "stash@{0}" confusion.
 
-Tired of seeing everyone's branches? Filter to show only what matters to you.
+- ✍️ **Named stashes** - "WIP: login form" beats "stash@{0}"
+- 👁️ **Preview changes** - see diffs before applying
+- 📊 **File counts** - know what's in each shelf
+- ⚠️ **Smart warnings** - prevents data loss
+- 🗂️ **Include untracked files** - stash everything
+- 🔄 **Apply or Pop** - your choice
 
-- 👤 **"My Branches" filter** - one click to see only yours
-- 🔍 **Filter by any author** - focus on specific team members
-- 🎨 **Color-coded by author** - visual organization
-- ✓ **Current branch** highlighted
-- ☁️ **Remote branches** with smart checkout
-- ➕ **Create & delete** branches visually
-- 📅 **Sorted by activity** - recent work first
+### 🌿 **Branch Management**
 
-### 📊 **Git Log - Repository Timeline**
+Work efficiently with team repositories. Focus on what matters.
 
-View your repository's recent history and perform advanced Git operations without typing commands.
-
-- 🎨 **Author colors** throughout
-- 🔄 **Revert in new branch** - safe commit reversal
-- 🍒 **Cherry-pick** with conflict detection
-- 🌿 **Create branches** from any commit
-- ⏪ **Checkout** to any point in history
-- 🛡️ **Uncommitted changes** warnings
-
-### 🔄 **Git Operations - Time Travel**
-
-View your Git reflog (every action you've taken) with beautiful icons and descriptions.
-
-- 📝 Commits
-- 🌿 Checkouts  
-- ☁️ Pulls
-- 🔀 Merges
-- 📚 Rebases
-- ❌ Resets
-- 🍒 Cherry-picks
-
-Jump back to any point in your repository's history with one click.
+- 👤 **My Branches filter** - hide team noise
+- 🔍 **Filter by author** - track specific developers
+- 📌 **Pin important branches** - persistent across sessions
+- 🎨 **Color-coded** - same author, same color
+- ☁️ **Remote branch checkout** - one click
+- ➕ **Create & delete** visually
+- 📅 **Sorted by activity** - recent first
 
 ## 🎨 Why GitMaster?
 
-**🌈 Author Color-Coding Everywhere**  
-The same author gets the same color across File History, Branches, and Git Log. Spot who did what instantly.
+**🔍 Built for Code Investigation**  
+Find when bugs were introduced, who changed what, and why. Filter, search, and visualize your way to answers.
 
-**🎭 Theme-Aware**  
-Works beautifully in both light and dark themes. Colors automatically adapt.
+**📦 WebStorm-Style Shelves**  
+Named stashes that actually make sense. Save WIP work with context, not cryptic stash@{0} references.
 
-**🖱️ Mouse-Driven Workflow**  
-Stop memorizing Git commands. Everything is point-and-click.
+**🌈 Author Color-Coding**  
+Same author = same color everywhere. Spot patterns across File History, Branches, Git Log, and Graph instantly.
+
+**🖱️ Visual & Interactive**  
+Click to explore. Right-click for operations. No terminal commands to memorize.
 
 **🛡️ Safe by Default**  
-Warns before destructive operations. Validates inputs. Shows what will happen.
+Warns before destructive actions. Detects conflicts. Validates inputs. Shows what will happen.
 
 ## 🚀 Quick Start
 
@@ -88,34 +88,35 @@ Warns before destructive operations. Validates inputs. Shows what will happen.
 
 > **💡 Tip:** No configuration needed. GitMaster works out of the box with any Git repository.
 
-## 📖 Common Workflows
+## 📖 Investigation Workflows
 
-### 🔍 "When was this line changed?"
-1. Open the file
-2. Click a commit in File History
-3. See the exact diff with that change highlighted
+### 🔍 "When did this bug get introduced?"
+1. Open the buggy file → File History
+2. Filter commits by keywords (e.g., "auth")
+3. Click commits to see syntax-highlighted diffs
+4. Find the culprit commit
 
-### 📦 "Save my work but switch branches"
-1. Click **+** in Shelves
-2. Name it (e.g., "WIP: login feature")
-3. Switch branches freely
-4. Come back and click **Pop** to restore
+### 🌳 "How did these branches merge?"
+1. Git Log → Click Git Graph icon
+2. See visual branch flow and merge points
+3. Click any commit to inspect details
+4. Zoom in/out for clarity
 
-### 🌿 "Show me only my branches"
-1. Expand Branches
-2. Click the **👤** (My Branches) icon
-3. Work without distraction from 50 team branches
+### 🕵️ "Who worked on authentication?"
+1. Branches → Filter by author
+2. Or Git Log → Filter by "auth"
+3. See all related commits color-coded
 
-### 🔄 "Undo that commit, but safely"
-1. Find the commit in Git Log
-2. Right-click → "Revert in New Branch"
-3. Name your revert branch
-4. Review the revert, then merge when ready
+### 📦 "Save WIP to investigate a bug"
+1. Shelves → Click **+**
+2. Name it "WIP: feature-x"
+3. Investigate and fix the bug
+4. Pop your shelf to resume work
 
-### 🍒 "I need just that one commit"
-1. Find it in Git Log
-2. Click "Cherry Pick"
-3. GitMaster applies it and warns if there are conflicts
+### 🍒 "Apply this fix to another branch"
+1. Find commit in Git Log or Graph
+2. Right-click → Cherry-pick
+3. Auto-conflict detection guides you
 
 ## 💻 System Requirements
 
@@ -127,47 +128,41 @@ That's it! GitMaster works with any Git repo - no additional setup required.
 
 ## ❓ FAQ
 
-**Q: Will this work with GitHub/GitLab/Bitbucket?**  
-A: Yes! GitMaster works with any Git repository, regardless of where it's hosted.
+**Q: How is this different from Git Graph extensions?**  
+A: GitMaster combines investigation tools (file history, filtering, author tracking), visual graph, AND WebStorm-style shelves in one extension. It's designed for investigating code, not just viewing commits.
 
-**Q: Does it support mono-repos?**  
-A: Absolutely. GitMaster works great with large repositories.
+**Q: Does it work with large repositories?**  
+A: Yes! Load-more functionality (50 commits at a time) and filtering keep it fast even with thousands of commits.
 
-**Q: Can I use it with Git worktrees?**  
-A: Yes, each worktree is treated as its own repository.
+**Q: Will this work with GitHub/GitLab/Bitbucket/Azure DevOps?**  
+A: Yes! Works with any Git repository, regardless of hosting.
 
-**Q: Does it work with VS Code's built-in Git features?**  
-A: Yes! GitMaster complements (doesn't replace) VS Code's Git features. Use both together.
+**Q: Does it replace VS Code's built-in Git?**  
+A: No, it complements it. Use GitMaster for investigation and history, use built-in Git for staging/committing.
 
-**Q: Is my Git history safe?**  
-A: Yes. GitMaster only reads your Git data for most operations. For write operations (like creating branches or stashing), it asks for confirmation first.
+**Q: What are "Shelves"?**  
+A: Named stashes, like WebStorm/IntelliJ. Much better than "stash@{0}" - you can name them "WIP: login form" or "trying-new-approach".
 
-## 🆚 GitMaster vs. Git Command Line
+## 🆚 GitMaster vs. Command Line
 
 | Feature | Command Line | GitMaster |
 |---------|-------------|-----------|
-| View file history | `git log --follow <file>` | Click file → see history |
-| Stash with name | `git stash push -m "name"` | Click + → type name |
-| Filter branches by author | `git branch -a \| grep ...` + bash scripting | Click 👤 icon |
-| Cherry-pick safely | `git cherry-pick` + check conflicts | Click commit → auto conflict detection |
-| View reflog | `git reflog` → parse output | Beautiful timeline with icons |
+| Investigate file history | `git log --follow <file>` + `git show` | Click file → see history with syntax diffs |
+| Filter commit history | `git log --grep="..."` | Type in filter box |
+| Visualize branch graph | `git log --graph --all` | Interactive graph with zoom & click |
+| Named stashes | `git stash push -m "name"` | Click + → type name |
+| Filter branches by author | `git branch -a \| grep ...` + scripting | Click 👤 icon |
+| View reflog | `git reflog` → parse text | Timeline with icons & operations |
 
-**GitMaster makes Git visual, intuitive, and safe.**
+**GitMaster makes Git investigation visual, fast, and safe.**
 
 ## 🐛 Found a Bug?
 
-Please [open an issue](https://github.com/yourusername/gitmaster/issues) with:
-- What you were trying to do
-- What happened instead
-- Your VS Code version
-- Your Git version (`git --version`)
+[Open an issue](https://github.com/razyahkovnia/gitmaster/issues) with: what you tried, what happened, VS Code version, Git version.
 
 ## 🌟 Love GitMaster?
 
-- ⭐ **Star** the repository
-- ✍️ **Leave a review** on the marketplace
-- 📢 **Tell your team** about it
-- 🐦 **Tweet** about your favorite feature
+⭐ Star on [GitHub](https://github.com/razyahkovnia/gitmaster) • ✍️ [Leave a review](https://marketplace.visualstudio.com/items?itemName=razyahkovnia.gitmaster&ssr=false#review-details) • 📢 Tell your team
 
 ## 📝 License
 
@@ -177,10 +172,10 @@ MIT License - Free to use in personal and commercial projects.
 
 <div align="center">
 
-**Made with ❤️ for developers who love Git**
+**Made with ❤️ for code investigators and Git power users**
 
-*Because visual Git is better Git*
+*Because understanding your codebase shouldn't require a terminal degree*
 
-[Report Bug](https://github.com/yourusername/gitmaster/issues) • [Request Feature](https://github.com/yourusername/gitmaster/issues) • [Discussions](https://github.com/yourusername/gitmaster/discussions)
+[Report Bug](https://github.com/razyahkovnia/gitmaster/issues) • [Request Feature](https://github.com/razyahkovnia/gitmaster/issues)
 
 </div>

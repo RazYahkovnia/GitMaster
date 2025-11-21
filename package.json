@@ -1,8 +1,8 @@
 {
     "name": "gitmaster",
     "displayName": "GitMaster",
-    "description": "Advanced Git visualization with file history, branches, shelves, and commit management",
-    "version": "0.0.7",
+    "description": "Git investigation tools with visual history, graph, named stashes (shelves), and author tracking. Find when bugs were introduced, understand code changes, and manage WIP work efficiently.",
+    "version": "0.0.8",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -16,13 +16,25 @@
     "homepage": "https://github.com/razyahkovnia/gitmaster#readme",
     "keywords": [
         "git",
+        "investigation",
         "history",
+        "diff",
         "branch",
         "commit",
         "stash",
         "shelves",
         "reflog",
-        "visualization"
+        "visualization",
+        "graph",
+        "timeline",
+        "cherry-pick",
+        "revert",
+        "author",
+        "blame",
+        "log",
+        "webstorm",
+        "gitkraken",
+        "sourcetree"
     ],
     "icon": "resources/gitmaster-icon-128.png",
     "engines": {
