@@ -8,6 +8,9 @@ to continue when Cherry-pick conflicts are fixed.
 3. Add option to copy commit hash
 4. Add option to open commit details in GitHub
 
+## File History Section
+1. Add option to see who is the expert about this file? - meaning seeing the top 3 developers worked on this file
+can be done by counting the amount of lines changes each developer did in that file.
 
 
 ## General
