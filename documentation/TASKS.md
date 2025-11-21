@@ -13,9 +13,14 @@ to continue when Cherry-pick conflicts are fixed.
 can be done by counting the amount of lines changes each developer did in that file.
 
 
+## Shelves Section
+1. Option to Shelve a specific section in a file
+
 ## General
 
 1. Support other platforms except GitHub
 2. Add Git Blame line on each line when coding
+3. Add option to compare branches, commit hashes, and HEAD~NUMBER
+4. Having an option to remove file from Git History
 
 ## Rebase Section
