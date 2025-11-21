@@ -119,6 +119,11 @@
                 "icon": "$(clear-all)"
             },
             {
+                "command": "gitmaster.showFileExperts",
+                "title": "Show File Experts",
+                "icon": "$(person)"
+            },
+            {
                 "command": "gitmaster.showCommitDiff",
                 "title": "Show Commit Details"
             },
@@ -357,6 +362,11 @@
                     "command": "gitmaster.clearFileHistoryFilter",
                     "when": "view == gitmaster.fileHistory",
                     "group": "navigation@2"
+                },
+                {
+                    "command": "gitmaster.showFileExperts",
+                    "when": "view == gitmaster.fileHistory",
+                    "group": "navigation@3"
                 },
                 {
                     "command": "gitmaster.refreshFileHistory",
@@ -626,6 +636,7 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
+        "build": "npm run compile",
         "watch": "tsc -watch -p ./",
         "pretest": "npm run compile",
         "lint": "eslint src --ext ts",

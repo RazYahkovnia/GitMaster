@@ -69,7 +69,7 @@ export function deactivate() {
 function initializeServices(context: vscode.ExtensionContext): void {
     gitService = new GitService();
     diffService = new DiffService(gitService);
-    fileHistoryProvider = new FileHistoryProvider(gitService);
+    fileHistoryProvider = new FileHistoryProvider(gitService, context);
     commitDetailsProvider = new CommitDetailsProvider(gitService);
     shelvesProvider = new ShelvesProvider(gitService);
     reflogProvider = new ReflogProvider(gitService);
@@ -160,6 +160,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const clearFileHistoryFilterCommand = vscode.commands.registerCommand(
         'gitmaster.clearFileHistoryFilter',
         () => fileHistoryProvider.clearMessageFilter()
+    );
+
+    const showFileExpertsCommand = vscode.commands.registerCommand(
+        'gitmaster.showFileExperts',
+        async () => await fileHistoryProvider.showFileExperts()
     );
 
     // Show commit details command
@@ -461,6 +466,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshCommand,
         filterFileHistoryByMessageCommand,
         clearFileHistoryFilterCommand,
+        showFileExpertsCommand,
         showCommitDiffCommand,
         showRepositoryCommitDetailsCommand,
         showFileDiffCommand,

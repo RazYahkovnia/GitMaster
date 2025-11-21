@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { GitService } from '../services/gitService';
 import { CommitInfo } from '../types/git';
 import { getAuthorColor } from '../utils/colorUtils';
 import { MessageFilter } from '../utils/filterUtils';
+import { FileExpertsView } from '../views/fileExpertsView';
 
 export class CommitTreeItem extends vscode.TreeItem {
     constructor(
@@ -48,8 +50,14 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
 
     private currentFilePath: string | undefined;
     private messageFilter = new MessageFilter();
+    private fileExpertsView: FileExpertsView;
 
-    constructor(private gitService: GitService) { }
+    constructor(
+        private gitService: GitService,
+        private context: vscode.ExtensionContext
+    ) {
+        this.fileExpertsView = new FileExpertsView(context, gitService);
+    }
 
     refresh(filePath?: string): void {
         if (filePath) {
@@ -149,6 +157,23 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
      */
     hasFilter(): boolean {
         return this.messageFilter.isActive();
+    }
+
+    /**
+     * Show top contributors/experts for the current file
+     */
+    async showFileExperts(): Promise<void> {
+        if (!this.currentFilePath) {
+            vscode.window.showInformationMessage('No file is currently open in the history view');
+            return;
+        }
+
+        try {
+            await this.fileExpertsView.show(this.currentFilePath);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to get file experts: ${error}`);
+            console.error('Error showing file experts:', error);
+        }
     }
 }
 
