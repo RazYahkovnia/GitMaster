@@ -143,6 +143,15 @@ A: No, it complements it. Use GitMaster for investigation and history, use built
 **Q: What are "Shelves"?**  
 A: Named stashes, like WebStorm/IntelliJ. Much better than "stash@{0}" - you can name them "WIP: login form" or "trying-new-approach".
 
+**Q: I reset my branch and lost my changes. Can GitMaster help me recover them?**  
+A: Yes! If you committed your changes before resetting:
+1. Open **Git Operations** (reflog) - it shows every commit you've made, even "lost" ones
+2. Scroll through and click commits to see changes in the **Commit Details** section
+3. Once you find your lost commit, right-click → **Create Branch from Commit**
+4. Optional: Use **Interactive Rebase** section to rebase your recovered branch onto master
+
+Git never truly deletes committed changes - reflog keeps them for ~90 days. GitMaster makes finding and recovering them visual and easy.
+
 ## 🆚 GitMaster vs. Command Line
 
 | Feature | Command Line | GitMaster |
