@@ -627,8 +627,8 @@
         "keybindings": [
             {
                 "command": "gitmaster.copyRemoteLineUrl",
-                "key": "ctrl+shift+alt+c",
-                "mac": "cmd+shift+alt+c",
+                "key": "ctrl+shift+l",
+                "mac": "cmd+shift+l",
                 "when": "editorTextFocus"
             }
         ]
