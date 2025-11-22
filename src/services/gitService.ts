@@ -950,7 +950,7 @@ export class GitService {
             // Get commits from current branch (HEAD) only, with branch/tag decorations
             // Use null byte as delimiter to avoid issues with | in commit messages
             const { stdout } = await execAsync(
-                `git log HEAD --format="%H%x00%h%x00%s%x00%an%x00%ad%x00%P%x00%D%x00" --date=short -n ${limit}`,
+                `git log HEAD --format="%H%x00%h%x00%s%x00%an%x00%ae%x00%ad%x00%P%x00%D%x00" --date=short -n ${limit}`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 
@@ -959,25 +959,31 @@ export class GitService {
             }
 
             const commits: any[] = [];
-            const lines = stdout.trim().split('\n');
+            const rawCommits = stdout.split('\x00\n');
 
-            for (const line of lines) {
-                const parts = line.split('\x00');
-                if (parts.length >= 7) {
-                    const [hash, shortHash, message, author, date, parentsStr, refsStr] = parts;
+            for (const rawCommit of rawCommits) {
+                if (!rawCommit.trim()) continue;
+
+                const parts = rawCommit.split('\x00');
+                // Expected parts: hash, shortHash, message, author, email, date, parents, refs
+                if (parts.length >= 8) {
+                    const hash = parts[0];
+                    const shortHash = parts[1];
+                    const message = parts[2];
+                    const author = parts[3];
+                    const email = parts[4];
+                    const date = parts[5];
+                    const parents = parts[6] ? parts[6].split(' ') : [];
+                    const refs = parts[7] ? parts[7].split(', ') : [];
 
                     // Skip stash entries (WIP on, index on)
                     if (message.startsWith('WIP on ') || message.startsWith('index on ')) {
                         continue;
                     }
 
-                    const parents = parentsStr.trim() ? parentsStr.trim().split(' ') : [];
-
-                    // Parse refs (branches, tags)
-                    const refs = refsStr ? refsStr.split(',').map(r => r.trim()) : [];
                     const branches = refs.filter(r =>
-                        r.startsWith('HEAD ->') ||
-                        (!r.startsWith('tag:') && !r.includes('/'))
+                        r.includes('HEAD') ||
+                        (!r.startsWith('tag: ') && !r.includes('origin/'))
                     ).map(r => r.replace('HEAD -> ', ''));
                     const tags = refs.filter(r => r.startsWith('tag:')).map(r => r.replace('tag: ', ''));
 
@@ -986,6 +992,7 @@ export class GitService {
                         shortHash,
                         message,
                         author,
+                        email,
                         date,
                         parents,
                         branches,
