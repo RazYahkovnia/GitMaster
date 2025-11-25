@@ -23,4 +23,13 @@ can be done by counting the amount of lines changes each developer did in that f
 3. Add option to compare branches, commit hashes, and HEAD~NUMBER
 4. Having an option to remove file from Git History
 
+## Completed Features
+
+### Git Worktrees
+- [x] View list of worktrees (Main, Current, Linked)
+- [x] Create new worktree (folder & branch)
+- [x] Open worktree in new window
+- [x] Remove worktree (with safety checks)
+- [x] Prune stale worktrees
+
 ## Rebase Section

@@ -155,6 +155,7 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
         pinned.delete(branchName);
         await this.savePinnedBranches(pinned);
         this.refresh();
+
     }
 
     /**

@@ -151,3 +151,19 @@ export interface RebaseState {
     conflictMessage?: string;
 }
 
+/**
+ * Information about a git worktree
+ */
+export interface GitWorktree {
+    /** Absolute path to the worktree */
+    path: string;
+    /** Commit hash or HEAD reference */
+    head: string;
+    /** Branch name (if detached, specific status) */
+    branch: string;
+    /** Whether this is the main worktree */
+    isMain: boolean;
+    /** Whether this is the currently opened worktree */
+    isCurrent: boolean;
+}
+

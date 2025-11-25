@@ -99,6 +99,12 @@
                     "name": "Interactive Rebase (Beta)",
                     "contextualTitle": "Interactive Rebase",
                     "visibility": "collapsed"
+                },
+                {
+                    "id": "gitmaster.worktrees",
+                    "name": "Worktrees",
+                    "contextualTitle": "Git Worktrees",
+                    "visibility": "collapsed"
                 }
             ]
         },
@@ -349,6 +355,31 @@
                 "command": "gitmaster.resetRebase",
                 "title": "Reset Rebase Configuration",
                 "icon": "$(discard)"
+            },
+            {
+                "command": "gitmaster.addWorktree",
+                "title": "Add Worktree",
+                "icon": "$(add)"
+            },
+            {
+                "command": "gitmaster.removeWorktree",
+                "title": "Remove Worktree",
+                "icon": "$(trash)"
+            },
+            {
+                "command": "gitmaster.openWorktree",
+                "title": "Open Worktree",
+                "icon": "$(folder-opened)"
+            },
+            {
+                "command": "gitmaster.pruneWorktrees",
+                "title": "Prune Worktrees",
+                "icon": "$(clear-all)"
+            },
+            {
+                "command": "gitmaster.refreshWorktrees",
+                "title": "Refresh Worktrees",
+                "icon": "$(refresh)"
             }
         ],
         "menus": {
@@ -462,6 +493,21 @@
                     "command": "gitmaster.refreshRebase",
                     "when": "view == gitmaster.rebase",
                     "group": "navigation@5"
+                },
+                {
+                    "command": "gitmaster.addWorktree",
+                    "when": "view == gitmaster.worktrees",
+                    "group": "navigation@1"
+                },
+                {
+                    "command": "gitmaster.refreshWorktrees",
+                    "when": "view == gitmaster.worktrees",
+                    "group": "navigation@2"
+                },
+                {
+                    "command": "gitmaster.pruneWorktrees",
+                    "when": "view == gitmaster.worktrees",
+                    "group": "navigation@3"
                 }
             ],
             "view/item/context": [
@@ -608,6 +654,21 @@
                 {
                     "command": "gitmaster.rewordCommit",
                     "when": "view == gitmaster.rebase && viewItem == rebaseCommit",
+                    "group": "1_actions"
+                },
+                {
+                    "command": "gitmaster.openWorktree",
+                    "when": "view == gitmaster.worktrees && (viewItem == worktreeMain || viewItem == worktreeLinked)",
+                    "group": "inline@1"
+                },
+                {
+                    "command": "gitmaster.removeWorktree",
+                    "when": "view == gitmaster.worktrees && viewItem == worktreeLinked",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "gitmaster.removeWorktree",
+                    "when": "view == gitmaster.worktrees && viewItem == worktreeLinked",
                     "group": "1_actions"
                 }
             ],

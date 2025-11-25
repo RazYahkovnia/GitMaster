@@ -8,12 +8,14 @@ import { ReflogProvider } from './providers/reflogProvider';
 import { RepositoryLogProvider } from './providers/repositoryLogProvider';
 import { BranchesProvider } from './providers/branchesProvider';
 import { RebaseProvider } from './providers/rebaseProvider';
+import { WorktreesProvider } from './providers/worktreesProvider';
 import { CommitCommands } from './commands/commitCommands';
 import { StashCommands } from './commands/stashCommands';
 import { ReflogCommands } from './commands/reflogCommands';
 import { RepositoryLogCommands } from './commands/repositoryLogCommands';
 import { BranchCommands } from './commands/branchCommands';
 import { RebaseCommands } from './commands/rebaseCommands';
+import { WorktreeCommands } from './commands/worktreeCommands';
 import { GitGraphView } from './views/gitGraphView';
 
 // Global service instances
@@ -26,12 +28,14 @@ let reflogProvider: ReflogProvider;
 let repositoryLogProvider: RepositoryLogProvider;
 let branchesProvider: BranchesProvider;
 let rebaseProvider: RebaseProvider;
+let worktreesProvider: WorktreesProvider;
 let commitCommands: CommitCommands;
 let stashCommands: StashCommands;
 let reflogCommands: ReflogCommands;
 let repositoryLogCommands: RepositoryLogCommands;
 let branchCommands: BranchCommands;
 let rebaseCommands: RebaseCommands;
+let worktreeCommands: WorktreeCommands;
 let gitGraphView: GitGraphView;
 
 /**
@@ -76,12 +80,14 @@ function initializeServices(context: vscode.ExtensionContext): void {
     repositoryLogProvider = new RepositoryLogProvider(gitService);
     branchesProvider = new BranchesProvider(gitService, context);
     rebaseProvider = new RebaseProvider(gitService);
+    worktreesProvider = new WorktreesProvider(gitService);
     commitCommands = new CommitCommands(gitService, diffService, commitDetailsProvider);
     stashCommands = new StashCommands(gitService, diffService, shelvesProvider);
     reflogCommands = new ReflogCommands(gitService, reflogProvider, commitDetailsProvider);
     repositoryLogCommands = new RepositoryLogCommands(gitService, repositoryLogProvider);
     branchCommands = new BranchCommands(gitService, branchesProvider);
     rebaseCommands = new RebaseCommands(gitService, rebaseProvider, commitDetailsProvider);
+    worktreeCommands = new WorktreeCommands(gitService, worktreesProvider);
     gitGraphView = new GitGraphView(context, gitService);
 }
 
@@ -131,6 +137,12 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         showCollapseAll: false
     });
 
+    // Worktrees tree view
+    const worktreesTreeView = vscode.window.createTreeView('gitmaster.worktrees', {
+        treeDataProvider: worktreesProvider,
+        showCollapseAll: false
+    });
+
     context.subscriptions.push(
         fileHistoryTreeView,
         commitDetailsTreeView,
@@ -138,7 +150,8 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         reflogTreeView,
         repositoryLogTreeView,
         branchesTreeView,
-        rebaseTreeView
+        rebaseTreeView,
+        worktreesTreeView
     );
 }
 
@@ -425,6 +438,32 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (treeItem) => await rebaseCommands.showCommitDetails(treeItem)
     );
 
+    // Worktree commands
+    const addWorktreeCommand = vscode.commands.registerCommand(
+        'gitmaster.addWorktree',
+        async () => await worktreeCommands.addWorktree()
+    );
+
+    const removeWorktreeCommand = vscode.commands.registerCommand(
+        'gitmaster.removeWorktree',
+        async (item) => await worktreeCommands.removeWorktree(item)
+    );
+
+    const openWorktreeCommand = vscode.commands.registerCommand(
+        'gitmaster.openWorktree',
+        async (item) => await worktreeCommands.openWorktree(item)
+    );
+
+    const pruneWorktreesCommand = vscode.commands.registerCommand(
+        'gitmaster.pruneWorktrees',
+        async () => await worktreeCommands.pruneWorktrees()
+    );
+
+    const refreshWorktreesCommand = vscode.commands.registerCommand(
+        'gitmaster.refreshWorktrees',
+        () => worktreeCommands.refresh()
+    );
+
     // Copy remote line URL command
     const copyRemoteLineUrlCommand = vscode.commands.registerCommand(
         'gitmaster.copyRemoteLineUrl',
@@ -515,6 +554,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         changeBaseBranchCommand,
         resetRebaseCommand,
         showRebaseCommitDetailsCommand,
+        addWorktreeCommand,
+        removeWorktreeCommand,
+        openWorktreeCommand,
+        pruneWorktreesCommand,
+        refreshWorktreesCommand,
         copyRemoteLineUrlCommand
     );
 }
@@ -546,6 +590,7 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
             const repoRoot = await gitService.getRepoRoot(event.document.uri.fsPath);
             if (repoRoot) {
                 await rebaseProvider.setRepoRoot(repoRoot);
+                worktreesProvider.refresh();
             }
         }
     });
@@ -558,6 +603,7 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
             const repoRoot = await gitService.getRepoRoot(vscode.window.activeTextEditor.document.uri.fsPath);
             if (repoRoot) {
                 await rebaseProvider.setRepoRoot(repoRoot);
+                worktreesProvider.refresh();
             }
         }
     });
@@ -567,6 +613,7 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
             const repoRoot = await gitService.getRepoRoot(vscode.window.activeTextEditor.document.uri.fsPath);
             if (repoRoot) {
                 await rebaseProvider.setRepoRoot(repoRoot);
+                worktreesProvider.refresh();
             }
         }
     });
@@ -605,6 +652,7 @@ async function initializeFromWorkspace(): Promise<void> {
                 repositoryLogProvider.setRepoRoot(repoRoot);
                 branchesProvider.setRepoRoot(repoRoot);
                 await rebaseProvider.setRepoRoot(repoRoot);
+                worktreesProvider.setRepoRoot(repoRoot);
                 return;
             }
         }
@@ -617,6 +665,7 @@ async function initializeFromWorkspace(): Promise<void> {
     repositoryLogProvider.setRepoRoot(undefined);
     branchesProvider.setRepoRoot(undefined);
     await rebaseProvider.setRepoRoot(undefined);
+    worktreesProvider.setRepoRoot(undefined);
 }
 
 /**
@@ -634,6 +683,7 @@ async function updateFileHistory(editor: vscode.TextEditor | undefined): Promise
         repositoryLogProvider.setRepoRoot(repoRoot || undefined);
         branchesProvider.setRepoRoot(repoRoot || undefined);
         await rebaseProvider.setRepoRoot(repoRoot || undefined);
+        worktreesProvider.setRepoRoot(repoRoot || undefined);
     } else {
         // No active editor, fall back to workspace initialization
         await initializeFromWorkspace();

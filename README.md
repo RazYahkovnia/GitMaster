@@ -39,6 +39,14 @@ Repository timeline with powerful filtering and operations.
 Every action you've taken, visualized with icons. Jump to any point in history.
 - 📝 Commits • 🌿 Checkouts • ☁️ Pulls • 🔀 Merges • 📚 Rebases • ❌ Resets
 
+### 🏗️ **Git Worktrees - Multi-Context Workflow**
+
+Work on multiple branches simultaneously without switching contexts or stashing.
+- 📂 **Manage Worktrees** - View, create, and remove worktrees visually
+- 🚀 **Quick Switch** - Open any worktree in a new window with one click
+- 🛡️ **Safe Management** - Prevents accidental deletion of main or active worktrees
+- 🧹 **Auto-Prune** - Clean up stale worktree entries easily
+
 ### 📦 **Shelves - WebStorm-Style Stash Management**
 
 Save your WIP changes with meaningful names. No more "stash@{0}" confusion.
@@ -118,6 +126,13 @@ Warns before destructive actions. Detects conflicts. Validates inputs. Shows wha
 2. Right-click → Cherry-pick
 3. Auto-conflict detection guides you
 
+### 🏗️ "Work on a hotfix while in the middle of a feature"
+1. Worktrees → Click **+**
+2. Name folder "hotfix-login" and branch "hotfix/login-bug"
+3. Click the folder icon to open a new window
+4. Fix bug in isolation without touching your current work
+5. Close window and remove worktree when done
+
 ## 💻 System Requirements
 
 - **Git** installed and in your PATH
@@ -162,6 +177,7 @@ Git never truly deletes committed changes - reflog keeps them for ~90 days. GitM
 | Named stashes | `git stash push -m "name"` | Click + → type name |
 | Filter branches by author | `git branch -a \| grep ...` + scripting | Click 👤 icon |
 | View reflog | `git reflog` → parse text | Timeline with icons & operations |
+| Manage worktrees | `git worktree list/add/remove` | Visual list, one-click open & create |
 
 **GitMaster makes Git investigation visual, fast, and safe.**
 
