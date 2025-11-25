@@ -34,7 +34,11 @@
         "log",
         "webstorm",
         "gitkraken",
-        "sourcetree"
+        "sourcetree",
+        "Worktrees",
+        "vcs",
+        "devtools",
+        "git-investigation"
     ],
     "icon": "resources/gitmaster-icon-128.png",
     "engines": {
