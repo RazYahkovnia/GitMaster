@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Git investigation tools with visual history, graph, named stashes (shelves), and author tracking. Find when bugs were introduced, understand code changes, and manage WIP work efficiently.",
-    "version": "0.0.9",
+    "version": "0.0.11",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -16,6 +16,7 @@
     "homepage": "https://github.com/razyahkovnia/gitmaster#readme",
     "keywords": [
         "git",
+        "git master",
         "investigation",
         "history",
         "diff",
@@ -96,7 +97,8 @@
                     "id": "gitmaster.reflog",
                     "name": "Git Operations",
                     "contextualTitle": "Git Operations History",
-                    "visibility": "collapsed"
+                    "visibility": "collapsed",
+                    "when": "config.gitmaster.views.showGitOperations"
                 },
                 {
                     "id": "gitmaster.rebase",
@@ -386,6 +388,21 @@
                 "icon": "$(refresh)"
             }
         ],
+        "configuration": {
+            "title": "GitMaster",
+            "properties": {
+                "gitmaster.blame.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable inline Git blame annotations."
+                },
+                "gitmaster.views.showGitOperations": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Show Git Operations (Reflog) view in the sidebar."
+                }
+            }
+        },
         "menus": {
             "view/title": [
                 {

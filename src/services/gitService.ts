@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import * as path from 'path';
-import { CommitInfo, ChangedFile, StashInfo, ReflogEntry, RepositoryCommit, BranchInfo } from '../types/git';
+import { CommitInfo, ChangedFile, StashInfo, ReflogEntry, RepositoryCommit, BranchInfo, BlameInfo } from '../types/git';
 
 const execAsync = promisify(exec);
 
@@ -114,6 +114,173 @@ export class GitService {
             console.error('Error getting commit info:', error);
             return null;
         }
+    }
+
+    /**
+     * Get blame information for a specific line
+     */
+    async getBlameForLine(filePath: string, lineNumber: number, commitHash?: string): Promise<BlameInfo | null> {
+        try {
+            // Handle git scheme URIs (from diff view)
+            let actualFilePath = filePath;
+            let blameCommitHash = commitHash;
+
+            if (filePath.startsWith('git:')) {
+                // Parse git URI to get real file path and commit
+                // Format: git:/path/to/file?{"path":"/path/to/file","ref":"commit-hash"}
+                try {
+                    const uri = require('vscode').Uri.parse(filePath);
+                    if (uri.query) {
+                        const query = JSON.parse(uri.query);
+                        actualFilePath = query.path;
+                        // If we're looking at an older version, blame that version
+                        if (query.ref && query.ref !== '' && query.ref !== '~') {
+                            blameCommitHash = query.ref;
+                        }
+                    } else {
+                        actualFilePath = uri.fsPath;
+                    }
+                } catch (e) {
+                    // Fallback to fsPath if parsing fails
+                    actualFilePath = filePath;
+                }
+            } else if (filePath.startsWith('gitmaster-diff:')) {
+                // Handle gitmaster-diff scheme
+                try {
+                    const uri = require('vscode').Uri.parse(filePath);
+                    actualFilePath = uri.fsPath;
+
+                    // Extract commit hash from query
+                    if (uri.query) {
+                        // Handle potentially encoded query
+                        const rawQuery = uri.query;
+                        // Try plain base64 first
+                        let decoded = '';
+                        try {
+                            decoded = Buffer.from(rawQuery, 'base64').toString('utf-8');
+                        } catch {
+                            decoded = '';
+                        }
+
+                        // If that failed or didn't look like JSON, try decoding URI component first
+                        if (!decoded || !decoded.startsWith('{')) {
+                            try {
+                                const unencoded = decodeURIComponent(rawQuery);
+                                decoded = Buffer.from(unencoded, 'base64').toString('utf-8');
+                            } catch {
+                                // Keep previous decoded
+                            }
+                        }
+
+                        try {
+                            const data = JSON.parse(decoded);
+                            if (data && data.commit) {
+                                blameCommitHash = data.commit;
+                            }
+                        } catch {
+                            // Not JSON, assume legacy
+                        }
+                    }
+                } catch (e) {
+                    // Fallback
+                }
+            } else if (filePath.startsWith('file:')) {
+                // Handle file: scheme URIs properly
+                try {
+                    const uri = require('vscode').Uri.parse(filePath);
+                    actualFilePath = uri.fsPath;
+                } catch (e) {
+                    // Fallback if parsing fails
+                }
+            }
+
+            const repoRoot = await this.getRepoRoot(actualFilePath);
+            if (!repoRoot) {
+                return null;
+            }
+
+            // Get relative path for git command
+            const relativePath = path.relative(repoRoot, actualFilePath);
+
+            // If commitHash is provided, blame that specific commit
+            const revArgs = blameCommitHash ? `${blameCommitHash} ` : '';
+
+            // git blame --porcelain -L 12,12 file.ts
+            // lineNumber is 1-based
+            const { stdout } = await execAsync(
+                `git blame --porcelain -L ${lineNumber},${lineNumber} ${revArgs}-- "${relativePath}"`,
+                { cwd: repoRoot }
+            );
+
+            if (!stdout.trim()) {
+                return null;
+            }
+
+            // Parse porcelain output
+            const lines = stdout.trim().split('\n');
+            const hashLine = lines[0]; // first line contains hash
+            const hashParts = hashLine.split(' ');
+            const hash = hashParts[0];
+            const shortHash = hash.substring(0, 7);
+
+            let author = '';
+            let authorEmail = '';
+            let authorTimeStr = '';
+            let message = '';
+            let filename = '';
+
+            for (const line of lines) {
+                if (line.startsWith('author ')) {
+                    author = line.substring(7).trim();
+                } else if (line.startsWith('author-mail ')) {
+                    authorEmail = line.substring(12).trim().replace(/[<>]/g, '');
+                } else if (line.startsWith('author-time ')) {
+                    authorTimeStr = line.substring(12).trim();
+                } else if (line.startsWith('summary ')) {
+                    message = line.substring(8).trim();
+                } else if (line.startsWith('filename ')) {
+                    filename = line.substring(9).trim();
+                }
+            }
+
+            // Format date
+            const date = new Date(parseInt(authorTimeStr) * 1000);
+            const relativeDate = this.getRelativeDate(date);
+            const formattedDate = date.toLocaleDateString();
+
+            return {
+                hash,
+                shortHash,
+                author,
+                authorEmail,
+                date: formattedDate,
+                relativeDate,
+                message,
+                filename
+            };
+        } catch (error) {
+            // Ignore errors (e.g. line out of range, file not tracked)
+            return null;
+        }
+    }
+
+    private getRelativeDate(date: Date): string {
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+
+        const seconds = Math.floor(diff / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const months = Math.floor(days / 30);
+        const years = Math.floor(days / 365);
+
+        if (years > 0) return `${years} year${years > 1 ? 's' : ''} ago`;
+        if (months > 0) return `${months} month${months > 1 ? 's' : ''} ago`;
+        if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
+        if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        if (minutes > 0) return `${minutes} min${minutes > 1 ? 's' : ''} ago`;
+        return 'Just now';
     }
 
     /**
@@ -1668,7 +1835,7 @@ exit 0
                 // We need to be careful with path normalization
                 // On macOS /private/var... vs /var... can be tricky, so we use realpath if possible or just string compare
                 const normalizedWtPath = path.normalize(wtPath);
-                
+
                 // Usually the first worktree listed is the main one (bare repo or main worktree)
                 // A better check for main worktree might be checking if .git is a directory inside it vs a file
                 // But simply assuming the first one is main is common heuristic, 
@@ -1692,13 +1859,13 @@ exit 0
             let currentRealRoot = repoRoot;
             try {
                 currentRealRoot = fs.realpathSync(repoRoot);
-            } catch (e) {}
+            } catch (e) { }
 
             for (const wt of worktrees) {
                 let wtReal = wt.path;
                 try {
                     wtReal = fs.realpathSync(wt.path);
-                } catch (e) {}
+                } catch (e) { }
                 wt.isCurrent = (wtReal === currentRealRoot);
             }
 
@@ -1721,7 +1888,7 @@ exit 0
             const fs = await import('fs');
 
             let currentRealRoot = repoRoot;
-            try { currentRealRoot = fs.realpathSync(repoRoot); } catch (e) {}
+            try { currentRealRoot = fs.realpathSync(repoRoot); } catch (e) { }
 
             lines.forEach((line, index) => {
                 // Format: /path/to/wt  hash [branch]
@@ -1732,9 +1899,9 @@ exit 0
                     const head = parts[1];
                     const branchPart = parts.slice(2).join(' ');
                     const branch = branchPart.replace('[', '').replace(']', '');
-                    
+
                     let wtReal = wtPath;
-                    try { wtReal = fs.realpathSync(wtPath); } catch (e) {}
+                    try { wtReal = fs.realpathSync(wtPath); } catch (e) { }
 
                     worktrees.push({
                         path: wtPath,

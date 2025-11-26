@@ -167,3 +167,16 @@ export interface GitWorktree {
     isCurrent: boolean;
 }
 
+/**
+ * Information about a git blame entry
+ */
+export interface BlameInfo {
+    hash: string;
+    shortHash: string;
+    author: string;
+    authorEmail?: string;
+    date: string;
+    relativeDate: string;
+    message: string;
+    filename?: string;
+}

@@ -1,5 +1,19 @@
 # Change Log
 
+## [0.0.11] - 2025-11-27
+### ✨ New Features
+- **Inline Git Blame**: See who changed a line right in your editor.
+  - 👤 **Inline Annotations**: View author, relative time, and message for the current line.
+  - 🖼️ **Author Avatars**: Hover to see the contributor's avatar (Gravatar).
+  - 🖱️ **Interactive**: Click to view detailed commit info and full diff.
+  - 🔄 **History Navigation**: Works seamlessly in diff views to trace changes back in time.
+  - 🏷️ **Rename Tracking**: Correctly follows files through renames.
+  - ⚙️ **Configurable**: Toggle blame inline annotations via settings.
+
+### ⚙️ Configuration
+- **gitmaster.blame.enabled**: Toggle inline blame annotations (default: `true`).
+- **gitmaster.views.showGitOperations**: Toggle Git Operations (Reflog) view visibility (default: `true`).
+
 ## [0.0.10] - 2025-11-26
 ### ✨ New Features
 - **Git Worktrees Support**: Complete workflow for managing git worktrees.

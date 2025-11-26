@@ -38,7 +38,22 @@ export class DiffService {
             const title = this.getDiffTitle(relativePath, commit, oldPath, status);
             const leftPath = oldPath || relativePath;
             const rightPath = relativePath;
-            await this.openDiffView(leftContent, leftTitle, rightContent, rightTitle, title, leftPath, rightPath);
+            // We can try to pass absolute paths if possible, but we only have relative paths and repoRoot
+            const leftAbsolutePath = path.join(repoRoot, leftPath);
+            const rightAbsolutePath = path.join(repoRoot, rightPath);
+
+            await this.openDiffView(
+                leftContent,
+                leftTitle,
+                rightContent,
+                rightTitle,
+                title,
+                leftAbsolutePath,
+                rightAbsolutePath,
+                repoRoot,
+                parentCommit || undefined,
+                commit.hash
+            );
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show diff: ${error}`);
         }
@@ -138,15 +153,30 @@ export class DiffService {
         rightTitle: string,
         title: string,
         leftPath: string,
-        rightPath: string
+        rightPath: string,
+        repoRoot?: string,
+        leftCommit?: string,
+        rightCommit?: string
     ): Promise<void> {
-        // Use the actual file paths to enable syntax highlighting based on file extension
-        const leftUri = vscode.Uri.parse(`gitmaster-diff:/${leftPath}`).with({
-            query: Buffer.from(leftContent).toString('base64')
+        const leftData = {
+            content: leftContent,
+            commit: leftCommit
+        };
+
+        const rightData = {
+            content: rightContent,
+            commit: rightCommit
+        };
+
+        // Use vscode.Uri.file to properly handle paths (Windows/Unix), then change scheme
+        const leftUri = vscode.Uri.file(leftPath).with({
+            scheme: 'gitmaster-diff',
+            query: Buffer.from(JSON.stringify(leftData)).toString('base64')
         });
 
-        const rightUri = vscode.Uri.parse(`gitmaster-diff:/${rightPath}`).with({
-            query: Buffer.from(rightContent).toString('base64')
+        const rightUri = vscode.Uri.file(rightPath).with({
+            scheme: 'gitmaster-diff',
+            query: Buffer.from(JSON.stringify(rightData)).toString('base64')
         });
 
         const provider = new DiffContentProvider();
@@ -164,12 +194,25 @@ export class DiffService {
 /**
  * Content provider for diff views
  * Decodes base64 content from URI query parameters
+ * Handles both legacy (raw content) and new (JSON with metadata) formats
  */
 export class DiffContentProvider implements vscode.TextDocumentContentProvider {
     provideTextDocumentContent(uri: vscode.Uri): string {
         try {
             const base64Content = uri.query;
-            return Buffer.from(base64Content, 'base64').toString('utf-8');
+            const decoded = Buffer.from(base64Content, 'base64').toString('utf-8');
+
+            // Try to parse as JSON (new format)
+            try {
+                const data = JSON.parse(decoded);
+                if (data && typeof data.content === 'string') {
+                    return data.content;
+                }
+            } catch {
+                // Not JSON, assume legacy raw content
+            }
+
+            return decoded;
         } catch (error) {
             return '';
         }

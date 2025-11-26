@@ -19,9 +19,31 @@ export class CommitCommands {
      * Show detailed information about a commit
      * Displays commit details in sidebar and opens diff for the current file
      */
-    async showCommitDetails(commit: CommitInfo, filePath: string): Promise<void> {
+    async showCommitDetails(commit: CommitInfo & { path?: string }, filePath: string): Promise<void> {
         try {
-            const repoRoot = await this.gitService.getRepoRoot(filePath);
+            let actualFilePath = filePath;
+
+            // Handle URI strings (file:, git:, or gitmaster-diff: schemes)
+            if (filePath.startsWith('file:') || filePath.startsWith('git:') || filePath.startsWith('gitmaster-diff:')) {
+                try {
+                    const uri = vscode.Uri.parse(filePath);
+                    if (uri.scheme === 'git' && uri.query) {
+                        // Parse git URI to get real file path
+                        const query = JSON.parse(uri.query);
+                        actualFilePath = query.path;
+                    } else if (uri.scheme === 'gitmaster-diff') {
+                        // gitmaster-diff scheme uses absolute path in path component
+                        actualFilePath = uri.fsPath;
+                    } else {
+                        actualFilePath = uri.fsPath;
+                    }
+                } catch (e) {
+                    // Fallback to original path if parsing fails
+                    console.error('Error parsing URI in showCommitDetails:', e);
+                }
+            }
+
+            const repoRoot = await this.gitService.getRepoRoot(actualFilePath);
             if (!repoRoot) {
                 vscode.window.showErrorMessage('Not a git repository');
                 return;
@@ -33,8 +55,17 @@ export class CommitCommands {
             // Show the commit details view
             vscode.commands.executeCommand('setContext', 'gitmaster.commitSelected', true);
 
-            // Open diff for the current file
-            const relativePath = path.relative(repoRoot, filePath);
+            // Determine the path to use for diff
+            // If the commit object has a path property (from blame info), use that as it represents the historic path
+            let relativePath: string;
+            if (commit.path) {
+                // commit.path is likely relative to repo root (from git blame --porcelain)
+                relativePath = commit.path;
+            } else {
+                // Otherwise use the current file path
+                relativePath = path.relative(repoRoot, actualFilePath);
+            }
+
             const changedFiles = await this.gitService.getChangedFilesInCommit(commit.hash, repoRoot);
             const currentFile = this.findFileInCommit(changedFiles, relativePath);
 

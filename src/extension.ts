@@ -17,6 +17,7 @@ import { BranchCommands } from './commands/branchCommands';
 import { RebaseCommands } from './commands/rebaseCommands';
 import { WorktreeCommands } from './commands/worktreeCommands';
 import { GitGraphView } from './views/gitGraphView';
+import { BlameDecorator } from './decorators/blameDecorator';
 
 // Global service instances
 let gitService: GitService;
@@ -37,6 +38,7 @@ let branchCommands: BranchCommands;
 let rebaseCommands: RebaseCommands;
 let worktreeCommands: WorktreeCommands;
 let gitGraphView: GitGraphView;
+let blameDecorator: BlameDecorator;
 
 /**
  * Activate the GitMaster extension
@@ -89,6 +91,8 @@ function initializeServices(context: vscode.ExtensionContext): void {
     rebaseCommands = new RebaseCommands(gitService, rebaseProvider, commitDetailsProvider);
     worktreeCommands = new WorktreeCommands(gitService, worktreesProvider);
     gitGraphView = new GitGraphView(context, gitService);
+    blameDecorator = new BlameDecorator(gitService);
+    context.subscriptions.push(blameDecorator);
 }
 
 /**

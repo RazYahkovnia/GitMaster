@@ -10,6 +10,14 @@ Perfect for code investigators, reviewers, and developers who need to track down
 
 ### 🔍 **Git Investigation Tools**
 
+**Inline Git Blame - Context Where You Need It**
+See the history of any line of code directly in your editor.
+- 👤 **Who & When**: See author and relative time inline as you type.
+- 🖼️ **Rich Tooltip**: Hover to see the author's avatar, full message, and date.
+- 🖱️ **Interactive**: Click to open detailed commit view and see the full diff.
+- 🔄 **Smart Diff**: Works in comparison views to let you step back through history.
+- 🏷️ **Rename Aware**: Tracks file history even across renames.
+
 **File History - Track Every Change**  
 Open any file and see its complete commit history with syntax-highlighted diffs.
 - 🎨 Color-coded by author - spot patterns instantly
@@ -69,6 +77,18 @@ Work efficiently with team repositories. Focus on what matters.
 - ☁️ **Remote branch checkout** - one click
 - ➕ **Create & delete** visually
 - 📅 **Sorted by activity** - recent first
+
+## ⚙️ Configuration
+
+You can customize GitMaster in VS Code Settings (**Cmd+','** or **Ctrl+','**). Search for "GitMaster" to see all available options.
+
+**Inline Git Blame**
+- `gitmaster.blame.enabled` (default: `true`)  
+  Toggle inline Git blame annotations on/off.
+
+**Git Operations View**
+- `gitmaster.views.showGitOperations` (default: `true`)  
+  Toggle the Git Operations (Reflog) view in the sidebar.
 
 ## 🎨 Why GitMaster?
 
