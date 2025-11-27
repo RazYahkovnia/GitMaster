@@ -66,6 +66,8 @@ Save your WIP changes with meaningful names. No more "stash@{0}" confusion.
 - 🗂️ **Include untracked files** - stash everything
 - 🔄 **Apply or Pop** - your choice
 
+![GitMaster Shelves Guide](resources/git-master-guide.gif)
+
 ### 🌿 **Branch Management**
 
 Work efficiently with team repositories. Focus on what matters.
