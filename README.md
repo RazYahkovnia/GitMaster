@@ -18,6 +18,12 @@ See the history of any line of code directly in your editor.
 - 🔄 **Smart Diff**: Works in comparison views to let you step back through history.
 - 🏷️ **Rename Aware**: Tracks file history even across renames.
 
+**✨ Explain with AI - Understand Changes Instantly**  
+Don't just see the code changes—understand *why* they happened.
+- 🤖 **One-Click Analysis**: Click the sparkle icon in Commit Details.
+- 📋 **Auto-Copy**: Copies the commit message and full diff to your clipboard.
+- 🧠 **Context-Rich**: Prompts your AI assistant (Cursor, Copilot, etc.) to explain the "what" and "why" of the change.
+
 **File History - Track Every Change**  
 Open any file and see its complete commit history with syntax-highlighted diffs.
 - 🎨 Color-coded by author - spot patterns instantly
@@ -124,7 +130,7 @@ Warns before destructive actions. Detects conflicts. Validates inputs. Shows wha
 1. Open the buggy file → File History
 2. Filter commits by keywords (e.g., "auth")
 3. Click commits to see syntax-highlighted diffs
-4. Or use **Inline Blame**: Click any line to see the commit and diff, auto-scrolled to that line.
+4. **New**: Click "✨ Explain with AI" to get an instant summary of complex changes.
 5. Find the culprit commit
 
 ### 🌳 "How did these branches merge?"

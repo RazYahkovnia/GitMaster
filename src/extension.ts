@@ -16,6 +16,7 @@ import { RepositoryLogCommands } from './commands/repositoryLogCommands';
 import { BranchCommands } from './commands/branchCommands';
 import { RebaseCommands } from './commands/rebaseCommands';
 import { WorktreeCommands } from './commands/worktreeCommands';
+import { AICommands } from './commands/aiCommands';
 import { GitGraphView } from './views/gitGraphView';
 import { BlameDecorator } from './decorators/blameDecorator';
 
@@ -37,6 +38,7 @@ let repositoryLogCommands: RepositoryLogCommands;
 let branchCommands: BranchCommands;
 let rebaseCommands: RebaseCommands;
 let worktreeCommands: WorktreeCommands;
+let aiCommands: AICommands;
 let gitGraphView: GitGraphView;
 let blameDecorator: BlameDecorator;
 
@@ -90,6 +92,7 @@ function initializeServices(context: vscode.ExtensionContext): void {
     branchCommands = new BranchCommands(gitService, branchesProvider);
     rebaseCommands = new RebaseCommands(gitService, rebaseProvider, commitDetailsProvider);
     worktreeCommands = new WorktreeCommands(gitService, worktreesProvider);
+    aiCommands = new AICommands(gitService);
     gitGraphView = new GitGraphView(context, gitService);
     blameDecorator = new BlameDecorator(gitService);
     context.subscriptions.push(blameDecorator);
@@ -468,6 +471,27 @@ function registerCommands(context: vscode.ExtensionContext): void {
         () => worktreeCommands.refresh()
     );
 
+    // AI Commands
+    const explainCommitWithAICommand = vscode.commands.registerCommand(
+        'gitmaster.explainCommitWithAI',
+        async (commit) => {
+            let repoRoot: string | undefined;
+
+            // Fallback to current commit in provider if no argument provided
+            if (!commit && commitDetailsProvider.currentCommitInfo) {
+                commit = commitDetailsProvider.currentCommitInfo;
+                repoRoot = commitDetailsProvider.currentRepoRootPath;
+            } else if (commit) {
+                // Try to determine repo root for passed commit
+                if (vscode.window.activeTextEditor) {
+                    repoRoot = await gitService.getRepoRoot(vscode.window.activeTextEditor.document.uri.fsPath) || undefined;
+                }
+            }
+
+            await aiCommands.explainCommit(commit, repoRoot);
+        }
+    );
+
     // Copy remote line URL command
     const copyRemoteLineUrlCommand = vscode.commands.registerCommand(
         'gitmaster.copyRemoteLineUrl',
@@ -563,6 +587,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         openWorktreeCommand,
         pruneWorktreesCommand,
         refreshWorktreesCommand,
+        explainCommitWithAICommand,
         copyRemoteLineUrlCommand
     );
 }

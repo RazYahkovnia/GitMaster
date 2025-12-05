@@ -163,6 +163,11 @@
                 "icon": "$(link)"
             },
             {
+                "command": "gitmaster.explainCommitWithAI",
+                "title": "Explain with AI",
+                "icon": "$(sparkle)"
+            },
+            {
                 "command": "gitmaster.createShelf",
                 "title": "Create Shelf",
                 "icon": "$(add)"
@@ -407,6 +412,11 @@
             "view/title": [
                 {
                     "command": "gitmaster.copyCommitId",
+                    "when": "view == gitmaster.commitDetails && gitmaster.commitSelected",
+                    "group": "navigation"
+                },
+                {
+                    "command": "gitmaster.explainCommitWithAI",
                     "when": "view == gitmaster.commitDetails && gitmaster.commitSelected",
                     "group": "navigation"
                 },

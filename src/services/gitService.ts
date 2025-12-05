@@ -736,6 +736,24 @@ export class GitService {
     }
 
     /**
+     * Get the full diff of a specific commit
+     */
+    async getCommitDiff(commitHash: string, repoRoot: string): Promise<string> {
+        try {
+            // git show provides the commit message and the diff
+            const { stdout } = await execAsync(`git show ${commitHash}`, {
+                cwd: repoRoot,
+                maxBuffer: 10 * 1024 * 1024
+            });
+            return stdout;
+        } catch (error) {
+            // Fallback if git show fails or is too large, just return message
+            console.error('Error getting commit diff:', error);
+            return '';
+        }
+    }
+
+    /**
      * Check if any files have both staged and unstaged changes
      * Returns true if there are files that cannot be stashed with --staged
      */

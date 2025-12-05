@@ -1,6 +1,12 @@
 # Change Log
 
 ## [0.0.12] - 2025-12-05
+### ✨ New Features
+- **Explain with AI**: Investigate commits faster with AI.
+  - 🤖 **Context-Aware**: Automatically copies the commit message and full code diff to your clipboard.
+  - 🚀 **Universal Support**: Works with GitHub Copilot, Cursor AI, and ChatGPT.
+  - 🧠 **Smart Prompt**: Generates a prompt that asks for an explanation of "why" and "what" changed.
+
 ### 🚀 Improvements
 - **Inline Git Blame**: Clicking on blame annotation now opens the diff and automatically scrolls to the relevant line.
 - **Commit Details**: Added "Copy Commit ID" action to the view title for quick access.
