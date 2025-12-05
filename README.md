@@ -2,6 +2,8 @@
 
 > **Investigate your Git history like a detective. Manage stashes like a pro.**
 
+[**🌐 Visit Website**](https://git-master.com)
+
 Stop wrestling with Git commands. GitMaster brings powerful Git investigation tools and visual stash management (Shelves) directly into VS Code. Beautiful visualizations, author color-coding, and intuitive controls make understanding your codebase effortless.
 
 Perfect for code investigators, reviewers, and developers who need to track down changes, understand history, and manage work-in-progress efficiently.
@@ -230,6 +232,6 @@ MIT License - Free to use in personal and commercial projects.
 
 *Because understanding your codebase shouldn't require a terminal degree*
 
-[Report Bug](https://github.com/razyahkovnia/gitmaster/issues) • [Request Feature](https://github.com/razyahkovnia/gitmaster/issues)
+[Report Bug](https://github.com/razyahkovnia/gitmaster/issues) • [Request Feature](https://github.com/razyahkovnia/gitmaster/issues) • [🌐 Website](https://git-master.com)
 
 </div>
