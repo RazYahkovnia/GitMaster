@@ -141,7 +141,18 @@ export class CommitCommands {
     async copyCommitId(commitOrTreeItem: any): Promise<void> {
         try {
             // Handle both CommitInfo and CommitTreeItem
-            const commit = commitOrTreeItem.commit || commitOrTreeItem;
+            let commit = commitOrTreeItem?.commit || commitOrTreeItem;
+
+            // Fallback to current commit in provider if no argument provided (e.g. from view title)
+            if (!commit && this.commitDetailsProvider.currentCommitInfo) {
+                commit = this.commitDetailsProvider.currentCommitInfo;
+            }
+
+            if (!commit || !commit.hash) {
+                vscode.window.showErrorMessage('No commit information available');
+                return;
+            }
+
             await vscode.env.clipboard.writeText(commit.hash);
             vscode.window.showInformationMessage(`Copied commit ${commit.shortHash} to clipboard`);
         } catch (error) {

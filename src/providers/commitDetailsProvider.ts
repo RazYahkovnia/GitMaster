@@ -76,6 +76,10 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
 
     constructor(private gitService: GitService) { }
 
+    get currentCommitInfo(): CommitInfo | undefined {
+        return this.currentCommit;
+    }
+
     refresh(): void {
         this._onDidChangeTreeData.fire();
     }

@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Git investigation tools with visual history, graph, named stashes (shelves), and author tracking. Find when bugs were introduced, understand code changes, and manage WIP work efficiently.",
-    "version": "0.0.11",
+    "version": "0.0.12",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -405,6 +405,11 @@
         },
         "menus": {
             "view/title": [
+                {
+                    "command": "gitmaster.copyCommitId",
+                    "when": "view == gitmaster.commitDetails && gitmaster.commitSelected",
+                    "group": "navigation"
+                },
                 {
                     "command": "gitmaster.filterFileHistoryByMessage",
                     "when": "view == gitmaster.fileHistory",

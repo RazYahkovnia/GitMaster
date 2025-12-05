@@ -124,7 +124,8 @@ Warns before destructive actions. Detects conflicts. Validates inputs. Shows wha
 1. Open the buggy file → File History
 2. Filter commits by keywords (e.g., "auth")
 3. Click commits to see syntax-highlighted diffs
-4. Find the culprit commit
+4. Or use **Inline Blame**: Click any line to see the commit and diff, auto-scrolled to that line.
+5. Find the culprit commit
 
 ### 🌳 "How did these branches merge?"
 1. Git Log → Click Git Graph icon
