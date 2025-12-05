@@ -17,7 +17,8 @@ export class DiffService {
         commit: CommitInfo,
         repoRoot: string,
         oldPath?: string,
-        status?: string
+        status?: string,
+        line?: number
     ): Promise<void> {
         try {
             const parentCommit = await this.gitService.getParentCommit(commit.hash, repoRoot);
@@ -52,7 +53,8 @@ export class DiffService {
                 rightAbsolutePath,
                 repoRoot,
                 parentCommit || undefined,
-                commit.hash
+                commit.hash,
+                line
             );
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show diff: ${error}`);
@@ -156,7 +158,8 @@ export class DiffService {
         rightPath: string,
         repoRoot?: string,
         leftCommit?: string,
-        rightCommit?: string
+        rightCommit?: string,
+        line?: number
     ): Promise<void> {
         const leftData = {
             content: leftContent,
@@ -182,7 +185,12 @@ export class DiffService {
         const provider = new DiffContentProvider();
         const providerDisposable = vscode.workspace.registerTextDocumentContentProvider('gitmaster-diff', provider);
 
-        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
+        const options: vscode.TextDocumentShowOptions = {};
+        if (typeof line === 'number') {
+            options.selection = new vscode.Range(line, 0, line, 0);
+        }
+
+        await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title, options);
 
         // Clean up after a delay
         setTimeout(() => {

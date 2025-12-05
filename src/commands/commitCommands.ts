@@ -19,7 +19,7 @@ export class CommitCommands {
      * Show detailed information about a commit
      * Displays commit details in sidebar and opens diff for the current file
      */
-    async showCommitDetails(commit: CommitInfo & { path?: string }, filePath: string): Promise<void> {
+    async showCommitDetails(commit: CommitInfo & { path?: string }, filePath: string, line?: number): Promise<void> {
         try {
             let actualFilePath = filePath;
 
@@ -74,7 +74,8 @@ export class CommitCommands {
                 commit,
                 repoRoot,
                 currentFile?.oldPath,
-                currentFile?.status
+                currentFile?.status,
+                line
             );
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);

@@ -187,7 +187,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
     // Show commit details command
     const showCommitDiffCommand = vscode.commands.registerCommand(
         'gitmaster.showCommitDiff',
-        async (commit, filePath) => await commitCommands.showCommitDetails(commit, filePath)
+        async (commit, filePath, line) => await commitCommands.showCommitDetails(commit, filePath, line)
     );
 
     // Show repository commit details command

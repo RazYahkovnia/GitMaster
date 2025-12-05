@@ -95,7 +95,7 @@ export class BlameDecorator implements vscode.Disposable {
                     path: blame.filename // Pass the filename from blame (might be different from current if renamed)
                 };
 
-                // Argument for command: [commitInfo, filePath]
+                // Argument for command: [commitInfo, filePath, lineNumber]
                 // Use the original URI string to handle git: scheme correctly
                 // For gitmaster-diff, we strip the query (content) to avoid huge URIs and potential command parsing issues
                 let uriString = doc.uri.toString();
@@ -103,7 +103,7 @@ export class BlameDecorator implements vscode.Disposable {
                     uriString = doc.uri.with({ query: '' }).toString();
                 }
 
-                const args = [commitInfo, uriString];
+                const args = [commitInfo, uriString, line];
                 const commandUri = vscode.Uri.parse(
                     `command:gitmaster.showCommitDiff?${encodeURIComponent(JSON.stringify(args))}`
                 );
