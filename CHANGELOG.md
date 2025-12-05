@@ -11,6 +11,9 @@
 - **Inline Git Blame**: Clicking on blame annotation now opens the diff and automatically scrolls to the relevant line.
 - **Commit Details**: Added "Copy Commit ID" action to the view title for quick access.
 
+### 🐛 Bug Fixes
+- **Windows Compatibility**: Automatically detects Git executable in standard installation paths if not found in system PATH.
+
 ## [0.0.11] - 2025-11-27
 ### ✨ New Features
 - **Inline Git Blame**: See who changed a line right in your editor.
