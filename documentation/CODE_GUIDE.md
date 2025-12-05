@@ -222,7 +222,7 @@ if (answer !== 'Delete') return;
 
 ### Commands
 ```bash
-npm run compile    # Build
+npm run build      # Build
 npm run watch      # Auto-build
 npm run package    # Create .vsix
 npm run publish    # Publish to marketplace
