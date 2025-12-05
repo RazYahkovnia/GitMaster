@@ -116,7 +116,6 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
                 )
             );
         } catch (error) {
-            console.error('Error getting file history:', error);
             const errorItem = new vscode.TreeItem('Failed to load file history');
             errorItem.contextValue = 'empty';
             errorItem.iconPath = new vscode.ThemeIcon('error');

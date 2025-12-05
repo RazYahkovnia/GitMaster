@@ -115,17 +115,6 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
             const authorItem = new CommitInfoTreeItem('Author', this.currentCommit.author);
             items.push(authorItem);
 
-            // Add AI explanation item
-            const aiItem = new vscode.TreeItem('Explain with AI', vscode.TreeItemCollapsibleState.None);
-            aiItem.iconPath = new vscode.ThemeIcon('sparkle');
-            aiItem.contextValue = 'aiExplanation';
-            aiItem.command = {
-                command: 'gitmaster.explainCommitWithAI',
-                title: 'Explain with AI',
-                arguments: [this.currentCommit]
-            };
-            items.push(aiItem);
-
             // Add GitHub link if available
             if (this.githubUrl) {
                 const githubItem = new vscode.TreeItem('Open in GitHub', vscode.TreeItemCollapsibleState.None);
