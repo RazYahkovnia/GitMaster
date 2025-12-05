@@ -45,11 +45,19 @@ let blameDecorator: BlameDecorator;
 /**
  * Activate the GitMaster extension
  */
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     console.log('GitMaster extension is now active!');
 
     // Initialize services
     initializeServices(context);
+
+    // Try to resolve Git path on Windows if missing
+    await gitService.setupWindowsGit();
+
+    // Check if Git is installed
+    gitService.getGitVersion().catch(() => {
+        vscode.window.showErrorMessage('GitMaster: Git not found in PATH. Please install Git or check your environment variables.');
+    });
 
     // Register tree views
     registerTreeViews(context);
@@ -672,17 +680,21 @@ async function initializeFromWorkspace(): Promise<void> {
         // Try each workspace folder to find a git repo
         for (const folder of workspaceFolders) {
             const folderPath = folder.uri.fsPath;
-            const repoRoot = await gitService.getRepoRoot(folderPath);
+            try {
+                const repoRoot = await gitService.getRepoRoot(folderPath);
 
-            if (repoRoot) {
-                // Found a git repo, initialize all providers
-                shelvesProvider.setRepoRoot(repoRoot);
-                reflogProvider.setRepoRoot(repoRoot);
-                repositoryLogProvider.setRepoRoot(repoRoot);
-                branchesProvider.setRepoRoot(repoRoot);
-                await rebaseProvider.setRepoRoot(repoRoot);
-                worktreesProvider.setRepoRoot(repoRoot);
-                return;
+                if (repoRoot) {
+                    // Found a git repo, initialize all providers
+                    shelvesProvider.setRepoRoot(repoRoot);
+                    reflogProvider.setRepoRoot(repoRoot);
+                    repositoryLogProvider.setRepoRoot(repoRoot);
+                    branchesProvider.setRepoRoot(repoRoot);
+                    await rebaseProvider.setRepoRoot(repoRoot);
+                    worktreesProvider.setRepoRoot(repoRoot);
+                    return;
+                }
+            } catch (e) {
+                console.warn('GitMaster: Error checking workspace folder:', folderPath, e);
             }
         }
     }
