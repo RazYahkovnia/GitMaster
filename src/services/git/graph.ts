@@ -1,17 +1,27 @@
 import { GitExecutor } from './core';
 
 export class GitGraphService {
-    constructor(private executor: GitExecutor) {}
+    constructor(private executor: GitExecutor) { }
 
     /**
      * Get commits for graph visualization with parent and ref information
      */
-    async getGraphCommits(repoRoot: string, limit: number = 50): Promise<any[]> {
+    async getGraphCommits(repoRoot: string, limit: number = 50, skip: number = 0, refs: string[] = []): Promise<any[]> {
         try {
-            // Get commits from current branch (HEAD) only, with branch/tag decorations
+            const args = ['log'];
+
+            if (refs.length > 0) {
+                args.push(...refs);
+            } else {
+                args.push('--all');
+            }
+
+            // Get commits with branch/tag decorations
             // Use null byte as delimiter to avoid issues with | in commit messages
+            args.push(`--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%ad%x00%P%x00%D%x00`, '--date=short', `--skip=${skip}`, `-n`, limit.toString());
+
             const { stdout } = await this.executor.exec(
-                ['log', 'HEAD', `--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%ad%x00%P%x00%D%x00`, '--date=short', '-n', limit.toString()],
+                args,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 

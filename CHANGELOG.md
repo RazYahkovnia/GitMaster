@@ -1,5 +1,9 @@
 # Change Log
 
+## [0.0.13] - 2025-12-06
+### 🚀 Improved Git Graph
+- **Overhauled Visualization**: A stunning new UI with glassmorphism, infinite scroll, smart layout, unique author colors, and enhanced interactions for the best git history experience.
+
 ## [0.0.12] - 2025-12-05
 ### ✨ New Features
 - **Explain with AI**: Investigate commits faster with AI.

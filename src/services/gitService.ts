@@ -293,8 +293,8 @@ export class GitService {
     }
 
     // Graph Service Delegation
-    async getGraphCommits(repoRoot: string, limit: number = 50): Promise<any[]> {
-        return this.graphService.getGraphCommits(repoRoot, limit);
+    async getGraphCommits(repoRoot: string, limit: number = 50, skip: number = 0, refs: string[] = []): Promise<any[]> {
+        return this.graphService.getGraphCommits(repoRoot, limit, skip, refs);
     }
 
     // Contributors Service Delegation
