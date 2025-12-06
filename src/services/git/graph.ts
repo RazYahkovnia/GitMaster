@@ -20,6 +20,12 @@ export class GitGraphService {
             // Use null byte as delimiter to avoid issues with | in commit messages
             args.push(`--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%ad%x00%P%x00%D%x00`, '--date=short', `--skip=${skip}`, `-n`, limit.toString());
 
+            // Add '--' to separate refs from file paths (fixes ambiguous argument error)
+            // This must come AFTER all git options, not before
+            if (refs.length > 0) {
+                args.push('--');
+            }
+
             const { stdout } = await this.executor.exec(
                 args,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
@@ -33,7 +39,9 @@ export class GitGraphService {
             const rawCommits = stdout.split('\x00\n');
 
             for (const rawCommit of rawCommits) {
-                if (!rawCommit.trim()) continue;
+                if (!rawCommit.trim()) {
+                    continue;
+                }
 
                 const parts = rawCommit.split('\x00');
                 // Expected parts: hash, shortHash, message, author, email, date, parents, refs
