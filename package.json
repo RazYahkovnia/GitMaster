@@ -265,7 +265,7 @@
             },
             {
                 "command": "gitmaster.showGitGraph",
-                "title": "Show Git Graph",
+                "title": "Git Master: Show Git Graph",
                 "icon": "$(graph)"
             },
             {

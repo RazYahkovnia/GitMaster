@@ -155,7 +155,14 @@ export class GitGraphView {
     private async showCommitDetails(commitHash: string): Promise<void> {
         const commitInfo = await this.gitService.getCommitInfo(commitHash, this.currentRepoRoot);
         if (commitInfo) {
+            // Show commit details
             await vscode.commands.executeCommand('gitmaster.showRepositoryCommitDetails', commitInfo, this.currentRepoRoot);
+
+            // Focus on the GitMaster sidebar to show the commit details view
+            await vscode.commands.executeCommand('workbench.view.extension.gitmaster');
+
+            // Focus specifically on the commit details view
+            await vscode.commands.executeCommand('gitmaster.commitDetails.focus');
         }
     }
 
@@ -655,12 +662,7 @@ export class GitGraphView {
         
         .more-tags-btn {
             cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .more-tags-btn:hover {
-            transform: scale(1.05);
-            opacity: 1;
+            transition: all 0.3s ease;
         }
 
         /* Premium Glassmorphism Tooltip */
@@ -1311,7 +1313,7 @@ export class GitGraphView {
                     let tagX = textX;
                     let tagY = pos.y + 40; // Moved down slightly
                     
-                    const maxVisibleTags = 4;
+                    const maxVisibleTags = 2;
                     const visibleTags = commit.tags.slice(0, maxVisibleTags);
                     const hasMoreTags = commit.tags.length > maxVisibleTags;
                     
@@ -1344,40 +1346,51 @@ export class GitGraphView {
                     });
                     
                     if (hasMoreTags) {
-                        const moreWidth = 28;
                         const remainingTags = commit.tags.slice(maxVisibleTags);
+                        const moreText = \`+\${remainingTags.length}\`;
+                        const moreWidth = moreText.length * 9 + 16;
                         
                         const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
                         grp.style.cursor = 'pointer';
+                        grp.classList.add('animate-slide');
+                        grp.style.animationDelay = '0.12s';
                         
+                        // Premium gradient background
                         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                         rect.setAttribute('x', tagX);
                         rect.setAttribute('y', tagY);
                         rect.setAttribute('width', moreWidth);
-                        rect.setAttribute('height', 18);
-                        rect.setAttribute('rx', 3);
+                        rect.setAttribute('height', 20);
+                        rect.setAttribute('rx', 6);
                         rect.setAttribute('class', 'ref-badge more-tags-btn');
-                        rect.style.fill = 'var(--vscode-badge-background)';
-                        rect.style.stroke = 'var(--vscode-widget-border)';
-                        rect.style.strokeWidth = '1px';
+                        rect.style.fill = 'url(#headGradient)';
+                        rect.style.opacity = '0.9';
                         grp.appendChild(rect);
                         
+                        // Count text (centered)
                         const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', tagX + 6);
-                        label.setAttribute('y', tagY + 10);
+                        label.setAttribute('x', tagX + (moreWidth / 2));
+                        label.setAttribute('y', tagY + 13);
+                        label.setAttribute('text-anchor', 'middle');
                         label.setAttribute('class', 'ref-text');
-                        label.style.fill = 'var(--vscode-badge-foreground)';
-                        label.textContent = '...';
+                        label.style.fill = 'white';
+                        label.style.fontWeight = 'bold';
+                        label.style.fontSize = '11px';
+                        label.textContent = moreText;
                         label.style.pointerEvents = 'none';
                         grp.appendChild(label);
 
                         grp.addEventListener('mouseenter', (e) => {
                             e.stopPropagation();
+                            rect.style.opacity = '1';
+                            rect.style.filter = 'drop-shadow(0 4px 12px rgba(102, 126, 234, 0.6))';
                             showTagsTooltip(e, remainingTags);
                         });
                         
                         grp.addEventListener('mouseleave', (e) => {
                             e.stopPropagation();
+                            rect.style.opacity = '0.9';
+                            rect.style.filter = 'drop-shadow(0 4px 12px var(--shadow-color))';
                             hideTooltip();
                         });
                         
