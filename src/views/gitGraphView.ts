@@ -124,6 +124,8 @@ export class GitGraphView {
             const defaults = new Set(['main', 'master', 'origin/main', 'origin/master']);
             if (defaultBranch) {
                 defaults.add(defaultBranch);
+                // Also add the remote tracking version
+                defaults.add(`origin/${defaultBranch}`);
             }
 
             const interestingBranches = branches.filter(b => {
@@ -132,8 +134,13 @@ export class GitGraphView {
                     return true;
                 }
 
-                // Always show default/main/master
+                // Always show default/main/master (local and remote)
                 if (defaults.has(b.name)) {
+                    return true;
+                }
+
+                // Also show origin/HEAD and its target
+                if (b.name.startsWith('origin/HEAD')) {
                     return true;
                 }
 
@@ -457,6 +464,100 @@ export class GitGraphView {
 
         svg {
             display: block;
+        }
+
+        #badges-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .badge {
+            position: absolute;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: bold;
+            color: white;
+            white-space: nowrap;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: all;
+            cursor: default;
+            animation: fadeInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+            opacity: 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(8px);
+        }
+
+        .badge.head-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 0 20px var(--glow-head);
+            color: white;
+        }
+
+        .badge.branch-badge {
+            background: linear-gradient(135deg, #0d7a6f 0%, #2bc48a 100%);
+            color: white;
+        }
+
+        .badge.tag-badge {
+            background: linear-gradient(135deg, #d4a55a 0%, #1a5a8c 100%);
+            font-size: 10px;
+            color: white;
+        }
+
+        .badge.merge-badge {
+            background: linear-gradient(135deg, #7825c7 0%, #3d00b8 100%);
+            color: white;
+        }
+
+        .badge.more-tags-badge {
+            background: linear-gradient(135deg, #d6567a 0%, #e6c632 100%);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            color: white;
+        }
+
+        .badge.more-tags-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(214, 86, 122, 0.4);
+        }
+
+        /* Light theme adjustments */
+        @media (prefers-color-scheme: light) {
+            .badge {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+            }
+
+            .badge.head-badge {
+                background: linear-gradient(135deg, #5568d3 0%, #6a3c8c 100%);
+            }
+
+            .badge.branch-badge {
+                background: linear-gradient(135deg, #0a5f56 0%, #22a371 100%);
+            }
+
+            .badge.tag-badge {
+                background: linear-gradient(135deg, #b8873e 0%, #154870 100%);
+            }
+
+            .badge.merge-badge {
+                background: linear-gradient(135deg, #6620a8 0%, #32009a 100%);
+            }
+
+            .badge.more-tags-badge {
+                background: linear-gradient(135deg, #c24166 0%, #d1b025 100%);
+            }
+
+            .badge.more-tags-badge:hover {
+                box-shadow: 0 6px 20px rgba(194, 65, 102, 0.5);
+            }
         }
 
         /* Ultra-Modern Commit Nodes with 3D Effect */
@@ -851,6 +952,7 @@ export class GitGraphView {
 <body>
     <div id="graph-container">
         <svg id="graph-svg"></svg>
+        <div id="badges-overlay"></div>
         <div id="load-more-trigger"></div>
     </div>
     
@@ -917,12 +1019,20 @@ export class GitGraphView {
             
             // Identify HEAD
             headHash = null;
+            console.log('[GitGraph] Rendering', commitsToRender.length, 'commits');
             
             // Assign lanes
-            commitsToRender.forEach((commit) => {
-                // Check for HEAD
-                if (commit.branches.some(b => b.includes('HEAD'))) {
+            commitsToRender.forEach((commit, index) => {
+                // Debug log for first few commits
+                if (index < 5) {
+                    console.log('[GitGraph] Commit', index, ':', commit.shortHash, 'refs:', commit.refs, 'branches:', commit.branches);
+                }
+                
+                // Check for local HEAD (not origin/HEAD)
+                // Check the refs array since branches have 'HEAD -> ' stripped out
+                if (commit.refs && commit.refs.some(r => r.startsWith('HEAD ->') && !r.includes('origin/'))) {
                     headHash = commit.hash;
+                    console.log('[GitGraph] ✅ Found HEAD at commit:', commit.hash, commit.shortHash, commit.message, 'refs:', commit.refs);
                 }
 
                 let lane;
@@ -987,12 +1097,14 @@ export class GitGraphView {
             
             // Render
             const svg = document.getElementById('graph-svg');
+            const badgesOverlay = document.getElementById('badges-overlay');
             const graphWidth = (maxLane + 1) * CONFIG.H_SPACING + 100;
             const totalWidth = Math.max(graphWidth + maxTextWidth + 200, window.innerWidth * 1.5);
             const height = currentY + 150;
             
-            // Clear existing svg content
+            // Clear existing content
             svg.innerHTML = '';
+            badgesOverlay.innerHTML = '';
             
             svg.setAttribute('width', totalWidth);
             svg.setAttribute('height', height);
@@ -1093,7 +1205,8 @@ export class GitGraphView {
                 if (!pos) return;
                 
                 const isMerge = commit.parents.length > 1;
-                const isCurrentBranch = commit.branches.some(b => b.includes('HEAD'));
+                // Check refs array for HEAD, not branches (since HEAD -> is stripped from branches)
+                const isCurrentBranch = commit.refs && commit.refs.some(r => r.startsWith('HEAD ->') && !r.includes('origin/'));
                 const color = getLaneColor(pos.lane);
                 
                 const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -1168,35 +1281,41 @@ export class GitGraphView {
                 let currentY = pos.y - 45; // Moved further up for padding
                 let currentX = textX;
                 
+                // Add HEAD badge first if this is the current commit
+                if (isCurrentBranch) {
+                    const headBadge = document.createElement('div');
+                    headBadge.className = 'badge head-badge';
+                    headBadge.textContent = 'HEAD';
+                    headBadge.style.left = currentX + 'px';
+                    headBadge.style.top = (currentY - 10) + 'px';
+                    headBadge.style.animationDelay = '0s';
+                    badgesOverlay.appendChild(headBadge);
+                    
+                    // Measure and update currentX
+                    setTimeout(() => {
+                        const width = headBadge.offsetWidth;
+                        // Store for next badge positioning (handled in next iteration)
+                    }, 0);
+                    currentX += 50; // Approximate width + gap
+                }
+                
                 if (commit.branches.length > 0) {
                     commit.branches.forEach((branch, idx) => {
+                        // Skip origin/HEAD - it's just a pointer, not meaningful for display
+                        if (branch === 'origin/HEAD' || branch.startsWith('origin/HEAD ->')) {
+                            return;
+                        }
+                        
                         const text = branch.replace('HEAD -> ', '→ ');
-                        const textWidth = text.length * 7 + 24;
+                        const branchBadge = document.createElement('div');
+                        branchBadge.className = 'badge branch-badge';
+                        branchBadge.textContent = text;
+                        branchBadge.style.left = currentX + 'px';
+                        branchBadge.style.top = (currentY - 10) + 'px';
+                        branchBadge.style.animationDelay = \`\${(idx + 1) * 0.05}s\`;
+                        badgesOverlay.appendChild(branchBadge);
                         
-                        const badgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                        badgeGroup.classList.add('animate-slide');
-                        badgeGroup.style.animationDelay = \`\${idx * 0.05}s\`;
-                        
-                        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                        rect.setAttribute('x', currentX);
-                        rect.setAttribute('y', currentY);
-                        rect.setAttribute('width', textWidth);
-                        rect.setAttribute('height', 20);
-                        rect.setAttribute('rx', 6);
-                        rect.setAttribute('class', 'ref-badge');
-                        rect.style.fill = 'url(#branchGradient)';
-                        badgeGroup.appendChild(rect);
-                        
-                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', currentX + 10);
-                        label.setAttribute('y', currentY + 13);
-                        label.setAttribute('class', 'ref-text');
-                        label.style.fontWeight = 'bold';
-                        label.textContent = text;
-                        badgeGroup.appendChild(label);
-                        
-                        g.appendChild(badgeGroup);
-                        currentX += textWidth + 10;
+                        currentX += (text.length * 7) + 12; // Approximate width + gap
                     });
                 }
                 
@@ -1220,34 +1339,16 @@ export class GitGraphView {
                 const mergeMatch = commit.message.match(/^Merge branch '([^']+)'/);
                 if (mergeMatch) {
                     const mergedBranch = mergeMatch[1];
-                    const badgeWidth = mergedBranch.length * 7 + 20;
+                    const badgeText = 'from ' + mergedBranch;
                     const badgeX = textX + (commit.message.length * 8.5) + 12; 
                     
-                    const mergeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                    mergeGroup.classList.add('animate-slide');
-                    mergeGroup.style.animationDelay = '0.1s';
-                    
-                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                    rect.setAttribute('x', badgeX);
-                    rect.setAttribute('y', messageY - 15);
-                    rect.setAttribute('width', badgeWidth);
-                    rect.setAttribute('height', 20);
-                    rect.setAttribute('rx', 6);
-                    rect.setAttribute('class', 'ref-badge');
-                    rect.setAttribute('fill', 'url(#mergeGradient)');
-                    mergeGroup.appendChild(rect);
-                    
-                    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    label.setAttribute('x', badgeX + 10);
-                    label.setAttribute('y', messageY);
-                    label.setAttribute('fill', 'white');
-                    label.setAttribute('font-size', '11px');
-                    label.setAttribute('font-weight', 'bold');
-                    label.textContent = 'from ' + mergedBranch;
-                    label.style.pointerEvents = 'none';
-                    mergeGroup.appendChild(label);
-                    
-                    g.appendChild(mergeGroup);
+                    const mergeBadge = document.createElement('div');
+                    mergeBadge.className = 'badge merge-badge';
+                    mergeBadge.textContent = badgeText;
+                    mergeBadge.style.left = badgeX + 'px';
+                    mergeBadge.style.top = (messageY - 25) + 'px';
+                    mergeBadge.style.animationDelay = '0.1s';
+                    badgesOverlay.appendChild(mergeBadge);
                 }
                 
                 // 3. Meta: Author • Hash • Date (Bottom line)
@@ -1318,83 +1419,39 @@ export class GitGraphView {
                     const hasMoreTags = commit.tags.length > maxVisibleTags;
                     
                     visibleTags.forEach((tag, idx) => {
-                        const textWidth = tag.length * 6 + 20;
+                        const tagBadge = document.createElement('div');
+                        tagBadge.className = 'badge tag-badge';
+                        tagBadge.textContent = tag;
+                        tagBadge.style.left = tagX + 'px';
+                        tagBadge.style.top = (tagY - 10) + 'px';
+                        tagBadge.style.animationDelay = \`\${idx * 0.06}s\`;
+                        badgesOverlay.appendChild(tagBadge);
                         
-                        const tagGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                        tagGroup.classList.add('animate-slide');
-                        tagGroup.style.animationDelay = \`\${idx * 0.06}s\`;
-                        
-                        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                        rect.setAttribute('x', tagX);
-                        rect.setAttribute('y', tagY);
-                        rect.setAttribute('width', textWidth);
-                        rect.setAttribute('height', 20);
-                        rect.setAttribute('rx', 6);
-                        rect.setAttribute('class', 'ref-badge');
-                        rect.style.fill = 'url(#tagGradient)';
-                        tagGroup.appendChild(rect);
-                        
-                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', tagX + 10);
-                        label.setAttribute('y', tagY + 13);
-                        label.setAttribute('class', 'ref-text tag-text');
-                        label.textContent = tag;
-                        tagGroup.appendChild(label);
-                        
-                        g.appendChild(tagGroup);
-                        tagX += textWidth + 8;
+                        tagX += (tag.length * 6) + 12; // Approximate width + gap
                     });
                     
                     if (hasMoreTags) {
                         const remainingTags = commit.tags.slice(maxVisibleTags);
                         const moreText = \`+\${remainingTags.length}\`;
-                        const moreWidth = moreText.length * 9 + 16;
                         
-                        const grp = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-                        grp.style.cursor = 'pointer';
-                        grp.classList.add('animate-slide');
-                        grp.style.animationDelay = '0.12s';
+                        const moreBadge = document.createElement('div');
+                        moreBadge.className = 'badge more-tags-badge';
+                        moreBadge.textContent = moreText;
+                        moreBadge.style.left = tagX + 'px';
+                        moreBadge.style.top = (tagY - 10) + 'px';
+                        moreBadge.style.animationDelay = '0.12s';
                         
-                        // Premium gradient background
-                        const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-                        rect.setAttribute('x', tagX);
-                        rect.setAttribute('y', tagY);
-                        rect.setAttribute('width', moreWidth);
-                        rect.setAttribute('height', 20);
-                        rect.setAttribute('rx', 6);
-                        rect.setAttribute('class', 'ref-badge more-tags-btn');
-                        rect.style.fill = 'url(#headGradient)';
-                        rect.style.opacity = '0.9';
-                        grp.appendChild(rect);
-                        
-                        // Count text (centered)
-                        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', tagX + (moreWidth / 2));
-                        label.setAttribute('y', tagY + 13);
-                        label.setAttribute('text-anchor', 'middle');
-                        label.setAttribute('class', 'ref-text');
-                        label.style.fill = 'white';
-                        label.style.fontWeight = 'bold';
-                        label.style.fontSize = '11px';
-                        label.textContent = moreText;
-                        label.style.pointerEvents = 'none';
-                        grp.appendChild(label);
-
-                        grp.addEventListener('mouseenter', (e) => {
+                        moreBadge.addEventListener('mouseenter', (e) => {
                             e.stopPropagation();
-                            rect.style.opacity = '1';
-                            rect.style.filter = 'drop-shadow(0 4px 12px rgba(102, 126, 234, 0.6))';
                             showTagsTooltip(e, remainingTags);
                         });
                         
-                        grp.addEventListener('mouseleave', (e) => {
+                        moreBadge.addEventListener('mouseleave', (e) => {
                             e.stopPropagation();
-                            rect.style.opacity = '0.9';
-                            rect.style.filter = 'drop-shadow(0 4px 12px var(--shadow-color))';
                             hideTooltip();
                         });
                         
-                        g.appendChild(grp);
+                        badgesOverlay.appendChild(moreBadge);
                     }
                 }
                 
@@ -1467,13 +1524,18 @@ export class GitGraphView {
 
         // Jump to HEAD
         document.getElementById('jump-head-btn').addEventListener('click', () => {
+            console.log('[GitGraph] Jump to HEAD clicked. headHash:', headHash);
+            
             if (!headHash) {
+                console.log('[GitGraph] No HEAD hash found, scrolling to top');
                 // If HEAD not found (maybe deep in history?), try scrolling to top first
                 container.scrollTo({ top: 0, behavior: 'smooth' });
                 return;
             }
             
             const headElement = document.querySelector(\`.commit-node[data-hash="\${headHash}"]\`);
+            console.log('[GitGraph] HEAD element found:', !!headElement);
+            
             if (headElement) {
                 // Calculate position to center it
                 const rect = headElement.getBoundingClientRect();
@@ -1486,6 +1548,8 @@ export class GitGraphView {
                 // Center in view
                 const targetScroll = absoluteTop - (containerRect.height / 2) + 50;
                 
+                console.log('[GitGraph] Scrolling to HEAD. Target scroll:', targetScroll);
+                
                 container.scrollTo({
                     top: Math.max(0, targetScroll),
                     behavior: 'smooth'
@@ -1496,6 +1560,8 @@ export class GitGraphView {
                 setTimeout(() => headElement.style.opacity = '1', 150);
                 setTimeout(() => headElement.style.opacity = '0.5', 300);
                 setTimeout(() => headElement.style.opacity = '1', 450);
+            } else {
+                console.log('[GitGraph] HEAD element not found in DOM');
             }
         });
 

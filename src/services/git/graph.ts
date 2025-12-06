@@ -60,10 +60,30 @@ export class GitGraphService {
                         continue;
                     }
 
-                    const branches = refs.filter(r =>
-                        r.includes('HEAD') ||
-                        (!r.startsWith('tag: ') && !r.includes('origin/'))
-                    ).map(r => r.replace('HEAD -> ', ''));
+                    const branches = refs.filter(r => {
+                        // Include HEAD refs
+                        if (r.includes('HEAD')) {
+                            return true;
+                        }
+                        
+                        // Exclude tags
+                        if (r.startsWith('tag: ')) {
+                            return false;
+                        }
+                        
+                        // Include important origin branches (main, master)
+                        if (r === 'origin/main' || r === 'origin/master') {
+                            return true;
+                        }
+                        
+                        // Exclude other origin branches (except the important ones above)
+                        if (r.includes('origin/')) {
+                            return false;
+                        }
+                        
+                        // Include all other local branches
+                        return true;
+                    }).map(r => r.replace('HEAD -> ', ''));
                     const tags = refs.filter(r => r.startsWith('tag:')).map(r => r.replace('tag: ', ''));
 
                     commits.push({
