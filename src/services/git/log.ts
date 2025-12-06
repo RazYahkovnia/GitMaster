@@ -100,8 +100,9 @@ export class GitLogService {
      */
     async getReflog(repoRoot: string, limit: number = 50): Promise<ReflogEntry[]> {
         try {
+            // Format: hash|shortHash|selector|message|timestamp|relativeTime
             const { stdout } = await this.executor.exec(
-                ['reflog', '--format=%H|%h|%gd|%gs', '-n', limit.toString()],
+                ['reflog', '--format=%H|%h|%gd|%gs|%ci|%cr', '-n', limit.toString()],
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 
@@ -114,20 +115,29 @@ export class GitLogService {
 
             for (const line of lines) {
                 const parts = line.split('|');
-                if (parts.length >= 4) {
-                    const [hash, shortHash, selector, message] = parts;
+                if (parts.length >= 6) {
+                    const hash: string = parts[0];
+                    const shortHash: string = parts[1];
+                    const selector: string = parts[2];
+                    const message: string = parts[3];
+                    const timestamp: string = parts[4];
+                    const relativeTime: string = parts.slice(5).join('|'); // In case relative time contains |
 
                     // Extract action from message (e.g., "commit", "checkout", "pull")
                     const actionMatch = message.match(/^(\w+):/);
-                    const action = actionMatch ? actionMatch[1] : 'other';
+                    const action: string = actionMatch ? actionMatch[1] : 'other';
 
-                    entries.push({
+                    const entry: ReflogEntry = {
                         hash,
                         shortHash,
                         selector,
                         action,
-                        message
-                    });
+                        message,
+                        timestamp,
+                        relativeTime
+                    };
+
+                    entries.push(entry);
                 }
             }
 

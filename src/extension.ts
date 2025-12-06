@@ -293,6 +293,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (entryOrTreeItem, repoRoot) => await reflogCommands.showReflogCommitDetails(entryOrTreeItem, repoRoot)
     );
 
+    const toggleReflogGroupByDateCommand = vscode.commands.registerCommand(
+        'gitmaster.toggleReflogGroupByDate',
+        () => reflogCommands.toggleReflogGroupByDate()
+    );
+
     // Repository Log commands
     const revertCommitInNewBranchCommand = vscode.commands.registerCommand(
         'gitmaster.revertCommitInNewBranch',
@@ -560,6 +565,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshReflogCommand,
         loadMoreReflogCommand,
         showReflogCommitDetailsCommand,
+        toggleReflogGroupByDateCommand,
         revertCommitInNewBranchCommand,
         checkoutCommitFromRepoLogCommand,
         cherryPickCommitCommand,

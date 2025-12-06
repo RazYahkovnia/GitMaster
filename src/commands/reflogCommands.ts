@@ -81,6 +81,13 @@ export class ReflogCommands {
     }
 
     /**
+     * Toggle grouping by date
+     */
+    toggleReflogGroupByDate(): void {
+        this.reflogProvider.toggleGroupByDate();
+    }
+
+    /**
      * Show commit details from reflog entry
      */
     async showReflogCommitDetails(entryOrTreeItem: any, repoRoot?: string): Promise<void> {

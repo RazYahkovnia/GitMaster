@@ -3,6 +3,17 @@ import { GitService } from '../services/gitService';
 import { ReflogEntry } from '../types/git';
 
 /**
+ * Tree item for a date separator in grouped view
+ */
+export class DateSeparatorTreeItem extends vscode.TreeItem {
+    constructor(label: string) {
+        super(label, vscode.TreeItemCollapsibleState.Expanded);
+        this.contextValue = 'dateSeparator';
+        this.iconPath = new vscode.ThemeIcon('calendar');
+    }
+}
+
+/**
  * Tree item for a reflog entry (git operation)
  */
 export class ReflogTreeItem extends vscode.TreeItem {
@@ -14,7 +25,7 @@ export class ReflogTreeItem extends vscode.TreeItem {
         super(entry.message, collapsibleState);
 
         this.tooltip = this.createTooltip();
-        this.description = `${entry.shortHash} • ${entry.selector}`;
+        this.description = `${entry.shortHash} • ${entry.relativeTime}`;
         this.contextValue = 'reflogEntry';
         this.iconPath = this.getIcon();
 
@@ -27,29 +38,60 @@ export class ReflogTreeItem extends vscode.TreeItem {
     }
 
     private createTooltip(): string {
-        return `${this.entry.message}\nCommit: ${this.entry.hash}\nSelector: ${this.entry.selector}`;
+        return `${this.entry.message}\nCommit: ${this.entry.hash}\nSelector: ${this.entry.selector}\nTime: ${this.entry.relativeTime}`;
     }
 
     private getIcon(): vscode.ThemeIcon {
+        const isDangerous = this.isDangerousOperation();
+
         // Different icons for different operations
+        let icon: string;
+        let color: vscode.ThemeColor | undefined;
+
         switch (this.entry.action) {
             case 'commit':
-                return new vscode.ThemeIcon('git-commit');
+                icon = 'git-commit';
+                break;
             case 'checkout':
-                return new vscode.ThemeIcon('git-branch');
+                icon = 'git-branch';
+                break;
             case 'pull':
-                return new vscode.ThemeIcon('cloud-download');
+                icon = 'cloud-download';
+                break;
             case 'merge':
-                return new vscode.ThemeIcon('git-merge');
+                icon = 'git-merge';
+                break;
             case 'rebase':
-                return new vscode.ThemeIcon('versions');
+                icon = 'versions';
+                break;
             case 'reset':
-                return new vscode.ThemeIcon('discard');
+                icon = 'discard';
+                color = new vscode.ThemeColor('errorForeground');
+                break;
             case 'cherry-pick':
-                return new vscode.ThemeIcon('git-pull-request');
+                icon = 'git-pull-request';
+                break;
             default:
-                return new vscode.ThemeIcon('history');
+                icon = 'history';
         }
+
+        // Highlight dangerous operations in red
+        if (isDangerous && !color) {
+            color = new vscode.ThemeColor('errorForeground');
+        }
+
+        return new vscode.ThemeIcon(icon, color);
+    }
+
+    private isDangerousOperation(): boolean {
+        const dangerousPatterns = [
+            /reset.*--hard/i,
+            /push.*--force/i,
+            /push.*-f\b/i,
+            /rebase.*--force/i
+        ];
+
+        return dangerousPatterns.some(pattern => pattern.test(this.entry.message));
     }
 }
 
@@ -80,6 +122,7 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
     private currentRepoRoot: string | undefined;
     private entryLimit: number = 50;
     private readonly LOAD_MORE_INCREMENT = 50;
+    private groupByDate: boolean = false;
 
     constructor(private gitService: GitService) { }
 
@@ -98,11 +141,6 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
             return [emptyItem];
         }
 
-        // Only show root level items (no children)
-        if (element) {
-            return [];
-        }
-
         try {
             const entries = await this.gitService.getReflog(this.currentRepoRoot, this.entryLimit);
 
@@ -112,24 +150,114 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
                 return [emptyItem];
             }
 
-            const items: vscode.TreeItem[] = entries.map(entry =>
-                new ReflogTreeItem(
-                    entry,
-                    this.currentRepoRoot!,
-                    vscode.TreeItemCollapsibleState.None
-                )
-            );
-
-            // Add "Load More" button at the bottom if we have entries equal to the limit
-            // (suggesting there might be more entries available)
-            if (entries.length === this.entryLimit) {
-                items.push(new LoadMoreReflogTreeItem());
+            // If element is provided and grouping is enabled, return entries for that date group
+            if (element && element instanceof DateSeparatorTreeItem && this.groupByDate) {
+                const dateLabel = element.label as string;
+                const groupEntries = this.getEntriesForDateGroup(entries, dateLabel);
+                return groupEntries.map(entry =>
+                    new ReflogTreeItem(
+                        entry,
+                        this.currentRepoRoot!,
+                        vscode.TreeItemCollapsibleState.None
+                    )
+                );
             }
 
-            return items;
+            // Root level - either show grouped by date or flat list
+            if (!element) {
+                if (this.groupByDate) {
+                    return this.createGroupedView(entries);
+                } else {
+                    return this.createFlatView(entries);
+                }
+            }
+
+            return [];
         } catch (error) {
             console.error('Error getting reflog:', error);
             return [];
+        }
+    }
+
+    private createFlatView(entries: ReflogEntry[]): vscode.TreeItem[] {
+        const items: vscode.TreeItem[] = entries.map(entry =>
+            new ReflogTreeItem(
+                entry,
+                this.currentRepoRoot!,
+                vscode.TreeItemCollapsibleState.None
+            )
+        );
+
+        // Add "Load More" button at the bottom if we have entries equal to the limit
+        if (entries.length === this.entryLimit) {
+            items.push(new LoadMoreReflogTreeItem());
+        }
+
+        return items;
+    }
+
+    private createGroupedView(entries: ReflogEntry[]): vscode.TreeItem[] {
+        const groups = this.groupEntriesByDate(entries);
+        const items: vscode.TreeItem[] = [];
+
+        // Add date separators with count badges
+        for (const [label, groupEntries] of groups) {
+            const separator = new DateSeparatorTreeItem(label);
+            separator.description = `${groupEntries.length} operation${groupEntries.length !== 1 ? 's' : ''}`;
+            items.push(separator);
+        }
+
+        // Add "Load More" button at the bottom if we have entries equal to the limit
+        if (entries.length === this.entryLimit) {
+            items.push(new LoadMoreReflogTreeItem());
+        }
+
+        return items;
+    }
+
+    private groupEntriesByDate(entries: ReflogEntry[]): Map<string, ReflogEntry[]> {
+        const groups = new Map<string, ReflogEntry[]>();
+        const now = new Date();
+
+        for (const entry of entries) {
+            const entryDate = new Date(entry.timestamp);
+            const label = this.getDateLabel(entryDate, now);
+
+            if (!groups.has(label)) {
+                groups.set(label, []);
+            }
+            groups.get(label)!.push(entry);
+        }
+
+        return groups;
+    }
+
+    private getEntriesForDateGroup(entries: ReflogEntry[], dateLabel: string): ReflogEntry[] {
+        const now = new Date();
+        return entries.filter(entry => {
+            const entryDate = new Date(entry.timestamp);
+            return this.getDateLabel(entryDate, now) === dateLabel;
+        });
+    }
+
+    private getDateLabel(date: Date, now: Date): string {
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffDays === 0) {
+            return 'Today';
+        } else if (diffDays === 1) {
+            return 'Yesterday';
+        } else if (diffDays < 7) {
+            return 'Last Week';
+        } else if (diffDays < 30) {
+            return 'Last Month';
+        } else if (diffDays < 90) {
+            return 'Last 3 Months';
+        } else if (diffDays < 180) {
+            return 'Last 6 Months';
+        } else {
+            return 'Older';
         }
     }
 
@@ -145,6 +273,21 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
     loadMore(): void {
         this.entryLimit += this.LOAD_MORE_INCREMENT;
         this.refresh();
+    }
+
+    /**
+     * Toggle grouping by date
+     */
+    toggleGroupByDate(): void {
+        this.groupByDate = !this.groupByDate;
+        this.refresh();
+    }
+
+    /**
+     * Get current grouping state
+     */
+    isGroupedByDate(): boolean {
+        return this.groupByDate;
     }
 
     getRepoRoot(): string | undefined {

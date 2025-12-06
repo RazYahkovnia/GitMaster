@@ -225,6 +225,11 @@
                 "title": "Load More Operations"
             },
             {
+                "command": "gitmaster.toggleReflogGroupByDate",
+                "title": "Group by Date",
+                "icon": "$(calendar)"
+            },
+            {
                 "command": "gitmaster.revertCommitInNewBranch",
                 "title": "Revert in New Branch",
                 "icon": "$(discard)"
@@ -451,9 +456,14 @@
                     "group": "navigation@2"
                 },
                 {
+                    "command": "gitmaster.toggleReflogGroupByDate",
+                    "when": "view == gitmaster.reflog",
+                    "group": "navigation@1"
+                },
+                {
                     "command": "gitmaster.refreshReflog",
                     "when": "view == gitmaster.reflog",
-                    "group": "navigation"
+                    "group": "navigation@2"
                 },
                 {
                     "command": "gitmaster.filterRepositoryLogByMessage",

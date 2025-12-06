@@ -58,6 +58,10 @@ export interface ReflogEntry {
     action: string;
     /** Full message */
     message: string;
+    /** Timestamp of the operation (ISO format) */
+    timestamp: string;
+    /** Relative time (e.g., "2 hours ago") */
+    relativeTime: string;
 }
 
 /**
