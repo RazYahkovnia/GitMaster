@@ -40,14 +40,18 @@ describe('ReflogProvider', () => {
                 shortHash: '123',
                 selector: 'HEAD@{0}',
                 message: 'commit: Test',
-                action: 'commit'
+                action: 'commit',
+                timestamp: '2024-01-01 10:00:00 +0000',
+                relativeTime: '2 hours ago'
             },
             {
                 hash: '456',
                 shortHash: '456',
                 selector: 'HEAD@{1}',
                 message: 'checkout: moving from master to dev',
-                action: 'checkout'
+                action: 'checkout',
+                timestamp: '2024-01-01 09:00:00 +0000',
+                relativeTime: '3 hours ago'
             }
         ];
 
@@ -69,7 +73,9 @@ describe('ReflogProvider', () => {
             shortHash: `${i}`,
             selector: `HEAD@{${i}}`,
             message: `Entry ${i}`,
-            action: 'commit'
+            action: 'commit',
+            timestamp: '2024-01-01 10:00:00 +0000',
+            relativeTime: `${i} hours ago`
         }));
 
         mockGitService.getReflog.mockResolvedValue(mockEntries);
@@ -90,7 +96,9 @@ describe('ReflogProvider', () => {
             shortHash: `${i}`,
             selector: `HEAD@{${i}}`,
             message: `Entry ${i}`,
-            action: 'commit'
+            action: 'commit',
+            timestamp: '2024-01-01 10:00:00 +0000',
+            relativeTime: `${i} hours ago`
         }));
 
         mockGitService.getReflog.mockResolvedValue(mockEntries);
@@ -113,7 +121,9 @@ describe('ReflogProvider', () => {
                 shortHash: '123',
                 selector: 'HEAD@{0}',
                 message: 'Test',
-                action
+                action,
+                timestamp: '2024-01-01 10:00:00 +0000',
+                relativeTime: '2 hours ago'
             },
             '/root',
             vscode.TreeItemCollapsibleState.None
