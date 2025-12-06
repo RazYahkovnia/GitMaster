@@ -259,26 +259,35 @@ export class GitGraphView {
             --accent-color: var(--vscode-textLink-foreground);
             --tooltip-bg: var(--vscode-editorHoverWidget-background);
             --tooltip-border: var(--vscode-editorHoverWidget-border);
-            --shadow-color: rgba(0, 0, 0, 0.25);
+            --shadow-color: rgba(0, 0, 0, 0.35);
             --node-stroke: var(--vscode-editor-background);
             
-            /* Gradients & Colors */
-            --branch-gradient: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
-            --tag-gradient: linear-gradient(135deg, #f9a825 0%, #f57f17 100%);
-            --merge-gradient: linear-gradient(135deg, #6a1b9a 0%, #4a148c 100%);
-            --tag-text: #000;
-            --head-color: #007acc;
+            /* Modern Premium Color Palette */
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning-gradient: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --branch-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --tag-gradient: linear-gradient(135deg, #FFD89B 0%, #19547B 100%);
+            --merge-gradient: linear-gradient(135deg, #8E2DE2 0%, #4A00E0 100%);
+            --head-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --glow-primary: rgba(102, 126, 234, 0.6);
+            --glow-secondary: rgba(56, 239, 125, 0.6);
+            --glow-head: rgba(118, 75, 162, 0.8);
+            --tag-text: #fff;
+            --head-color: #667eea;
+            --grid-color: rgba(102, 126, 234, 0.05);
         }
 
         /* Light mode overrides */
         @media (prefers-color-scheme: light) {
             :root {
-                --shadow-color: rgba(0, 0, 0, 0.15);
+                --shadow-color: rgba(0, 0, 0, 0.2);
                 --node-stroke: #ffffff;
-                --tag-text: #333;
-                --branch-gradient: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
-                --tag-gradient: linear-gradient(135deg, #fbc02d 0%, #f9a825 100%);
-                --merge-gradient: linear-gradient(135deg, #8e24aa 0%, #6a1b9a 100%);
+                --tag-text: #fff;
+                --grid-color: rgba(102, 126, 234, 0.08);
+                --glow-primary: rgba(102, 126, 234, 0.4);
+                --glow-secondary: rgba(56, 239, 125, 0.4);
             }
         }
 
@@ -289,14 +298,57 @@ export class GitGraphView {
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
             background: var(--bg-color);
             color: var(--text-color);
             overflow: hidden;
             position: relative;
-            /* Subtle Pattern */
-            background-image: radial-gradient(var(--line-color) 1px, transparent 1px);
-            background-size: 30px 30px;
+        }
+        
+        /* Advanced Animated Grid Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                linear-gradient(90deg, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(var(--grid-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            animation: gridFlow 20s linear infinite;
+            z-index: 0;
+        }
+        
+        @keyframes gridFlow {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Floating Orbs Background Effect */
+        body::after {
+            content: '';
+            position: fixed;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(circle at 20% 30%, var(--glow-primary), transparent 40%),
+                radial-gradient(circle at 80% 70%, var(--glow-secondary), transparent 40%),
+                radial-gradient(circle at 50% 50%, var(--glow-head), transparent 50%);
+            opacity: 0.15;
+            pointer-events: none;
+            animation: orbsFloat 30s ease-in-out infinite;
+            z-index: 0;
+        }
+        
+        @keyframes orbsFloat {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            33% { transform: translate(20px, -20px) rotate(120deg); }
+            66% { transform: translate(-20px, 20px) rotate(240deg); }
         }
 
         #zoom-controls {
@@ -305,49 +357,80 @@ export class GitGraphView {
             right: 30px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             z-index: 1000;
         }
 
         .zoom-btn {
-            width: 44px;
-            height: 44px;
+            width: 52px;
+            height: 52px;
             border: none;
-            background: var(--tooltip-bg);
+            background: rgba(30, 30, 30, 0.75);
             color: var(--text-color);
-            border-radius: 50%;
+            border-radius: 16px;
             cursor: pointer;
-            font-size: 18px;
+            font-size: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 8px 24px var(--shadow-color);
-            border: 1px solid var(--tooltip-border);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .zoom-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .zoom-btn:hover::before {
+            opacity: 1;
         }
 
         .zoom-btn:hover {
-            background: var(--hover-bg);
-            transform: scale(1.1) translateY(-2px);
-            color: var(--accent-color);
-            box-shadow: 0 12px 32px var(--shadow-color);
+            transform: scale(1.12) translateY(-4px) rotateZ(5deg);
+            box-shadow: 
+                0 16px 40px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            border-color: rgba(102, 126, 234, 0.6);
         }
 
         .zoom-btn:active {
-            transform: scale(0.95);
+            transform: scale(0.98);
         }
         
         /* Special Jump to HEAD button */
         #jump-head-btn {
-            color: var(--head-color);
-            margin-bottom: 8px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 
+                0 10px 30px rgba(102, 126, 234, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            margin-bottom: 12px;
+            animation: headButtonPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes headButtonPulse {
+            0%, 100% { box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.2); }
+            50% { box-shadow: 0 10px 40px rgba(102, 126, 234, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.3); }
         }
         
         #jump-head-btn:hover {
-            color: #fff;
-            background: var(--head-color);
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+            transform: scale(1.15) translateY(-5px);
+            animation: none;
         }
 
         #graph-container {
@@ -357,7 +440,8 @@ export class GitGraphView {
             overflow: auto;
             cursor: grab;
             scroll-behavior: smooth;
-            padding-bottom: 100px; /* Space for infinite scroll trigger */
+            padding-bottom: 100px;
+            z-index: 1;
         }
 
         #graph-container:active {
@@ -368,180 +452,251 @@ export class GitGraphView {
             display: block;
         }
 
-            /* Modern Glow Effects */
-            .commit-node {
-                cursor: pointer;
-                transition: all 0.3s ease;
-            }
+        /* Ultra-Modern Commit Nodes with 3D Effect */
+        .commit-node {
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: drop-shadow(0 4px 8px var(--shadow-color));
+        }
+        
+        .commit-node:hover {
+            filter: drop-shadow(0 8px 24px var(--glow-primary));
+        }
 
-            .commit-circle {
-                fill: var(--vscode-gitDecoration-addedResourceForeground);
-                stroke: var(--node-stroke);
-                stroke-width: 2;
-                transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-                filter: drop-shadow(0 2px 4px var(--shadow-color));
-            }
+        .commit-circle {
+            fill: var(--vscode-gitDecoration-addedResourceForeground);
+            stroke: var(--node-stroke);
+            stroke-width: 3;
+            transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+            filter: 
+                drop-shadow(0 0 8px currentColor)
+                drop-shadow(0 4px 12px var(--shadow-color));
+        }
 
-            .commit-node:hover .commit-circle {
-                r: 10;
-                stroke-width: 3;
-                filter: drop-shadow(0 0 12px var(--accent-color));
-            }
+        .commit-node:hover .commit-circle {
+            r: 11;
+            stroke-width: 4;
+            filter: 
+                drop-shadow(0 0 20px currentColor)
+                drop-shadow(0 0 40px currentColor)
+                drop-shadow(0 4px 16px var(--shadow-color));
+        }
 
-            /* Row Highlight Effect */
-            .commit-row-bg {
-                fill: transparent;
-                transition: fill 0.2s;
-            }
-            
-            .commit-node:hover .commit-row-bg {
-                fill: var(--hover-bg);
-                fill-opacity: 0.4;
-            }
+        /* Animated Row Highlight with Gradient */
+        .commit-row-bg {
+            fill: transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .commit-node:hover .commit-row-bg {
+            fill: url(#rowGradient);
+            fill-opacity: 0.15;
+        }
 
-        /* HEAD Pulse Animation */
+        /* HEAD Pulse Animation - Enhanced */
         @keyframes headPulse {
-            0% { r: 7; stroke-opacity: 1; stroke-width: 0; }
-            50% { r: 14; stroke-opacity: 0.4; stroke-width: 4; }
-            100% { r: 18; stroke-opacity: 0; stroke-width: 8; }
+            0% { r: 8; stroke-opacity: 0.8; stroke-width: 0; }
+            50% { r: 16; stroke-opacity: 0.4; stroke-width: 6; }
+            100% { r: 24; stroke-opacity: 0; stroke-width: 12; }
+        }
+        
+        @keyframes headRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .head-indicator {
             fill: none;
-            stroke: var(--head-color);
-            stroke-width: 2;
+            stroke: url(#headGradient);
+            stroke-width: 3;
             pointer-events: none;
-            animation: headPulse 2s infinite;
+            animation: headPulse 2.5s infinite;
+        }
+        
+        .head-ring {
+            fill: none;
+            stroke: url(#headGradient);
+            stroke-width: 2;
+            opacity: 0.4;
+            pointer-events: none;
+            transform-origin: center;
+            animation: headRotate 10s linear infinite;
         }
 
         .merge-commit .commit-circle {
-            fill: var(--vscode-gitDecoration-modifiedResourceForeground);
+            fill: url(#mergeGradient);
+            stroke: var(--node-stroke);
+            stroke-width: 4;
         }
 
         .current-branch .commit-circle {
-            fill: var(--head-color);
+            fill: url(#headGradient);
             stroke: var(--node-stroke);
-            stroke-width: 3;
+            stroke-width: 4;
+            filter: 
+                drop-shadow(0 0 12px var(--glow-head))
+                drop-shadow(0 4px 16px var(--shadow-color));
         }
         
         .current-branch:hover .commit-circle {
-             stroke: var(--node-stroke);
-             stroke-width: 4;
-             filter: drop-shadow(0 0 20px var(--head-color));
+            stroke-width: 5;
+            filter: 
+                drop-shadow(0 0 30px var(--glow-head))
+                drop-shadow(0 0 50px var(--glow-head))
+                drop-shadow(0 8px 24px var(--shadow-color));
         }
 
+        /* Advanced Line Rendering with Glow */
         .commit-line {
             stroke: var(--vscode-editor-foreground);
-            stroke-width: 2;
+            stroke-width: 3;
             fill: none;
-            opacity: 0.3;
+            opacity: 0.4;
             stroke-linecap: round;
             stroke-linejoin: round;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 0 4px currentColor);
+        }
+        
+        .commit-node:hover ~ .commit-line,
+        .commit-line:hover {
+            opacity: 0.8;
+            stroke-width: 4;
+            filter: drop-shadow(0 0 10px currentColor);
         }
 
         .merge-line {
-            stroke: var(--vscode-gitDecoration-modifiedResourceForeground);
-            stroke-width: 2;
+            stroke: url(#mergeGradient);
+            stroke-width: 3;
             fill: none;
-            opacity: 0.3;
-            stroke-dasharray: 4,4;
+            opacity: 0.5;
+            stroke-dasharray: 8,6;
+            stroke-linecap: round;
+            animation: dashFlow 1s linear infinite;
+            filter: drop-shadow(0 0 6px var(--glow-primary));
+        }
+        
+        @keyframes dashFlow {
+            to { stroke-dashoffset: -14; }
         }
 
+        /* Premium Typography */
         .commit-message {
             fill: var(--text-color);
             font-weight: 600;
-            font-size: 14px;
-            opacity: 0.9;
-            transition: fill 0.2s, transform 0.2s;
-            font-family: 'Segoe UI', sans-serif;
+            font-size: 15px;
+            opacity: 0.95;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.01em;
         }
         
         .commit-node:hover .commit-message {
             fill: var(--accent-color);
             opacity: 1;
-            transform: translateX(4px);
+            transform: translateX(6px);
+            filter: drop-shadow(0 0 8px var(--glow-primary));
         }
 
         .commit-meta {
             fill: var(--vscode-descriptionForeground);
             font-size: 12px;
-            opacity: 0.6;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+        
+        .commit-node:hover .commit-meta {
+            opacity: 0.9;
         }
         
         .commit-hash {
-            font-family: 'Consolas', 'Courier New', monospace;
+            font-family: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
             cursor: pointer;
             fill: var(--vscode-textLink-foreground);
             text-decoration: none;
-            opacity: 0.7;
-            font-weight: 500;
+            opacity: 0.8;
+            font-weight: 600;
+            transition: all 0.2s;
         }
         
         .commit-hash:hover {
             opacity: 1;
-            text-decoration: underline;
+            filter: drop-shadow(0 0 6px currentColor);
         }
 
-        /* Badges - Modernized */
+        /* Premium Glass Badge Design */
         .ref-badge {
-            rx: 4;
-            opacity: 0.9;
-            filter: drop-shadow(0 2px 4px var(--shadow-color));
+            rx: 6;
+            opacity: 0.95;
+            filter: drop-shadow(0 4px 12px var(--shadow-color));
             cursor: default;
+            transition: all 0.3s ease;
+        }
+        
+        .ref-badge:hover {
+            filter: drop-shadow(0 6px 20px var(--shadow-color));
+            transform: translateY(-2px);
         }
 
         .ref-text {
             fill: white;
             font-size: 11px;
-            font-weight: 600;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
             pointer-events: none;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Inter', sans-serif;
+            letter-spacing: 0.02em;
         }
         
         .tag-text {
             fill: var(--tag-text);
-            text-shadow: none;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.4);
         }
         
         .more-tags-btn {
             cursor: pointer;
-            transition: opacity 0.2s;
+            transition: all 0.3s;
         }
         
         .more-tags-btn:hover {
-            opacity: 0.8;
+            transform: scale(1.05);
+            opacity: 1;
         }
 
-        /* Glassmorphism Tooltip */
+        /* Premium Glassmorphism Tooltip */
         .tooltip {
             position: absolute;
-            background: rgba(30, 30, 30, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 16px;
-            border-radius: 16px;
+            background: rgba(20, 20, 30, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 20px;
+            border-radius: 20px;
             font-size: 13px;
             pointer-events: none;
             opacity: 0;
-            transition: opacity 0.2s, transform 0.2s;
-            max-width: 400px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            max-width: 420px;
             z-index: 2000;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-            transform: translateY(10px);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform: translateY(15px) scale(0.95);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
         }
         
         @media (prefers-color-scheme: light) {
             .tooltip {
-                background: rgba(255, 255, 255, 0.85);
-                border: 1px solid rgba(0, 0, 0, 0.1);
+                background: rgba(255, 255, 255, 0.9);
+                border: 1px solid rgba(0, 0, 0, 0.12);
+                box-shadow: 
+                    0 20px 60px rgba(0, 0, 0, 0.2),
+                    inset 0 1px 0 rgba(255, 255, 255, 0.8);
             }
         }
 
         .tooltip.show {
             opacity: 1;
-            transform: translateY(0);
+            transform: translateY(0) scale(1);
             pointer-events: auto;
         }
 
@@ -549,59 +704,62 @@ export class GitGraphView {
             display: flex;
             justify-content: space-between;
             align-items: flex-start;
-            margin-bottom: 12px;
-            gap: 10px;
-            border-bottom: 1px solid var(--line-color);
-            padding-bottom: 8px;
+            margin-bottom: 14px;
+            gap: 12px;
+            border-bottom: 2px solid rgba(102, 126, 234, 0.3);
+            padding-bottom: 10px;
         }
 
         .tooltip-title {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--text-color);
-            line-height: 1.4;
+            line-height: 1.5;
             font-size: 14px;
+            letter-spacing: -0.01em;
         }
 
         .tooltip-row {
             display: flex;
-            margin: 6px 0;
+            margin: 8px 0;
             color: var(--vscode-descriptionForeground);
             font-size: 12px;
             align-items: baseline;
         }
         
         .tooltip-label {
-            min-width: 70px;
-            opacity: 0.8;
-            font-weight: 500;
+            min-width: 75px;
+            opacity: 0.85;
+            font-weight: 600;
         }
         
         .tooltip-value {
             flex: 1;
             word-break: break-all;
-            font-family: 'Consolas', monospace;
+            font-family: 'JetBrains Mono', 'Consolas', monospace;
+            font-size: 11px;
         }
 
         .copy-btn {
-            background: var(--vscode-button-secondaryBackground);
-            color: var(--vscode-button-secondaryForeground);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             border: none;
-            border-radius: 6px;
-            padding: 6px 12px;
+            border-radius: 10px;
+            padding: 8px 16px;
             font-size: 12px;
+            font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 6px;
-            transition: all 0.2s;
+            gap: 8px;
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             white-space: nowrap;
-            font-weight: 500;
-            margin-top: 8px;
+            margin-top: 12px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
         }
 
         .copy-btn:hover {
-            background: var(--vscode-button-secondaryHoverBackground);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
         
         .copy-btn svg {
@@ -618,33 +776,37 @@ export class GitGraphView {
             margin-bottom: 20px;
         }
 
-        /* Loading Indicator */
+        /* Premium Loading Indicator */
         #loading-indicator {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: var(--tooltip-bg);
+            background: rgba(20, 20, 30, 0.85);
             color: var(--text-color);
-            padding: 10px 20px;
-            border-radius: 20px;
+            padding: 12px 24px;
+            border-radius: 30px;
             font-size: 14px;
-            box-shadow: 0 4px 12px var(--shadow-color);
+            font-weight: 600;
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
             display: none;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
             z-index: 100;
-            border: 1px solid var(--tooltip-border);
-            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
         }
         
         .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--text-color);
-            border-top: 2px solid transparent;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-top: 3px solid #667eea;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
         }
         
         @keyframes spin {
@@ -652,14 +814,35 @@ export class GitGraphView {
             100% { transform: rotate(360deg); }
         }
 
-        /* Animations */
+        /* Enhanced Animations */
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { 
+                opacity: 0; 
+                transform: translateY(30px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        
+        @keyframes slideInRight {
+            from { 
+                opacity: 0; 
+                transform: translateX(-30px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateX(0); 
+            }
         }
         
         .animate-in {
-            animation: fadeInUp 0.6s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            animation: fadeInUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+        
+        .animate-slide {
+            animation: slideInRight 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
     </style>
 </head>
@@ -812,21 +995,58 @@ export class GitGraphView {
             svg.setAttribute('width', totalWidth);
             svg.setAttribute('height', height);
             
-            // Add Gradients
+            // Add Premium Gradients & Effects
             const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
             defs.innerHTML = \`
+                <!-- Branch Gradient -->
                 <linearGradient id="branchGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#2e7d32;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#1b5e20;stop-opacity:1" />
+                    <stop offset="0%" style="stop-color:#11998e;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#38ef7d;stop-opacity:1" />
                 </linearGradient>
+                
+                <!-- Tag Gradient -->
                 <linearGradient id="tagGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#f9a825;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#f57f17;stop-opacity:1" />
+                    <stop offset="0%" style="stop-color:#FFD89B;stop-opacity:1" />
+                    <stop offset="50%" style="stop-color:#19547B;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#0D2F44;stop-opacity:1" />
                 </linearGradient>
+                
+                <!-- Merge Gradient -->
                 <linearGradient id="mergeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:#6a1b9a;stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:#4a148c;stop-opacity:1" />
+                    <stop offset="0%" style="stop-color:#8E2DE2;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#4A00E0;stop-opacity:1" />
                 </linearGradient>
+                
+                <!-- HEAD Gradient -->
+                <linearGradient id="headGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                </linearGradient>
+                
+                <!-- Row Hover Gradient -->
+                <linearGradient id="rowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:transparent;stop-opacity:0" />
+                    <stop offset="10%" style="stop-color:#667eea;stop-opacity:0.15" />
+                    <stop offset="90%" style="stop-color:#764ba2;stop-opacity:0.15" />
+                    <stop offset="100%" style="stop-color:transparent;stop-opacity:0" />
+                </linearGradient>
+                
+                <!-- Glow Filters -->
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+                
+                <filter id="strongGlow">
+                    <feGaussianBlur stdDeviation="8" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
             \`;
             svg.appendChild(defs);
             
@@ -905,14 +1125,24 @@ export class GitGraphView {
                 rowBg.setAttribute('class', 'commit-row-bg');
                 g.appendChild(rowBg);
                 
-                // HEAD Pulse Ring
+                // HEAD Pulse Ring with Double Effect
                 if (isCurrentBranch) {
+                    // Outer pulse
                     const pulse = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     pulse.setAttribute('cx', pos.x);
                     pulse.setAttribute('cy', pos.y);
                     pulse.setAttribute('r', CONFIG.RADIUS + 10);
                     pulse.setAttribute('class', 'head-indicator');
                     g.appendChild(pulse);
+                    
+                    // Static ring for depth
+                    const ring = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    ring.setAttribute('cx', pos.x);
+                    ring.setAttribute('cy', pos.y);
+                    ring.setAttribute('r', CONFIG.RADIUS + 4);
+                    ring.setAttribute('class', 'head-ring');
+                    ring.setAttribute('stroke-dasharray', '4,3');
+                    g.appendChild(ring);
                 }
 
                 // Circle
@@ -937,29 +1167,34 @@ export class GitGraphView {
                 let currentX = textX;
                 
                 if (commit.branches.length > 0) {
-                    commit.branches.forEach(branch => {
+                    commit.branches.forEach((branch, idx) => {
                         const text = branch.replace('HEAD -> ', '→ ');
-                        const textWidth = text.length * 7 + 20;
+                        const textWidth = text.length * 7 + 24;
+                        
+                        const badgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                        badgeGroup.classList.add('animate-slide');
+                        badgeGroup.style.animationDelay = \`\${idx * 0.05}s\`;
                         
                         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                         rect.setAttribute('x', currentX);
                         rect.setAttribute('y', currentY);
                         rect.setAttribute('width', textWidth);
-                        rect.setAttribute('height', 18);
-                        rect.setAttribute('rx', 3);
+                        rect.setAttribute('height', 20);
+                        rect.setAttribute('rx', 6);
                         rect.setAttribute('class', 'ref-badge');
                         rect.style.fill = 'url(#branchGradient)';
-                        g.appendChild(rect);
+                        badgeGroup.appendChild(rect);
                         
                         const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', currentX + 8);
-                        label.setAttribute('y', currentY + 12);
+                        label.setAttribute('x', currentX + 10);
+                        label.setAttribute('y', currentY + 13);
                         label.setAttribute('class', 'ref-text');
                         label.style.fontWeight = 'bold';
                         label.textContent = text;
-                        g.appendChild(label);
+                        badgeGroup.appendChild(label);
                         
-                        currentX += textWidth + 8;
+                        g.appendChild(badgeGroup);
+                        currentX += textWidth + 10;
                     });
                 }
                 
@@ -979,32 +1214,38 @@ export class GitGraphView {
                 
                 g.appendChild(message);
                 
-                // Merge Badge (Inline with message)
+                // Merge Badge (Inline with message) - Enhanced
                 const mergeMatch = commit.message.match(/^Merge branch '([^']+)'/);
                 if (mergeMatch) {
                     const mergedBranch = mergeMatch[1];
-                    const badgeWidth = mergedBranch.length * 7 + 16;
-                    const badgeX = textX + (commit.message.length * 8.5) + 10; 
+                    const badgeWidth = mergedBranch.length * 7 + 20;
+                    const badgeX = textX + (commit.message.length * 8.5) + 12; 
+                    
+                    const mergeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                    mergeGroup.classList.add('animate-slide');
+                    mergeGroup.style.animationDelay = '0.1s';
                     
                     const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                     rect.setAttribute('x', badgeX);
-                    rect.setAttribute('y', messageY - 14);
+                    rect.setAttribute('y', messageY - 15);
                     rect.setAttribute('width', badgeWidth);
-                    rect.setAttribute('height', 18);
-                    rect.setAttribute('rx', 4);
+                    rect.setAttribute('height', 20);
+                    rect.setAttribute('rx', 6);
                     rect.setAttribute('class', 'ref-badge');
                     rect.setAttribute('fill', 'url(#mergeGradient)');
-                    g.appendChild(rect);
+                    mergeGroup.appendChild(rect);
                     
                     const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                    label.setAttribute('x', badgeX + 8);
-                    label.setAttribute('y', messageY - 1);
+                    label.setAttribute('x', badgeX + 10);
+                    label.setAttribute('y', messageY);
                     label.setAttribute('fill', 'white');
-                    label.setAttribute('font-size', '10px');
+                    label.setAttribute('font-size', '11px');
                     label.setAttribute('font-weight', 'bold');
                     label.textContent = 'from ' + mergedBranch;
                     label.style.pointerEvents = 'none';
-                    g.appendChild(label);
+                    mergeGroup.appendChild(label);
+                    
+                    g.appendChild(mergeGroup);
                 }
                 
                 // 3. Meta: Author • Hash • Date (Bottom line)
@@ -1074,27 +1315,32 @@ export class GitGraphView {
                     const visibleTags = commit.tags.slice(0, maxVisibleTags);
                     const hasMoreTags = commit.tags.length > maxVisibleTags;
                     
-                    visibleTags.forEach(tag => {
-                        const textWidth = tag.length * 6 + 16;
+                    visibleTags.forEach((tag, idx) => {
+                        const textWidth = tag.length * 6 + 20;
+                        
+                        const tagGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+                        tagGroup.classList.add('animate-slide');
+                        tagGroup.style.animationDelay = \`\${idx * 0.06}s\`;
                         
                         const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                         rect.setAttribute('x', tagX);
                         rect.setAttribute('y', tagY);
                         rect.setAttribute('width', textWidth);
-                        rect.setAttribute('height', 18);
-                        rect.setAttribute('rx', 3);
+                        rect.setAttribute('height', 20);
+                        rect.setAttribute('rx', 6);
                         rect.setAttribute('class', 'ref-badge');
                         rect.style.fill = 'url(#tagGradient)';
-                        g.appendChild(rect);
+                        tagGroup.appendChild(rect);
                         
                         const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-                        label.setAttribute('x', tagX + 8);
-                        label.setAttribute('y', tagY + 12);
+                        label.setAttribute('x', tagX + 10);
+                        label.setAttribute('y', tagY + 13);
                         label.setAttribute('class', 'ref-text tag-text');
                         label.textContent = tag;
-                        g.appendChild(label);
+                        tagGroup.appendChild(label);
                         
-                        tagX += textWidth + 6;
+                        g.appendChild(tagGroup);
+                        tagX += textWidth + 8;
                     });
                     
                     if (hasMoreTags) {
@@ -1308,6 +1554,39 @@ export class GitGraphView {
             state.tooltipTimeout = setTimeout(() => {
                 tooltip.classList.remove('show');
             }, 300);
+        }
+        
+        function showTagsTooltip(e, tags) {
+            if (state.tooltipTimeout) {
+                clearTimeout(state.tooltipTimeout);
+                state.tooltipTimeout = null;
+            }
+            
+            const tagsList = tags.map(t => \`<div style="padding: 4px 0; font-family: 'JetBrains Mono', monospace; font-size: 11px;">🏷️ \${t}</div>\`).join('');
+            
+            tooltip.innerHTML = \`
+                <div class="tooltip-header">
+                    <div class="tooltip-title">Additional Tags (\${tags.length})</div>
+                </div>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    \${tagsList}
+                </div>
+            \`;
+            
+            const rect = tooltip.getBoundingClientRect();
+            let top = e.clientY + 15;
+            let left = e.clientX + 15;
+            
+            if (left + rect.width > window.innerWidth) {
+                left = window.innerWidth - rect.width - 10;
+            }
+            if (top + rect.height > window.innerHeight) {
+                top = e.clientY - rect.height - 10;
+            }
+            
+            tooltip.style.top = top + 'px';
+            tooltip.style.left = left + 'px';
+            tooltip.classList.add('show');
         }
         
         // Copy functionality
