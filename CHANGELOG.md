@@ -4,6 +4,10 @@
 ### 🚀 Improved Git Graph
 - **Overhauled Visualization**: A stunning new UI with glassmorphism, infinite scroll, smart layout, unique author colors, and enhanced interactions for the best git history experience.
 
+### ✨ New Features
+- **Git Operations - Group by Date**: Toggle button to group reflog entries by time periods (Today, Yesterday, Last Week, etc.) for easier navigation.
+- **Git Operations - Dangerous Operation Highlighting**: Reset and force push operations are now highlighted in red for better visibility.
+
 ## [0.0.12] - 2025-12-05
 ### ✨ New Features
 - **Explain with AI**: Investigate commits faster with AI.
