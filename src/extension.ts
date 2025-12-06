@@ -616,7 +616,10 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
 
     // Listen to workspace folder changes
     const workspaceFoldersChangeDisposable = vscode.workspace.onDidChangeWorkspaceFolders(
-        () => initializeFromWorkspace()
+        () => {
+            gitService.clearCache();
+            initializeFromWorkspace();
+        }
     );
 
     // Listen to Git repository changes (commits, checkouts, etc.)
