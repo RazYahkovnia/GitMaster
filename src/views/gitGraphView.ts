@@ -1296,7 +1296,7 @@ export class GitGraphView {
                         const width = headBadge.offsetWidth;
                         // Store for next badge positioning (handled in next iteration)
                     }, 0);
-                    currentX += 50; // Approximate width + gap
+                    currentX += 52; // Approximate width + gap
                 }
                 
                 if (commit.branches.length > 0) {
@@ -1315,7 +1315,7 @@ export class GitGraphView {
                         branchBadge.style.animationDelay = \`\${(idx + 1) * 0.05}s\`;
                         badgesOverlay.appendChild(branchBadge);
                         
-                        currentX += (text.length * 7) + 12; // Approximate width + gap
+                        currentX += (text.length * 7) + 16; // Approximate width + gap
                     });
                 }
                 
@@ -1427,7 +1427,7 @@ export class GitGraphView {
                         tagBadge.style.animationDelay = \`\${idx * 0.06}s\`;
                         badgesOverlay.appendChild(tagBadge);
                         
-                        tagX += (tag.length * 6) + 12; // Approximate width + gap
+                        tagX += (tag.length * 6) + 16; // Approximate width + gap
                     });
                     
                     if (hasMoreTags) {
