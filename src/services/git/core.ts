@@ -6,9 +6,16 @@ export const execFileAsync = promisify(execFile);
 
 export async function gitExec(args: string[], options: any = {}): Promise<{ stdout: string, stderr: string }> {
     return new Promise((resolve, reject) => {
-        execFile('git', args, options, (error, stdout, stderr) => {
+        // Default timeout of 60s to prevent hangs, unless overridden
+        const finalOptions = { timeout: 60000, maxBuffer: 10 * 1024 * 1024, ...options };
+        execFile('git', args, finalOptions, (error, stdout, stderr) => {
             if (error) {
-                reject(error);
+                // Enhance error message for timeouts
+                if (error.killed && error.signal === 'SIGTERM') {
+                    reject(new Error(`Git command timed out after ${finalOptions.timeout}ms: git ${args.join(' ')}`));
+                } else {
+                    reject(error);
+                }
             } else {
                 resolve({
                     stdout: typeof stdout === 'string' ? stdout : stdout.toString(),
@@ -26,9 +33,14 @@ export class GitExecutor {
 
     async execShell(command: string, options: any = {}): Promise<{ stdout: string, stderr: string }> {
         return new Promise((resolve, reject) => {
-            exec(command, options, (error, stdout, stderr) => {
+            const finalOptions = { timeout: 60000, maxBuffer: 10 * 1024 * 1024, ...options };
+            exec(command, finalOptions, (error, stdout, stderr) => {
                 if (error) {
-                    reject(error);
+                    if (error.killed && error.signal === 'SIGTERM') {
+                        reject(new Error(`Git command timed out after ${finalOptions.timeout}ms: ${command}`));
+                    } else {
+                        reject(error);
+                    }
                 } else {
                     resolve({
                         stdout: typeof stdout === 'string' ? stdout : stdout.toString(),

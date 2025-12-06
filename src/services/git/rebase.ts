@@ -6,7 +6,7 @@ export class GitRebaseService {
     constructor(
         private executor: GitExecutor,
         private branchService: GitBranchService
-    ) {}
+    ) { }
 
     /**
      * Get commits ahead of base branch
@@ -24,10 +24,10 @@ export class GitRebaseService {
                 throw new Error(`Could not find common ancestor between ${branch} and ${baseBranch}`);
             }
 
-            // Get commits from merge base to current branch
-            const format = '%H|%h|%an|%ar|%s';
+            // Get commits from merge base to current branch with stats
+            const format = 'COMMIT|%H|%h|%an|%ar|%s';
             const { stdout } = await this.executor.exec(
-                ['log', `--format=${format}`, `${mergeBase}..${branch}`],
+                ['log', `--format=${format}`, '--numstat', `${mergeBase}..${branch}`],
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
             );
 
@@ -37,53 +37,45 @@ export class GitRebaseService {
 
             const lines = stdout.trim().split('\n');
             const commits: RebaseCommit[] = [];
+            let currentCommit: RebaseCommit | null = null;
 
-            // Process in reverse order (oldest first for rebase)
-            for (let i = lines.length - 1; i >= 0; i--) {
-                const line = lines[i];
-                const [hash, shortHash, author, date, ...messageParts] = line.split('|');
-                const message = messageParts.join('|');
+            for (const line of lines) {
+                if (line.startsWith('COMMIT|')) {
+                    const [_, hash, shortHash, author, date, ...messageParts] = line.split('|');
+                    const message = messageParts.join('|');
 
-                // Get file count and stats for this commit
-                try {
-                    const { stdout: statOutput } = await this.executor.exec(
-                        ['show', '--stat', '--format=', hash],
-                        { cwd: repoRoot }
-                    );
-                    const statLines = statOutput.trim().split('\n');
-                    const fileCount = statLines.filter(l => l.includes('|')).length;
-
-                    // Parse additions and deletions from summary line
-                    const summaryLine = statLines[statLines.length - 1];
-                    const addMatch = summaryLine.match(/(\d+) insertion/);
-                    const delMatch = summaryLine.match(/(\d+) deletion/);
-                    const additions = addMatch ? parseInt(addMatch[1]) : 0;
-                    const deletions = delMatch ? parseInt(delMatch[1]) : 0;
-
-                    commits.push({
+                    currentCommit = {
                         hash,
                         shortHash,
                         author,
                         date,
                         message,
                         action: 'pick',
-                        fileCount,
-                        additions,
-                        deletions
-                    });
-                } catch {
-                    commits.push({
-                        hash,
-                        shortHash,
-                        author,
-                        date,
-                        message,
-                        action: 'pick'
-                    });
+                        fileCount: 0,
+                        additions: 0,
+                        deletions: 0
+                    };
+                    commits.push(currentCommit);
+                } else if (currentCommit && line.trim()) {
+                    // Parse numstat line: added deleted filename
+                    const parts = line.split('\t');
+                    if (parts.length >= 3) {
+                        const added = parts[0] === '-' ? 0 : parseInt(parts[0], 10);
+                        const deleted = parts[1] === '-' ? 0 : parseInt(parts[1], 10);
+
+                        if (!isNaN(added)) {
+                            currentCommit.additions = (currentCommit.additions || 0) + added;
+                        }
+                        if (!isNaN(deleted)) {
+                            currentCommit.deletions = (currentCommit.deletions || 0) + deleted;
+                        }
+                        currentCommit.fileCount = (currentCommit.fileCount || 0) + 1;
+                    }
                 }
             }
 
-            return commits;
+            // Return in reverse order (oldest first) for rebase
+            return commits.reverse();
         } catch (error) {
             throw new Error(`Failed to get commits ahead of base: ${error}`);
         }
