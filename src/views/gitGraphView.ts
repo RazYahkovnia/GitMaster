@@ -1289,14 +1289,13 @@ export class GitGraphView {
                     headBadge.style.left = currentX + 'px';
                     headBadge.style.top = (currentY - 10) + 'px';
                     headBadge.style.animationDelay = '0s';
+                    headBadge.style.visibility = 'hidden'; // Hide initially to measure
                     badgesOverlay.appendChild(headBadge);
                     
-                    // Measure and update currentX
-                    setTimeout(() => {
-                        const width = headBadge.offsetWidth;
-                        // Store for next badge positioning (handled in next iteration)
-                    }, 0);
-                    currentX += 52; // Approximate width + gap
+                    // Measure actual width and reposition
+                    const actualWidth = headBadge.offsetWidth;
+                    headBadge.style.visibility = 'visible';
+                    currentX += actualWidth + 8; // Actual width + consistent 8px gap
                 }
                 
                 if (commit.branches.length > 0) {
@@ -1313,9 +1312,13 @@ export class GitGraphView {
                         branchBadge.style.left = currentX + 'px';
                         branchBadge.style.top = (currentY - 10) + 'px';
                         branchBadge.style.animationDelay = \`\${(idx + 1) * 0.05}s\`;
+                        branchBadge.style.visibility = 'hidden'; // Hide initially to measure
                         badgesOverlay.appendChild(branchBadge);
                         
-                        currentX += (text.length * 7) + 16; // Approximate width + gap
+                        // Measure actual width and reposition
+                        const actualWidth = branchBadge.offsetWidth;
+                        branchBadge.style.visibility = 'visible';
+                        currentX += actualWidth + 8; // Actual width + consistent 8px gap
                     });
                 }
                 
@@ -1425,9 +1428,13 @@ export class GitGraphView {
                         tagBadge.style.left = tagX + 'px';
                         tagBadge.style.top = (tagY - 10) + 'px';
                         tagBadge.style.animationDelay = \`\${idx * 0.06}s\`;
+                        tagBadge.style.visibility = 'hidden'; // Hide initially to measure
                         badgesOverlay.appendChild(tagBadge);
                         
-                        tagX += (tag.length * 6) + 16; // Approximate width + gap
+                        // Measure actual width and reposition
+                        const actualWidth = tagBadge.offsetWidth;
+                        tagBadge.style.visibility = 'visible';
+                        tagX += actualWidth + 8; // Actual width + consistent 8px gap
                     });
                     
                     if (hasMoreTags) {

@@ -71,17 +71,7 @@ export class GitGraphService {
                             return false;
                         }
                         
-                        // Include important origin branches (main, master)
-                        if (r === 'origin/main' || r === 'origin/master') {
-                            return true;
-                        }
-                        
-                        // Exclude other origin branches (except the important ones above)
-                        if (r.includes('origin/')) {
-                            return false;
-                        }
-                        
-                        // Include all other local branches
+                        // Include all branches (local and remote)
                         return true;
                     }).map(r => r.replace('HEAD -> ', ''));
                     const tags = refs.filter(r => r.startsWith('tag:')).map(r => r.replace('tag: ', ''));
