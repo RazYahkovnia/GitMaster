@@ -402,12 +402,13 @@
                 "title": "Open Shelves View"
             },
             {
-                "command": "gitmaster.copyCursorMcpConfig",
-                "title": "Copy Cursor MCP Config (GitMaster)"
+                "command": "gitmaster.setupCursorMcp",
+                "title": "GitMaster: Install MCP in Cursor"
             },
             {
-                "command": "gitmaster.setupCursorMcp",
-                "title": "Install MCP in Cursor (GitMaster) - One-Click Setup"
+                "command": "gitmaster.openSettings",
+                "title": "GitMaster: Open Settings",
+                "icon": "$(settings-gear)"
             }
         ],
         "configuration": {
@@ -422,6 +423,18 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Show Git Operations (Reflog) view in the sidebar."
+                },
+                "gitmaster.mcp.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable MCP (Model Context Protocol) server for AI agents. The server runs on localhost and exposes Git shelves as resources."
+                },
+                "gitmaster.mcp.port": {
+                    "type": "number",
+                    "default": 8765,
+                    "description": "Port number for the MCP server (default: 8765). Can also be set via GITMASTER_MCP_UI_PORT environment variable.",
+                    "minimum": 1024,
+                    "maximum": 65535
                 }
             }
         },

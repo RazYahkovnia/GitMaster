@@ -69,18 +69,24 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register commands
     registerCommands(context);
 
-    // Start MCP server on localhost (runs inside extension host, no Node.js PATH needed)
-    // Port can be overridden via env var GITMASTER_MCP_UI_PORT (default: 8765)
-    const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
-    const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : 8765;
-    const finalPort = Number.isFinite(port) ? port : 8765;
+    // Start MCP server on localhost if enabled (runs inside extension host, no Node.js PATH needed)
+    const mcpEnabled = vscode.workspace.getConfiguration('gitmaster').get<boolean>('mcp.enabled', true);
+    if (mcpEnabled) {
+        // Port can be set via config or env var (config takes precedence)
+        const configPort = vscode.workspace.getConfiguration('gitmaster').get<number>('mcp.port', 8765);
+        const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
+        const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
+        const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
 
-    startGitMasterUiMcpBridge(context, { port: finalPort }).then(({ port: startedPort }) => {
-        console.log(`GitMaster MCP server started on http://127.0.0.1:${startedPort}/sse`);
-    }).catch(err => {
-        console.warn('GitMaster: failed to start MCP server:', err);
-        // Don't show error to user - MCP is optional
-    });
+        startGitMasterUiMcpBridge(context, { port: finalPort }).then(({ port: startedPort }) => {
+            console.log(`GitMaster MCP server started on http://127.0.0.1:${startedPort}/sse`);
+        }).catch(err => {
+            console.warn('GitMaster: failed to start MCP server:', err);
+            // Don't show error to user - MCP is optional
+        });
+    } else {
+        console.log('GitMaster MCP server is disabled (gitmaster.mcp.enabled = false)');
+    }
 
     // Register event listeners
     registerEventListeners(context);
@@ -568,16 +574,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
         }
     );
 
-    // Copy Cursor MCP configuration snippet (so users don't need to find the extension install path)
-    const copyCursorMcpConfigCommand = vscode.commands.registerCommand(
-        'gitmaster.copyCursorMcpConfig',
-        async () => {
-            const snippet = buildCursorMcpSnippet(context);
-            await vscode.env.clipboard.writeText(JSON.stringify(snippet, null, 2));
-            vscode.window.showInformationMessage('GitMaster: Copied Cursor MCP config JSON to clipboard');
-        }
-    );
-
     // Setup MCP in Cursor using deep link (recommended)
     const setupCursorMcpCommand = vscode.commands.registerCommand(
         'gitmaster.setupCursorMcp',
@@ -597,6 +593,15 @@ function registerCommands(context: vscode.ExtensionContext): void {
                     'GitMaster: MCP installer link copied to clipboard. Paste it in your browser or Cursor to install.'
                 );
             }
+        }
+    );
+
+    // Open GitMaster settings
+    const openSettingsCommand = vscode.commands.registerCommand(
+        'gitmaster.openSettings',
+        async () => {
+            // Open settings filtered to GitMaster extension
+            await vscode.commands.executeCommand('workbench.action.openSettings', '@ext:razyahkovnia.gitmaster');
         }
     );
 
@@ -662,15 +667,18 @@ function registerCommands(context: vscode.ExtensionContext): void {
         explainCommitWithAICommand,
         copyRemoteLineUrlCommand,
         openShelvesViewCommand,
-        copyCursorMcpConfigCommand,
-        setupCursorMcpCommand
+        setupCursorMcpCommand,
+        openSettingsCommand
     );
 }
 
 function buildCursorMcpSnippet(context: vscode.ExtensionContext): any {
     // Use localhost URL - server starts automatically with extension
-    const port = process.env.GITMASTER_MCP_UI_PORT ? parseInt(process.env.GITMASTER_MCP_UI_PORT, 10) : 8765;
-    const finalPort = Number.isFinite(port) ? port : 8765;
+    // Get port from config or env var (config takes precedence)
+    const configPort = vscode.workspace.getConfiguration('gitmaster').get<number>('mcp.port', 8765);
+    const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
+    const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
+    const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
 
     return {
         mcpServers: {
@@ -683,8 +691,11 @@ function buildCursorMcpSnippet(context: vscode.ExtensionContext): any {
 
 function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
     // Use localhost URL instead of stdio - simpler and no Node.js PATH issues
-    const port = process.env.GITMASTER_MCP_UI_PORT ? parseInt(process.env.GITMASTER_MCP_UI_PORT, 10) : 8765;
-    const finalPort = Number.isFinite(port) ? port : 8765;
+    // Get port from config or env var (config takes precedence)
+    const configPort = vscode.workspace.getConfiguration('gitmaster').get<number>('mcp.port', 8765);
+    const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
+    const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
+    const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
     const mcpUrl = `http://127.0.0.1:${finalPort}/sse`;
 
     // Build the MCP server config (just the server config, not the full mcpServers object)
