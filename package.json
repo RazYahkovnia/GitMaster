@@ -50,6 +50,7 @@
         "Visualization"
     ],
     "activationEvents": [
+        "workspaceContains:**/.git",
         "onStartupFinished"
     ],
     "main": "./out/extension.js",
