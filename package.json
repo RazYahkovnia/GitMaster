@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Git investigation tools with visual history, graph, named stashes (shelves), and author tracking. Find when bugs were introduced, understand code changes, and manage WIP work efficiently.",
-    "version": "0.0.13",
+    "version": "0.0.15",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -396,6 +396,19 @@
                 "command": "gitmaster.refreshWorktrees",
                 "title": "Refresh Worktrees",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.openShelvesView",
+                "title": "Open Shelves View"
+            },
+            {
+                "command": "gitmaster.setupCursorMcp",
+                "title": "GitMaster: Install MCP in Cursor"
+            },
+            {
+                "command": "gitmaster.openSettings",
+                "title": "GitMaster: Open Settings",
+                "icon": "$(settings-gear)"
             }
         ],
         "configuration": {
@@ -410,6 +423,18 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Show Git Operations (Reflog) view in the sidebar."
+                },
+                "gitmaster.mcp.enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable MCP (Model Context Protocol) server for AI agents. The server runs on localhost and exposes Git shelves as resources."
+                },
+                "gitmaster.mcp.port": {
+                    "type": "number",
+                    "default": 8765,
+                    "description": "Port number for the MCP server (default: 8765). Can also be set via GITMASTER_MCP_UI_PORT environment variable.",
+                    "minimum": 1024,
+                    "maximum": 65535
                 }
             }
         },
@@ -760,5 +785,8 @@
         "@typescript-eslint/parser": "^6.13.0",
         "eslint": "^8.55.0",
         "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.25.1"
     }
 }
