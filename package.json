@@ -400,6 +400,10 @@
             {
                 "command": "gitmaster.openShelvesView",
                 "title": "Open Shelves View"
+            },
+            {
+                "command": "gitmaster.copyCursorMcpConfig",
+                "title": "Copy Cursor MCP Config (GitMaster)"
             }
         ],
         "configuration": {

@@ -20,6 +20,7 @@ import { AICommands } from './commands/aiCommands';
 import { GitGraphView } from './views/gitGraphView';
 import { BlameDecorator } from './decorators/blameDecorator';
 import { startGitMasterUiMcpBridge } from './mcpUiBridge/server';
+import * as path from 'path';
 
 // Global service instances
 let gitService: GitService;
@@ -563,6 +564,37 @@ function registerCommands(context: vscode.ExtensionContext): void {
         }
     );
 
+    // Copy Cursor MCP configuration snippet (so users don't need to find the extension install path)
+    const copyCursorMcpConfigCommand = vscode.commands.registerCommand(
+        'gitmaster.copyCursorMcpConfig',
+        async () => {
+            const dataServerPath = path.join(context.extensionPath, 'out', 'mcp', 'server.js');
+
+            // Note: UI bridge is optional; users can enable by setting GITMASTER_MCP_UI_PORT.
+            const snippet = {
+                mcpServers: {
+                    'gitmaster-data': {
+                        command: 'node',
+                        args: [dataServerPath]
+                    },
+                    'gitmaster-ui': {
+                        url: 'http://127.0.0.1:8765/sse'
+                    }
+                }
+            };
+
+            const text = [
+                '// Paste into your Cursor mcp.json',
+                '// - gitmaster-data works immediately (after building, if needed)',
+                '// - gitmaster-ui requires launching Cursor/VS Code with GITMASTER_MCP_UI_PORT=8765',
+                JSON.stringify(snippet, null, 2)
+            ].join('\n');
+
+            await vscode.env.clipboard.writeText(text);
+            vscode.window.showInformationMessage('GitMaster: Copied Cursor MCP config snippet to clipboard');
+        }
+    );
+
     context.subscriptions.push(
         refreshCommand,
         filterFileHistoryByMessageCommand,
@@ -624,7 +656,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshWorktreesCommand,
         explainCommitWithAICommand,
         copyRemoteLineUrlCommand,
-        openShelvesViewCommand
+        openShelvesViewCommand,
+        copyCursorMcpConfigCommand
     );
 }
 

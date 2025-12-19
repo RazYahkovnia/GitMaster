@@ -7,6 +7,14 @@ GitMaster exposes **two MCP endpoints**:
 
 ## Data MCP (stdio): `gitmaster_shelves_list`
 
+### Recommended setup (end users)
+
+In VS Code/Cursor:
+
+1. Run `GitMaster: Copy Cursor MCP Config (GitMaster)`
+2. Paste the snippet into your Cursor `mcp.json`
+3. Restart Cursor / reload MCP servers
+
 ### Run
 
 Build GitMaster (so `out/` exists), then run:
@@ -42,7 +50,7 @@ In Cursor, add an MCP server that runs the stdio process:
     "gitmaster-data": {
       "command": "node",
       "args": [
-        "/Users/razya/dev/GitMaster/out/mcp/server.js"
+        "<ABS_PATH_TO_INSTALLED_EXTENSION>/out/mcp/server.js"
       ]
     }
   }
@@ -84,5 +92,6 @@ Configure an MCP server that connects to the SSE endpoint (Cursor MCP supports U
 Even without the UI bridge, you can open Shelves via the command:
 
 - `gitmaster.openShelvesView`
+
 
 
