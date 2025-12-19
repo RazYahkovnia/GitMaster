@@ -16,7 +16,7 @@ export class GitStatusService {
     /**
      * Get the git repository root directory for a given file or folder path
      */
-    async getRepoRoot(filePath: string): Promise<string | null> {
+    async getRepoRoot(filePath: string, options?: { timeoutMs?: number }): Promise<string | null> {
         try {
             const fs = await import('fs');
             // Check if path is a directory or file
@@ -35,7 +35,8 @@ export class GitStatusService {
             }
 
             const { stdout } = await this.executor.exec(['rev-parse', '--show-toplevel'], {
-                cwd: dirPath
+                cwd: dirPath,
+                timeout: options?.timeoutMs
             });
             const result = path.normalize(stdout.trim());
 

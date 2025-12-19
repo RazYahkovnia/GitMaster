@@ -12,6 +12,17 @@ import {
 export type GitMasterUiMcpBridgeOptions = {
     host?: string;
     port?: number;
+    /**
+     * Optional logger for diagnostics. In the extension host we usually pass an OutputChannel logger.
+     */
+    log?: (message: string) => void;
+    /**
+     * Optional UI helpers (extension-host only). MCP tools can remain usable without these,
+     * but any tool that needs UI will throw if its callback isn't provided.
+     */
+    openShelvesView?: () => Promise<void>;
+    openGitGraph?: (repoRoot: string) => Promise<void>;
+    openCommitDetails?: (commitInfo: any, repoRoot: string) => Promise<void>;
 };
 
 /**
@@ -61,13 +72,25 @@ export async function startGitMasterUiMcpBridge(
         const name = request.params?.name;
         const args = request.params?.arguments ?? {};
 
-        return handleGitMasterMcpToolCall(String(name), args, {
-            gitService: new GitService(),
+        const startedAt = Date.now();
+        const toolName = String(name);
+        const logger = options.log ?? ((msg: string) => console.log(msg));
+        logger(`[MCP] callTool start: ${toolName}`);
+
+        try {
+            return await handleGitMasterMcpToolCall(toolName, args, {
+                gitService: new GitService(),
             defaultRepoPath,
-            openShelvesView: async () => {
-                await vscode.commands.executeCommand('gitmaster.openShelvesView');
+            openShelvesView: options.openShelvesView,
+            openGitGraph: options.openGitGraph,
+            openCommitDetails: options.openCommitDetails
+            });
+        } finally {
+            const ms = Date.now() - startedAt;
+            if (ms >= 2000) {
+                logger(`[MCP] callTool done: ${toolName} (${ms}ms)`);
             }
-        });
+        }
     });
 
     // Resources handler: expose shelves as MCP resources
@@ -95,14 +118,34 @@ export async function startGitMasterUiMcpBridge(
     const postPath = '/message';
 
     let transport: any | undefined;
+    let isConnected = false;
 
     const server = http.createServer(async (req, res) => {
         try {
             const url = new URL(req.url ?? '/', `http://${req.headers.host ?? host}`);
 
             if (req.method === 'GET' && url.pathname === ssePath) {
+                // If a previous SSE connection exists, drop it so reconnects don't wedge the bridge.
+                // (Cursor typically maintains a single connection, but reconnects can happen.)
+                try {
+                    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
+                    transport?.close?.();
+                } catch {
+                    // ignore
+                }
+                transport = undefined;
+                isConnected = false;
+
                 transport = new SSEServerTransport(postPath, res);
-                await mcpServer.connect(transport);
+                res.on('close', () => {
+                    transport = undefined;
+                    isConnected = false;
+                });
+
+                if (!isConnected) {
+                    await mcpServer.connect(transport);
+                    isConnected = true;
+                }
                 return;
             }
 

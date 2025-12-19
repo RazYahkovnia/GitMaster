@@ -1,5 +1,15 @@
 # Change Log
 
+## [0.0.14] - 2025-12-20
+### ✨ New Features
+- **MCP (Cursor integration)**: Added 3 MCP tools for agents:
+  - `gitmaster_commit_explain`
+  - `gitmaster_show_git_graph`
+  - `gitmaster_shelves`
+
+### 📚 Documentation
+- Added a short README section explaining how to configure and use **MCP (Cursor integration)**.
+
 ## [0.0.13] - 2025-12-06
 ### 🚀 Improved Git Graph
 - **Overhauled Visualization**: A stunning new UI with glassmorphism, infinite scroll, smart layout, unique author colors, and enhanced interactions for the best git history experience.

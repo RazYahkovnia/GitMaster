@@ -8,12 +8,16 @@ export class GitCommitService {
     /**
      * Get detailed information about a single commit
      */
-    async getCommitInfo(commitHash: string, repoRoot: string): Promise<CommitInfo | null> {
+    async getCommitInfo(
+        commitHash: string,
+        repoRoot: string,
+        options?: { timeoutMs?: number }
+    ): Promise<CommitInfo | null> {
         try {
             const format = '%H|%h|%an|%ai|%ar|%s';
             const { stdout } = await this.executor.exec(
                 ['show', '--no-patch', `--format=${format}`, commitHash],
-                { cwd: repoRoot }
+                { cwd: repoRoot, timeout: options?.timeoutMs }
             );
 
             if (!stdout.trim()) {
@@ -64,10 +68,14 @@ export class GitCommitService {
     /**
      * Get all files changed in a specific commit
      */
-    async getChangedFilesInCommit(commitHash: string, repoRoot: string): Promise<ChangedFile[]> {
+    async getChangedFilesInCommit(
+        commitHash: string,
+        repoRoot: string,
+        options?: { timeoutMs?: number; detectRenames?: boolean }
+    ): Promise<ChangedFile[]> {
         try {
-            const files = await this.getChangedFilesStats(commitHash, repoRoot);
-            const statusMap = await this.getFileStatuses(commitHash, repoRoot);
+            const files = await this.getChangedFilesStats(commitHash, repoRoot, options);
+            const statusMap = await this.getFileStatuses(commitHash, repoRoot, options);
 
             // Update file statuses
             return files.map(file => ({
@@ -83,11 +91,24 @@ export class GitCommitService {
     /**
      * Get file statistics (additions/deletions) for a commit
      */
-    private async getChangedFilesStats(commitHash: string, repoRoot: string): Promise<ChangedFile[]> {
+    private async getChangedFilesStats(
+        commitHash: string,
+        repoRoot: string,
+        options?: { timeoutMs?: number; detectRenames?: boolean }
+    ): Promise<ChangedFile[]> {
         // Add --root flag to handle the initial commit (which has no parent)
+        const detectRenames = options?.detectRenames ?? true;
         const { stdout } = await this.executor.exec(
-            ['diff-tree', '--root', '--no-commit-id', '--numstat', '-M', '-r', commitHash],
-            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+            [
+                'diff-tree',
+                '--root',
+                '--no-commit-id',
+                '--numstat',
+                ...(detectRenames ? ['-M'] : []),
+                '-r',
+                commitHash
+            ],
+            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024, timeout: options?.timeoutMs }
         );
 
         const files: ChangedFile[] = [];
@@ -116,11 +137,24 @@ export class GitCommitService {
     /**
      * Get file statuses (A, M, D, R) for a commit
      */
-    private async getFileStatuses(commitHash: string, repoRoot: string): Promise<Map<string, { status: string, oldPath?: string }>> {
+    private async getFileStatuses(
+        commitHash: string,
+        repoRoot: string,
+        options?: { timeoutMs?: number; detectRenames?: boolean }
+    ): Promise<Map<string, { status: string, oldPath?: string }>> {
         // Add --root flag to handle the initial commit (which has no parent)
+        const detectRenames = options?.detectRenames ?? true;
         const { stdout } = await this.executor.exec(
-            ['diff-tree', '--root', '--no-commit-id', '--name-status', '-M', '-r', commitHash],
-            { cwd: repoRoot }
+            [
+                'diff-tree',
+                '--root',
+                '--no-commit-id',
+                '--name-status',
+                ...(detectRenames ? ['-M'] : []),
+                '-r',
+                commitHash
+            ],
+            { cwd: repoRoot, timeout: options?.timeoutMs }
         );
 
         const statusMap = new Map<string, { status: string, oldPath?: string }>();

@@ -2,10 +2,16 @@
 import { GitService } from '../services/gitService';
 import * as vscode from 'vscode';
 
-export type ShelvesListInput = {
+export type ShelvesInput = {
     repoPath?: string;
     maxShelves?: number;
     maxFilesPerShelf?: number;
+};
+
+export type CommitExplainInput = {
+    repoPath?: string;
+    commitId: string;
+    maxFiles?: number;
 };
 
 export type ShelfFile = {
@@ -13,6 +19,7 @@ export type ShelfFile = {
     status: string;
     additions: number;
     deletions: number;
+    oldPath?: string;
 };
 
 export type Shelf = {
@@ -25,8 +32,36 @@ export type Shelf = {
 
 export const GITMASTER_MCP_TOOLS = [
     {
-        name: 'gitmaster_shelves_list',
-        description: 'List GitMaster Shelves (git stashes) with their display name and files.',
+        name: 'gitmaster_commit_explain',
+        description:
+            'Open/focus GitMaster Commit Details for a commit and return commit metadata + changed files so the agent can summarize the change.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                repoPath: {
+                    type: 'string',
+                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)'
+                },
+                commitId: { type: 'string', description: 'Commit hash (full or short)' },
+                maxFiles: { type: 'number', description: 'Max changed files to return (default 200)' }
+            },
+            required: ['commitId']
+        }
+    },
+    {
+        name: 'gitmaster_show_git_graph',
+        description: 'Open/focus GitMaster Git Graph view in VS Code.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                repoPath: { type: 'string', description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)' }
+            },
+            required: []
+        }
+    },
+    {
+        name: 'gitmaster_shelves',
+        description: 'Open/focus GitMaster Shelves view in VS Code and return shelves (git stashes) with their files.',
         inputSchema: {
             type: 'object',
             properties: {
@@ -36,11 +71,6 @@ export const GITMASTER_MCP_TOOLS = [
             },
             required: []
         }
-    },
-    {
-        name: 'gitmaster_open_shelves_view',
-        description: 'Open/focus GitMaster Shelves view in VS Code.',
-        inputSchema: { type: 'object', properties: {}, required: [] }
     }
 ] as const;
 
@@ -57,6 +87,14 @@ export type GitMasterMcpDeps = {
      * Optional UI action only available inside the extension host.
      */
     openShelvesView?: () => Promise<void>;
+    /**
+     * Optional UI action only available inside the extension host.
+     */
+    openGitGraph?: (repoRoot: string) => Promise<void>;
+    /**
+     * Optional UI action only available inside the extension host.
+     */
+    openCommitDetails?: (commitInfo: any, repoRoot: string) => Promise<void>;
 };
 
 export async function handleGitMasterMcpToolCall(
@@ -64,7 +102,36 @@ export async function handleGitMasterMcpToolCall(
     args: any,
     deps: GitMasterMcpDeps
 ): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-    if (name === 'gitmaster_shelves_list') {
+    if (name === 'gitmaster_commit_explain') {
+        const payload = await getCommitExplainPayload(
+            {
+                repoPath: args?.repoPath,
+                commitId: String(args?.commitId ?? ''),
+                maxFiles: args?.maxFiles
+            },
+            deps
+        );
+
+        if (deps.openCommitDetails) {
+            await deps.openCommitDetails(payload.commit, payload.repoRoot);
+        }
+
+        return { content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }] };
+    }
+
+    if (name === 'gitmaster_show_git_graph') {
+        if (!deps.openGitGraph) {
+            throw new Error('gitmaster_show_git_graph is only available inside the VS Code extension host');
+        }
+        const repoRoot = await resolveRepoRoot(args?.repoPath ?? deps.defaultRepoPath, deps.gitService);
+        await deps.openGitGraph(repoRoot);
+        return { content: [{ type: 'text', text: 'ok' }] };
+    }
+
+    if (name === 'gitmaster_shelves') {
+        if (!deps.openShelvesView) {
+            throw new Error('gitmaster_shelves is only available inside the VS Code extension host');
+        }
         const shelves = await listShelves(
             {
                 repoPath: args?.repoPath,
@@ -73,15 +140,8 @@ export async function handleGitMasterMcpToolCall(
             },
             deps
         );
-        return { content: [{ type: 'text', text: JSON.stringify(shelves, null, 2) }] };
-    }
-
-    if (name === 'gitmaster_open_shelves_view') {
-        if (!deps.openShelvesView) {
-            throw new Error('gitmaster_open_shelves_view is only available inside the VS Code extension host');
-        }
         await deps.openShelvesView();
-        return { content: [{ type: 'text', text: 'ok' }] };
+        return { content: [{ type: 'text', text: JSON.stringify(shelves, null, 2) }] };
     }
 
     throw new Error(`Unknown tool: ${String(name)}`);
@@ -142,7 +202,7 @@ export async function readGitMasterMcpResource(
 }
 
 async function listShelves(
-    input: ShelvesListInput,
+    input: ShelvesInput,
     deps: Omit<GitMasterMcpDeps, 'openShelvesView'>
 ): Promise<Shelf[]> {
     const gitService = deps.gitService;
@@ -166,7 +226,8 @@ async function listShelves(
                 path: f.path,
                 status: f.status,
                 additions: f.additions,
-                deletions: f.deletions
+                deletions: f.deletions,
+                oldPath: (f as any).oldPath
             }))
         });
     }
@@ -174,9 +235,88 @@ async function listShelves(
     return shelves;
 }
 
+async function getCommitExplainPayload(
+    input: CommitExplainInput,
+    deps: Omit<GitMasterMcpDeps, 'openShelvesView'>
+): Promise<{
+    repoRoot: string;
+    commit: any;
+    files: Array<any>;
+    totals: { fileCount: number; totalAdditions: number; totalDeletions: number };
+    agentInstruction: string;
+    warning?: string;
+}> {
+    const commitId = input.commitId?.trim();
+    if (!commitId) {
+        throw new Error('commitId is required');
+    }
+
+    const repoRoot = await resolveRepoRoot(input.repoPath ?? deps.defaultRepoPath, deps.gitService);
+    // MCP should be responsive even on very large repos/commits.
+    // Use shorter timeouts than the general GitExecutor default.
+    const commitInfo = await deps.gitService.getCommitInfo(commitId, repoRoot, { timeoutMs: 10_000 });
+    if (!commitInfo) {
+        throw new Error(`Commit not found in repo: ${commitId}`);
+    }
+
+    const maxFiles = clamp(input.maxFiles ?? 200, 1, 2000);
+    // Rename detection (-M) can be extremely expensive on big commits; it's not required for an "explain".
+    let warning: string | undefined;
+    let changedFiles: any[] = [];
+    try {
+        changedFiles = await deps.gitService.getChangedFilesInCommit(commitInfo.hash, repoRoot, {
+            timeoutMs: 15_000,
+            detectRenames: false
+        });
+    } catch (err: any) {
+        warning =
+            `Failed to compute changed files within time limits. ` +
+            `Commit metadata is returned, but file list is empty. ` +
+            `Error: ${err?.message ?? String(err)}`;
+        changedFiles = [];
+    }
+
+    const files = changedFiles.slice(0, maxFiles).map(f => ({
+        path: (f as any).path,
+        oldPath: (f as any).oldPath,
+        status: (f as any).status,
+        additions: (f as any).additions ?? 0,
+        deletions: (f as any).deletions ?? 0
+    }));
+
+    const totals = files.reduce(
+        (acc, f) => {
+            acc.fileCount += 1;
+            acc.totalAdditions += Number(f.additions) || 0;
+            acc.totalDeletions += Number(f.deletions) || 0;
+            return acc;
+        },
+        { fileCount: 0, totalAdditions: 0, totalDeletions: 0 }
+    );
+
+    const agentInstruction =
+        'GitMaster Commit Details view has been opened/focused. Inspect the changed files and diff, then summarize what the commit did using both the commit message and the actual file changes.';
+
+    return {
+        repoRoot,
+        commit: {
+            hash: commitInfo.hash,
+            shortHash: commitInfo.shortHash,
+            message: commitInfo.message,
+            author: commitInfo.author,
+            date: commitInfo.date,
+            relativeDate: (commitInfo as any).relativeDate ?? commitInfo.date
+        },
+        files,
+        totals,
+        agentInstruction,
+        ...(warning ? { warning } : {})
+    };
+}
+
 async function resolveRepoRoot(repoPath: string | undefined, gitService: GitService): Promise<string> {
     const candidate = repoPath?.trim() ? repoPath.trim() : (vscode.workspace.workspaceFolders?.[0]?.uri.fsPath ?? process.cwd());
-    const resolved = await gitService.getRepoRoot(candidate);
+    const resolved = await gitService.getRepoRoot(candidate, { timeoutMs: 5_000 });
     if (!resolved) {
         throw new Error(`repoPath is not inside a git repository: ${candidate}`);
     }

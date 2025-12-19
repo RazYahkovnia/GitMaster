@@ -14,9 +14,9 @@ describe('GitMaster MCP shelves tool', () => {
         };
 
         const result = await handleGitMasterMcpToolCall(
-            'gitmaster_shelves_list',
+            'gitmaster_shelves',
             { repoPath: process.cwd() },
-            { gitService: gitServiceMock }
+            { gitService: gitServiceMock, openShelvesView: async () => { } }
         );
         const shelves = JSON.parse(result.content[0].text);
 
@@ -52,9 +52,9 @@ describe('GitMaster MCP shelves tool', () => {
         };
 
         const result = await handleGitMasterMcpToolCall(
-            'gitmaster_shelves_list',
+            'gitmaster_shelves',
             { repoPath: process.cwd(), maxShelves: 1, maxFilesPerShelf: 2 },
-            { gitService: gitServiceMock }
+            { gitService: gitServiceMock, openShelvesView: async () => { } }
         );
         const shelves = JSON.parse(result.content[0].text);
 

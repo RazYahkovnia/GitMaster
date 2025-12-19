@@ -64,8 +64,8 @@ export class GitService {
     }
 
     // Status Service Delegation
-    async getRepoRoot(filePath: string): Promise<string | null> {
-        return this.statusService.getRepoRoot(filePath);
+    async getRepoRoot(filePath: string, options?: { timeoutMs?: number }): Promise<string | null> {
+        return this.statusService.getRepoRoot(filePath, options);
     }
 
     async isFileTracked(filePath: string): Promise<boolean> {
@@ -90,8 +90,12 @@ export class GitService {
     }
 
     // Commit Service Delegation
-    async getCommitInfo(commitHash: string, repoRoot: string): Promise<CommitInfo | null> {
-        return this.commitService.getCommitInfo(commitHash, repoRoot);
+    async getCommitInfo(
+        commitHash: string,
+        repoRoot: string,
+        options?: { timeoutMs?: number }
+    ): Promise<CommitInfo | null> {
+        return this.commitService.getCommitInfo(commitHash, repoRoot, options);
     }
 
     async getCommitDiff(commitHash: string, repoRoot: string): Promise<string> {
@@ -102,8 +106,12 @@ export class GitService {
         return this.commitService.getParentCommit(commitHash, repoRoot);
     }
 
-    async getChangedFilesInCommit(commitHash: string, repoRoot: string): Promise<ChangedFile[]> {
-        return this.commitService.getChangedFilesInCommit(commitHash, repoRoot);
+    async getChangedFilesInCommit(
+        commitHash: string,
+        repoRoot: string,
+        options?: { timeoutMs?: number; detectRenames?: boolean }
+    ): Promise<ChangedFile[]> {
+        return this.commitService.getChangedFilesInCommit(commitHash, repoRoot, options);
     }
 
     // Content Service Delegation
