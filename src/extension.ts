@@ -20,9 +20,6 @@ import { AICommands } from './commands/aiCommands';
 import { GitGraphView } from './views/gitGraphView';
 import { BlameDecorator } from './decorators/blameDecorator';
 import { startGitMasterUiMcpBridge } from './mcpUiBridge/server';
-import * as path from 'path';
-import * as fs from 'fs';
-import * as os from 'os';
 
 // Global service instances
 let gitService: GitService;
@@ -696,23 +693,6 @@ function registerCommands(context: vscode.ExtensionContext): void {
     );
 }
 
-function buildCursorMcpSnippet(context: vscode.ExtensionContext): any {
-    // Use localhost URL - server starts automatically with extension
-    // Get port from config or env var (config takes precedence)
-    const configPort = vscode.workspace.getConfiguration('gitmaster').get<number>('mcp.port', 8765);
-    const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
-    const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
-    const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
-
-    return {
-        mcpServers: {
-            'gitmaster': {
-                url: `http://127.0.0.1:${finalPort}/sse`
-            }
-        }
-    };
-}
-
 function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
     // Use localhost URL instead of stdio - simpler and no Node.js PATH issues
     // Get port from config or env var (config takes precedence)
@@ -737,78 +717,6 @@ function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
     const deepLink = `cursor://anysphere.cursor-deeplink/mcp/install?name=GitMaster&config=${configEncoded}`;
 
     return deepLink;
-}
-
-async function tryOpenCursorMcpJson(): Promise<boolean> {
-    const candidates = getCursorMcpJsonCandidates();
-
-    // First, try to open existing files
-    for (const p of candidates) {
-        try {
-            if (fs.existsSync(p)) {
-                const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(p));
-                await vscode.window.showTextDocument(doc, { preview: false });
-                return true;
-            }
-        } catch {
-            // ignore and try next candidate
-        }
-    }
-
-    // If no existing file found, try to create one in the most likely location
-    const mostLikelyPath = candidates[0]; // Usually the first one is the most common
-    try {
-        // Ensure the directory exists
-        const dir = path.dirname(mostLikelyPath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-
-        // Create the file with a basic structure if it doesn't exist
-        if (!fs.existsSync(mostLikelyPath)) {
-            fs.writeFileSync(mostLikelyPath, '{\n  "mcpServers": {\n  }\n}\n', 'utf8');
-        }
-
-        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(mostLikelyPath));
-        await vscode.window.showTextDocument(doc, { preview: false });
-        return true;
-    } catch (err) {
-        // If we can't create the file, fall back to untitled document
-        console.warn('Could not create mcp.json file:', err);
-    }
-
-    // Final fallback: show an untitled doc
-    try {
-        const doc = await vscode.workspace.openTextDocument({
-            language: 'json',
-            content: '{\n  "mcpServers": {\n  }\n}\n'
-        });
-        await vscode.window.showTextDocument(doc, { preview: false });
-    } catch {
-        // ignore
-    }
-
-    return false;
-}
-
-function getCursorMcpJsonCandidates(): string[] {
-    const home = os.homedir();
-
-    // Heuristics for Cursor MCP config locations (may vary by Cursor version/OS).
-    // We only open if the file already exists; we do not create files outside the workspace.
-    return [
-        // Common community convention
-        path.join(home, '.cursor', 'mcp.json'),
-
-        // macOS (similar to VS Code's Application Support layout)
-        path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'mcp.json'),
-
-        // linux
-        path.join(home, '.config', 'Cursor', 'User', 'mcp.json'),
-
-        // windows (best-effort; harmless on non-windows)
-        path.join(home, 'AppData', 'Roaming', 'Cursor', 'User', 'mcp.json')
-    ];
 }
 
 /**

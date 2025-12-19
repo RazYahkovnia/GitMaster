@@ -50,8 +50,6 @@ export class AICommands {
             'workbench.panel.chat.view.focus'  // Generic Focus
         ];
 
-        let commandExecuted = false;
-
         for (const command of commandsToTry) {
             try {
                 // Some commands take arguments, others don't.
@@ -61,9 +59,8 @@ export class AICommands {
                     await vscode.commands.executeCommand(command);
                 }
 
-                // If we get here, the command existed and executed without throwing
-                commandExecuted = true;
-                // We still continue to show the notification because we can't be sure 
+                // If we get here, the command existed and executed without throwing.
+                // We still continue to show the notification because we can't be sure
                 // if the command actually opened the specific AI window we wanted.
                 break;
             } catch (e) {

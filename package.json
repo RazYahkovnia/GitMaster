@@ -768,9 +768,9 @@
     "scripts": {
         "vscode:prepublish": "npm run compile",
         "compile": "tsc -p ./",
-        "build": "npm run compile",
+        "build": "npm run lint && npm run compile",
         "watch": "tsc -watch -p ./",
-        "lint": "eslint src --ext ts",
+        "lint": "node ./node_modules/eslint/bin/eslint.js src --ext .ts",
         "publish": "vsce publish",
         "package": "npm run test && vsce package",
         "test": "jest"

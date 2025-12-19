@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { RebaseProvider, RebaseTreeItem } from '../providers/rebaseProvider';
 import { CommitDetailsProvider } from '../providers/commitDetailsProvider';
-import { RebaseCommit, RebaseState, BranchInfo, CommitInfo } from '../types/git';
+import { RebaseState, CommitInfo } from '../types/git';
 
 /**
  * Command handlers for interactive rebase operations

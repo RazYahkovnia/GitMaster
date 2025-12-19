@@ -1,5 +1,4 @@
 import { GitExecutor } from './git/core';
-import { GitUtils } from './git/utils';
 import { GitSystemService } from './git/system';
 import { GitStatusService } from './git/status';
 import { GitLogService } from './git/log';
