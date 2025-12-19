@@ -407,7 +407,7 @@
             },
             {
                 "command": "gitmaster.setupCursorMcp",
-                "title": "Setup MCP in Cursor (GitMaster)"
+                "title": "Install MCP in Cursor (GitMaster) - One-Click Setup"
             }
         ],
         "configuration": {

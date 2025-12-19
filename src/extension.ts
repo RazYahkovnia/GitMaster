@@ -69,16 +69,18 @@ export async function activate(context: vscode.ExtensionContext) {
     // Register commands
     registerCommands(context);
 
-    // Optional: start MCP UI bridge (for agents to open/focus views)
-    // Enable by setting env var GITMASTER_MCP_UI_PORT (e.g. 8765)
+    // Start MCP server on localhost (runs inside extension host, no Node.js PATH needed)
+    // Port can be overridden via env var GITMASTER_MCP_UI_PORT (default: 8765)
     const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
-    if (uiPortStr && uiPortStr.trim()) {
-        const parsed = parseInt(uiPortStr, 10);
-        const port = Number.isFinite(parsed) ? parsed : 8765;
-        startGitMasterUiMcpBridge(context, { port }).catch(err => {
-            console.warn('GitMaster: failed to start MCP UI bridge:', err);
-        });
-    }
+    const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : 8765;
+    const finalPort = Number.isFinite(port) ? port : 8765;
+
+    startGitMasterUiMcpBridge(context, { port: finalPort }).then(({ port: startedPort }) => {
+        console.log(`GitMaster MCP server started on http://127.0.0.1:${startedPort}/sse`);
+    }).catch(err => {
+        console.warn('GitMaster: failed to start MCP server:', err);
+        // Don't show error to user - MCP is optional
+    });
 
     // Register event listeners
     registerEventListeners(context);
@@ -576,23 +578,25 @@ function registerCommands(context: vscode.ExtensionContext): void {
         }
     );
 
-    // Setup MCP in Cursor: open the most likely MCP config file + copy snippet to clipboard
+    // Setup MCP in Cursor using deep link (recommended)
     const setupCursorMcpCommand = vscode.commands.registerCommand(
         'gitmaster.setupCursorMcp',
         async () => {
-            const opened = await tryOpenCursorMcpJson();
-            if (!opened) {
-                // Fallback: at least open settings JSON so the user lands in a JSON config editor
-                await vscode.commands.executeCommand('workbench.action.openSettingsJson');
+            const deepLink = buildCursorMcpDeepLink(context);
+
+            // Try to open the deep link directly
+            try {
+                await vscode.env.openExternal(vscode.Uri.parse(deepLink));
+                vscode.window.showInformationMessage(
+                    'GitMaster: Opening Cursor MCP installer. Click "Install" to set up the MCP server automatically.'
+                );
+            } catch (err) {
+                // If opening fails, copy to clipboard as fallback
+                await vscode.env.clipboard.writeText(deepLink);
+                vscode.window.showInformationMessage(
+                    'GitMaster: MCP installer link copied to clipboard. Paste it in your browser or Cursor to install.'
+                );
             }
-
-            // Copy snippet after opening so the user can paste immediately.
-            const snippet = buildCursorMcpSnippet(context);
-            await vscode.env.clipboard.writeText(JSON.stringify(snippet, null, 2));
-
-            vscode.window.showInformationMessage(
-                'GitMaster: MCP config copied. Paste it into your Cursor mcp.json and reload MCP servers.'
-            );
         }
     );
 
@@ -664,37 +668,81 @@ function registerCommands(context: vscode.ExtensionContext): void {
 }
 
 function buildCursorMcpSnippet(context: vscode.ExtensionContext): any {
-    const dataServerPath = path.join(context.extensionPath, 'out', 'mcp', 'server.js');
+    // Use localhost URL - server starts automatically with extension
+    const port = process.env.GITMASTER_MCP_UI_PORT ? parseInt(process.env.GITMASTER_MCP_UI_PORT, 10) : 8765;
+    const finalPort = Number.isFinite(port) ? port : 8765;
+
     return {
         mcpServers: {
-            'gitmaster-data': {
-                command: 'node',
-                args: [dataServerPath]
-            },
-            // Optional: enable UI bridge by launching Cursor/VS Code with GITMASTER_MCP_UI_PORT=8765
-            'gitmaster-ui': {
-                url: 'http://127.0.0.1:8765/sse'
+            'gitmaster': {
+                url: `http://127.0.0.1:${finalPort}/sse`
             }
         }
     };
 }
 
+function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
+    // Use localhost URL instead of stdio - simpler and no Node.js PATH issues
+    const port = process.env.GITMASTER_MCP_UI_PORT ? parseInt(process.env.GITMASTER_MCP_UI_PORT, 10) : 8765;
+    const finalPort = Number.isFinite(port) ? port : 8765;
+    const mcpUrl = `http://127.0.0.1:${finalPort}/sse`;
+
+    // Build the MCP server config (just the server config, not the full mcpServers object)
+    const mcpConfig = {
+        url: mcpUrl
+    };
+
+    // Base64 encode the config and URL encode it for the deep link
+    const configJson = JSON.stringify(mcpConfig);
+    const configBase64 = Buffer.from(configJson).toString('base64');
+    const configEncoded = encodeURIComponent(configBase64);
+
+    // Build the deep link following Cursor's format:
+    // cursor://anysphere.cursor-deeplink/mcp/install?name=<Name>&config=<Base64EncodedConfig>
+    const deepLink = `cursor://anysphere.cursor-deeplink/mcp/install?name=GitMaster&config=${configEncoded}`;
+
+    return deepLink;
+}
+
 async function tryOpenCursorMcpJson(): Promise<boolean> {
     const candidates = getCursorMcpJsonCandidates();
+
+    // First, try to open existing files
     for (const p of candidates) {
         try {
-            if (!fs.existsSync(p)) {
-                continue;
+            if (fs.existsSync(p)) {
+                const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(p));
+                await vscode.window.showTextDocument(doc, { preview: false });
+                return true;
             }
-            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(p));
-            await vscode.window.showTextDocument(doc, { preview: false });
-            return true;
         } catch {
             // ignore and try next candidate
         }
     }
 
-    // If we couldn't locate it, show an untitled doc to reduce friction.
+    // If no existing file found, try to create one in the most likely location
+    const mostLikelyPath = candidates[0]; // Usually the first one is the most common
+    try {
+        // Ensure the directory exists
+        const dir = path.dirname(mostLikelyPath);
+        if (!fs.existsSync(dir)) {
+            fs.mkdirSync(dir, { recursive: true });
+        }
+
+        // Create the file with a basic structure if it doesn't exist
+        if (!fs.existsSync(mostLikelyPath)) {
+            fs.writeFileSync(mostLikelyPath, '{\n  "mcpServers": {\n  }\n}\n', 'utf8');
+        }
+
+        const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(mostLikelyPath));
+        await vscode.window.showTextDocument(doc, { preview: false });
+        return true;
+    } catch (err) {
+        // If we can't create the file, fall back to untitled document
+        console.warn('Could not create mcp.json file:', err);
+    }
+
+    // Final fallback: show an untitled doc
     try {
         const doc = await vscode.workspace.openTextDocument({
             language: 'json',
