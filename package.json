@@ -404,6 +404,10 @@
             {
                 "command": "gitmaster.copyCursorMcpConfig",
                 "title": "Copy Cursor MCP Config (GitMaster)"
+            },
+            {
+                "command": "gitmaster.setupCursorMcp",
+                "title": "Setup MCP in Cursor (GitMaster)"
             }
         ],
         "configuration": {

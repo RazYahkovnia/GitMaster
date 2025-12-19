@@ -21,6 +21,8 @@ import { GitGraphView } from './views/gitGraphView';
 import { BlameDecorator } from './decorators/blameDecorator';
 import { startGitMasterUiMcpBridge } from './mcpUiBridge/server';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
 
 // Global service instances
 let gitService: GitService;
@@ -568,30 +570,29 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const copyCursorMcpConfigCommand = vscode.commands.registerCommand(
         'gitmaster.copyCursorMcpConfig',
         async () => {
-            const dataServerPath = path.join(context.extensionPath, 'out', 'mcp', 'server.js');
+            const snippet = buildCursorMcpSnippet(context);
+            await vscode.env.clipboard.writeText(JSON.stringify(snippet, null, 2));
+            vscode.window.showInformationMessage('GitMaster: Copied Cursor MCP config JSON to clipboard');
+        }
+    );
 
-            // Note: UI bridge is optional; users can enable by setting GITMASTER_MCP_UI_PORT.
-            const snippet = {
-                mcpServers: {
-                    'gitmaster-data': {
-                        command: 'node',
-                        args: [dataServerPath]
-                    },
-                    'gitmaster-ui': {
-                        url: 'http://127.0.0.1:8765/sse'
-                    }
-                }
-            };
+    // Setup MCP in Cursor: open the most likely MCP config file + copy snippet to clipboard
+    const setupCursorMcpCommand = vscode.commands.registerCommand(
+        'gitmaster.setupCursorMcp',
+        async () => {
+            const opened = await tryOpenCursorMcpJson();
+            if (!opened) {
+                // Fallback: at least open settings JSON so the user lands in a JSON config editor
+                await vscode.commands.executeCommand('workbench.action.openSettingsJson');
+            }
 
-            const text = [
-                '// Paste into your Cursor mcp.json',
-                '// - gitmaster-data works immediately (after building, if needed)',
-                '// - gitmaster-ui requires launching Cursor/VS Code with GITMASTER_MCP_UI_PORT=8765',
-                JSON.stringify(snippet, null, 2)
-            ].join('\n');
+            // Copy snippet after opening so the user can paste immediately.
+            const snippet = buildCursorMcpSnippet(context);
+            await vscode.env.clipboard.writeText(JSON.stringify(snippet, null, 2));
 
-            await vscode.env.clipboard.writeText(text);
-            vscode.window.showInformationMessage('GitMaster: Copied Cursor MCP config snippet to clipboard');
+            vscode.window.showInformationMessage(
+                'GitMaster: MCP config copied. Paste it into your Cursor mcp.json and reload MCP servers.'
+            );
         }
     );
 
@@ -657,8 +658,74 @@ function registerCommands(context: vscode.ExtensionContext): void {
         explainCommitWithAICommand,
         copyRemoteLineUrlCommand,
         openShelvesViewCommand,
-        copyCursorMcpConfigCommand
+        copyCursorMcpConfigCommand,
+        setupCursorMcpCommand
     );
+}
+
+function buildCursorMcpSnippet(context: vscode.ExtensionContext): any {
+    const dataServerPath = path.join(context.extensionPath, 'out', 'mcp', 'server.js');
+    return {
+        mcpServers: {
+            'gitmaster-data': {
+                command: 'node',
+                args: [dataServerPath]
+            },
+            // Optional: enable UI bridge by launching Cursor/VS Code with GITMASTER_MCP_UI_PORT=8765
+            'gitmaster-ui': {
+                url: 'http://127.0.0.1:8765/sse'
+            }
+        }
+    };
+}
+
+async function tryOpenCursorMcpJson(): Promise<boolean> {
+    const candidates = getCursorMcpJsonCandidates();
+    for (const p of candidates) {
+        try {
+            if (!fs.existsSync(p)) {
+                continue;
+            }
+            const doc = await vscode.workspace.openTextDocument(vscode.Uri.file(p));
+            await vscode.window.showTextDocument(doc, { preview: false });
+            return true;
+        } catch {
+            // ignore and try next candidate
+        }
+    }
+
+    // If we couldn't locate it, show an untitled doc to reduce friction.
+    try {
+        const doc = await vscode.workspace.openTextDocument({
+            language: 'json',
+            content: '{\n  "mcpServers": {\n  }\n}\n'
+        });
+        await vscode.window.showTextDocument(doc, { preview: false });
+    } catch {
+        // ignore
+    }
+
+    return false;
+}
+
+function getCursorMcpJsonCandidates(): string[] {
+    const home = os.homedir();
+
+    // Heuristics for Cursor MCP config locations (may vary by Cursor version/OS).
+    // We only open if the file already exists; we do not create files outside the workspace.
+    return [
+        // Common community convention
+        path.join(home, '.cursor', 'mcp.json'),
+
+        // macOS (similar to VS Code's Application Support layout)
+        path.join(home, 'Library', 'Application Support', 'Cursor', 'User', 'mcp.json'),
+
+        // linux
+        path.join(home, '.config', 'Cursor', 'User', 'mcp.json'),
+
+        // windows (best-effort; harmless on non-windows)
+        path.join(home, 'AppData', 'Roaming', 'Cursor', 'User', 'mcp.json')
+    ];
 }
 
 /**

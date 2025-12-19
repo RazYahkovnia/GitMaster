@@ -11,6 +11,12 @@ GitMaster exposes **two MCP endpoints**:
 
 In VS Code/Cursor:
 
+1. Run `GitMaster: Setup MCP in Cursor (GitMaster)` (recommended)
+2. Paste the config into your Cursor `mcp.json`
+3. Restart Cursor / reload MCP servers
+
+Or, if you prefer doing it manually:
+
 1. Run `GitMaster: Copy Cursor MCP Config (GitMaster)`
 2. Paste the snippet into your Cursor `mcp.json`
 3. Restart Cursor / reload MCP servers
