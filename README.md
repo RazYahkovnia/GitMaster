@@ -100,6 +100,18 @@ You can customize GitMaster in VS Code Settings (**Cmd+','** or **Ctrl+','**). S
 - `gitmaster.views.showGitOperations` (default: `true`)  
   Toggle the Git Operations (Reflog) view in the sidebar.
 
+### 🤝 MCP (Cursor integration)
+
+GitMaster can expose a local **MCP SSE endpoint** (running inside the extension host) so Cursor can call GitMaster tools.
+
+- **Enable**: `gitmaster.mcp.enabled` (default: `true`)
+- **Port**: `gitmaster.mcp.port` (default: `8765`)
+- **Endpoint**: `http://127.0.0.1:8765/sse`
+
+**Recommended (one-click):** run the VS Code command **`GitMaster: Install MCP in Cursor`**.
+
+Then in Cursor, use GitMaster MCP tools like **Commit Explain**, **Show Git Graph**, and **Shelves**.
+
 ## 🎨 Why GitMaster?
 
 **🔍 Built for Code Investigation**  

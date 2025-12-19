@@ -102,7 +102,6 @@ export class GitWorktreeService {
             if (!stdout.trim()) return [];
 
             const worktrees: GitWorktree[] = [];
-            const path = await import('path');
             const fs = await import('fs');
 
             let currentRealRoot = repoRoot;

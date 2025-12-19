@@ -669,7 +669,7 @@ export class StashCommands {
             const providerDisposable = vscode.workspace.registerTextDocumentContentProvider('gitmaster-diff', provider);
 
             // Show diff
-            const title = `${fileName} (stash changes)`;
+            const title = `${leftTitle} ↔ ${rightTitle}`;
             await vscode.commands.executeCommand('vscode.diff', leftUri, rightUri, title);
 
             // Clean up after a delay
