@@ -396,6 +396,10 @@
                 "command": "gitmaster.refreshWorktrees",
                 "title": "Refresh Worktrees",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "gitmaster.openShelvesView",
+                "title": "Open Shelves View"
             }
         ],
         "configuration": {
@@ -748,7 +752,8 @@
         "lint": "eslint src --ext ts",
         "publish": "vsce publish",
         "package": "npm run test && vsce package",
-        "test": "jest"
+        "test": "jest",
+        "mcp:data": "node ./out/mcp/server.js"
     },
     "devDependencies": {
         "jest": "^30.2.0",
@@ -760,5 +765,8 @@
         "@typescript-eslint/parser": "^6.13.0",
         "eslint": "^8.55.0",
         "typescript": "^5.3.3"
+    },
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.25.1"
     }
 }

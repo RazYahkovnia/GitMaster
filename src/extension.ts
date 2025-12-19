@@ -19,6 +19,7 @@ import { WorktreeCommands } from './commands/worktreeCommands';
 import { AICommands } from './commands/aiCommands';
 import { GitGraphView } from './views/gitGraphView';
 import { BlameDecorator } from './decorators/blameDecorator';
+import { startGitMasterUiMcpBridge } from './mcpUiBridge/server';
 
 // Global service instances
 let gitService: GitService;
@@ -64,6 +65,17 @@ export async function activate(context: vscode.ExtensionContext) {
 
     // Register commands
     registerCommands(context);
+
+    // Optional: start MCP UI bridge (for agents to open/focus views)
+    // Enable by setting env var GITMASTER_MCP_UI_PORT (e.g. 8765)
+    const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
+    if (uiPortStr && uiPortStr.trim()) {
+        const parsed = parseInt(uiPortStr, 10);
+        const port = Number.isFinite(parsed) ? parsed : 8765;
+        startGitMasterUiMcpBridge(context, { port }).catch(err => {
+            console.warn('GitMaster: failed to start MCP UI bridge:', err);
+        });
+    }
 
     // Register event listeners
     registerEventListeners(context);
@@ -542,6 +554,15 @@ function registerCommands(context: vscode.ExtensionContext): void {
         }
     );
 
+    // Open Shelves view command (for agents / quick navigation)
+    const openShelvesViewCommand = vscode.commands.registerCommand(
+        'gitmaster.openShelvesView',
+        async () => {
+            await vscode.commands.executeCommand('workbench.view.extension.gitmaster');
+            await vscode.commands.executeCommand('gitmaster.shelves.focus');
+        }
+    );
+
     context.subscriptions.push(
         refreshCommand,
         filterFileHistoryByMessageCommand,
@@ -602,7 +623,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         pruneWorktreesCommand,
         refreshWorktreesCommand,
         explainCommitWithAICommand,
-        copyRemoteLineUrlCommand
+        copyRemoteLineUrlCommand,
+        openShelvesViewCommand
     );
 }
 
