@@ -49,6 +49,8 @@ export interface McpServerOptions {
     openGitGraph?: (repoRoot: string) => Promise<void>;
     /** UI callback: open Commit Details view */
     openCommitDetails?: (commitInfo: CommitInfo, repoRoot: string) => Promise<void>;
+    /** UI callback: open File History view for a file */
+    openFileHistory?: (filePath: string) => Promise<void>;
 }
 
 /** Logger function type */
@@ -142,6 +144,7 @@ function createDependencies(options: McpServerOptions): McpDependencies {
         openShelvesView: options.openShelvesView,
         openGitGraph: options.openGitGraph,
         openCommitDetails: options.openCommitDetails,
+        openFileHistory: options.openFileHistory,
     };
 }
 

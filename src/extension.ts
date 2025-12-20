@@ -93,6 +93,11 @@ export async function activate(context: vscode.ExtensionContext) {
                 await vscode.commands.executeCommand('workbench.view.extension.gitmaster');
                 await vscode.commands.executeCommand('gitmaster.commitDetails.focus');
             },
+            openFileHistory: async (filePath: string) => {
+                fileHistoryProvider.setCurrentFile(filePath);
+                await vscode.commands.executeCommand('workbench.view.extension.gitmaster');
+                await vscode.commands.executeCommand('gitmaster.fileHistory.focus');
+            },
         }).then(({ port: startedPort }) => {
             const url = `http://127.0.0.1:${startedPort}/mcp`;
             console.log(`GitMaster MCP server started on ${url}`);

@@ -43,6 +43,13 @@ export const COMMIT_EXPLAIN_LIMITS = {
     MAX_FILES: 2000,
 } as const;
 
+/** File experts tool limits */
+export const FILE_EXPERTS_LIMITS = {
+    DEFAULT_LIMIT: 5,
+    MIN_LIMIT: 1,
+    MAX_LIMIT: 20,
+} as const;
+
 // ============================================================================
 // Timeouts
 // ============================================================================

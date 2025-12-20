@@ -1,5 +1,11 @@
 # Change Log
 
+## [0.0.15] - 2025-12-21
+### ✨ New Features
+- **MCP (Cursor integration)**: Added 2 new MCP tools for agents:
+  - `gitmaster_file_experts` - Find top contributors/experts for any file based on commit history
+  - `gitmaster_show_file_history` - Open the File History view for a specific file
+
 ## [0.0.14] - 2025-12-20
 ### ✨ New Features
 - **MCP (Cursor integration)**: Added 3 MCP tools for agents:

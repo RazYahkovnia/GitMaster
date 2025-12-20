@@ -30,6 +30,20 @@ export interface CommitExplainInput {
     maxFiles?: number;
 }
 
+/** Input parameters for the file experts tool */
+export interface FileExpertsInput {
+    /** Path to the file to analyze - required */
+    filePath: string;
+    /** Maximum number of experts to return (default: 5, max: 20) */
+    limit?: number;
+}
+
+/** Input parameters for the show file history tool */
+export interface ShowFileHistoryInput {
+    /** Path to the file to show history for - required */
+    filePath: string;
+}
+
 // ============================================================================
 // Domain Types
 // ============================================================================
@@ -98,6 +112,32 @@ export interface CommitExplainPayload {
     warning?: string;
 }
 
+/** A file expert (contributor) */
+export interface FileExpert {
+    /** Author name */
+    author: string;
+    /** Total lines changed (added + deleted) */
+    linesChanged: number;
+    /** Number of commits touching this file */
+    commitCount: number;
+    /** Percentage of total changes */
+    percentage: number;
+}
+
+/** Full payload returned by the file experts tool */
+export interface FileExpertsPayload {
+    /** The analyzed file path */
+    filePath: string;
+    /** Repository root */
+    repoRoot: string;
+    /** List of experts sorted by contribution */
+    experts: FileExpert[];
+    /** Total lines changed across all contributors */
+    totalLinesChanged: number;
+    /** Instruction for the agent */
+    agentInstruction: string;
+}
+
 // ============================================================================
 // MCP Response Types
 // ============================================================================
@@ -138,6 +178,8 @@ export interface McpUiCallbacks {
     openGitGraph?: (repoRoot: string) => Promise<void>;
     /** Open Commit Details for a specific commit */
     openCommitDetails?: (commitInfo: CommitInfo, repoRoot: string) => Promise<void>;
+    /** Open File History view for a specific file */
+    openFileHistory?: (filePath: string) => Promise<void>;
 }
 
 /** Dependencies required for MCP tool execution */

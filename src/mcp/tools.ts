@@ -11,9 +11,13 @@ import { GitService } from '../services/gitService';
 import {
     ShelvesInput,
     CommitExplainInput,
+    FileExpertsInput,
+    ShowFileHistoryInput,
     Shelf,
     ShelfFile,
     CommitExplainPayload,
+    FileExpertsPayload,
+    FileExpert,
     McpToolResponse,
     McpResourcesResponse,
     McpResourceReadResponse,
@@ -23,6 +27,7 @@ import {
 import {
     SHELVES_LIMITS,
     COMMIT_EXPLAIN_LIMITS,
+    FILE_EXPERTS_LIMITS,
     TIMEOUTS,
 } from './constants';
 
@@ -94,6 +99,38 @@ export const GITMASTER_MCP_TOOLS = [
             required: [],
         },
     },
+    {
+        name: 'gitmaster_file_experts',
+        description: 'Get the top contributors/experts for a file based on commit history and line changes. Returns authors sorted by contribution with commit counts and line change statistics. Useful for finding who to ask about a file or who should review changes.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                filePath: {
+                    type: 'string',
+                    description: 'Path to the file to analyze (absolute or relative to workspace)',
+                },
+                limit: {
+                    type: 'number',
+                    description: `Max experts to return (default ${FILE_EXPERTS_LIMITS.DEFAULT_LIMIT}, max ${FILE_EXPERTS_LIMITS.MAX_LIMIT})`,
+                },
+            },
+            required: ['filePath'],
+        },
+    },
+    {
+        name: 'gitmaster_show_file_history',
+        description: 'Open/focus GitMaster File History view in VS Code for a specific file. Shows the commit history timeline for the file.',
+        inputSchema: {
+            type: 'object',
+            properties: {
+                filePath: {
+                    type: 'string',
+                    description: 'Path to the file to show history for (absolute or relative to workspace)',
+                },
+            },
+            required: ['filePath'],
+        },
+    },
 ] as const;
 
 /** Type for valid tool names */
@@ -126,6 +163,12 @@ export async function handleGitMasterMcpToolCall(
 
         case 'gitmaster_shelves':
             return handleShelves(args, deps);
+
+        case 'gitmaster_file_experts':
+            return handleFileExperts(args, deps);
+
+        case 'gitmaster_show_file_history':
+            return handleShowFileHistory(args, deps);
 
         default:
             throw new Error(`Unknown tool: ${name}`);
@@ -193,6 +236,40 @@ async function handleShelves(
     await deps.openShelvesView();
 
     return createTextResponse(shelves);
+}
+
+/**
+ * Handle the file_experts tool: get top contributors for a file.
+ */
+async function handleFileExperts(
+    args: Record<string, unknown>,
+    deps: McpDependencies,
+): Promise<McpToolResponse> {
+    const input = parseFileExpertsArgs(args);
+    const payload = await buildFileExpertsPayload(input, deps);
+    return createTextResponse(payload);
+}
+
+/**
+ * Handle the show_file_history tool: open the File History view for a file.
+ */
+async function handleShowFileHistory(
+    args: Record<string, unknown>,
+    deps: McpDependencies,
+): Promise<McpToolResponse> {
+    if (!deps.openFileHistory) {
+        throw new Error('gitmaster_show_file_history is only available inside the VS Code extension host');
+    }
+
+    const input = parseShowFileHistoryArgs(args);
+    const filePath = await resolveFilePath(input.filePath, deps);
+    await deps.openFileHistory(filePath);
+
+    return createTextResponse({
+        filePath,
+        agentInstruction: 'GitMaster File History view has been opened/focused for this file. ' +
+            'The user can now see the commit timeline and click on commits to view details.',
+    });
 }
 
 // ============================================================================
@@ -284,6 +361,61 @@ async function fetchShelves(
             };
         }),
     );
+}
+
+/**
+ * Build the file experts payload with contributor statistics.
+ */
+async function buildFileExpertsPayload(
+    input: FileExpertsInput,
+    deps: McpCoreDependencies,
+): Promise<FileExpertsPayload> {
+    const { gitService } = deps;
+    const filePath = await resolveFilePath(input.filePath, deps);
+    const repoRoot = await resolveRepoRoot(filePath, gitService);
+
+    const limit = clamp(
+        input.limit ?? FILE_EXPERTS_LIMITS.DEFAULT_LIMIT,
+        FILE_EXPERTS_LIMITS.MIN_LIMIT,
+        FILE_EXPERTS_LIMITS.MAX_LIMIT,
+    );
+
+    // Get contributors from git service
+    const contributors = await gitService.getFileContributors(filePath, limit);
+
+    if (contributors.length === 0) {
+        return {
+            filePath,
+            repoRoot,
+            experts: [],
+            totalLinesChanged: 0,
+            agentInstruction: 'No commit history found for this file. ' +
+                'The file may be new, untracked, or have no git history.',
+        };
+    }
+
+    // Calculate total lines changed for percentage
+    const totalLinesChanged = contributors.reduce((sum, c) => sum + c.lineChanges, 0);
+
+    // Build experts list with percentages
+    const experts: FileExpert[] = contributors.map(c => ({
+        author: c.author,
+        linesChanged: c.lineChanges,
+        commitCount: c.commitCount,
+        percentage: totalLinesChanged > 0
+            ? Math.round((c.lineChanges / totalLinesChanged) * 100)
+            : 0,
+    }));
+
+    return {
+        filePath,
+        repoRoot,
+        experts,
+        totalLinesChanged,
+        agentInstruction: `Found ${experts.length} expert(s) for this file. ` +
+            `The top contributor is ${experts[0].author} with ${experts[0].percentage}% of changes. ` +
+            'Consider consulting these experts for code reviews or questions about this file.',
+    };
 }
 
 /**
@@ -399,6 +531,27 @@ function parseShelvesArgs(args: Record<string, unknown>): ShelvesInput {
     };
 }
 
+/** Parse and validate file experts arguments */
+function parseFileExpertsArgs(args: Record<string, unknown>): FileExpertsInput {
+    const filePath = parseStringArg(args.filePath);
+    if (!filePath) {
+        throw new Error('filePath is required');
+    }
+    return {
+        filePath,
+        limit: parseNumberArg(args.limit),
+    };
+}
+
+/** Parse and validate show file history arguments */
+function parseShowFileHistoryArgs(args: Record<string, unknown>): ShowFileHistoryInput {
+    const filePath = parseStringArg(args.filePath);
+    if (!filePath) {
+        throw new Error('filePath is required');
+    }
+    return { filePath };
+}
+
 /** Safely parse a string argument */
 function parseStringArg(value: unknown): string | undefined {
     return typeof value === 'string' ? value : undefined;
@@ -452,6 +605,38 @@ async function resolveRepoRoot(
     }
 
     return resolved;
+}
+
+/**
+ * Resolve a file path, supporting both absolute and relative paths.
+ * Relative paths are resolved against the workspace folder.
+ */
+async function resolveFilePath(
+    filePath: string,
+    deps: McpCoreDependencies,
+): Promise<string> {
+    const trimmed = filePath.trim();
+    if (!trimmed) {
+        throw new Error('filePath cannot be empty');
+    }
+
+    // If absolute path, use as-is
+    if (trimmed.startsWith('/') || /^[a-zA-Z]:/.test(trimmed)) {
+        return trimmed;
+    }
+
+    // Relative path - resolve against workspace or default repo path
+    const basePath = deps.defaultRepoPath
+        || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+
+    if (!basePath) {
+        throw new Error('Cannot resolve relative path: no workspace folder open');
+    }
+
+    // Use path.join equivalent
+    return basePath.endsWith('/') || basePath.endsWith('\\')
+        ? `${basePath}${trimmed}`
+        : `${basePath}/${trimmed}`;
 }
 
 /** Convert a ChangedFile to a ShelfFile */
