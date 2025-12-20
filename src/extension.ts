@@ -19,7 +19,7 @@ import { WorktreeCommands } from './commands/worktreeCommands';
 import { AICommands } from './commands/aiCommands';
 import { GitGraphView } from './views/gitGraphView';
 import { BlameDecorator } from './decorators/blameDecorator';
-import { startGitMasterUiMcpBridge } from './mcpUiBridge/server';
+import { startGitMasterMcpServer } from './mcp/server';
 
 // Global service instances
 let gitService: GitService;
@@ -79,7 +79,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
 
         mcpOutput.appendLine(`Starting MCP server on 127.0.0.1:${finalPort}...`);
-        startGitMasterUiMcpBridge(context, {
+        startGitMasterMcpServer(context, {
             port: finalPort,
             log: (message: string) => mcpOutput.appendLine(message),
             openShelvesView: async () => {
