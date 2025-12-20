@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Git investigation tools with visual history, graph, named stashes (shelves), and author tracking. Find when bugs were introduced, understand code changes, and manage WIP work efficiently.",
-    "version": "0.0.15",
+    "version": "0.0.16",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -206,6 +206,16 @@
                 "command": "gitmaster.shelveFileTo",
                 "title": "Shelve to...",
                 "icon": "$(archive)"
+            },
+            {
+                "command": "gitmaster.pinShelf",
+                "title": "Pin Shelf",
+                "icon": "$(pin)"
+            },
+            {
+                "command": "gitmaster.unpinShelf",
+                "title": "Unpin Shelf",
+                "icon": "$(pinned)"
             },
             {
                 "command": "gitmaster.checkoutFromReflog",
@@ -609,43 +619,63 @@
                     "group": "9_cutcopypaste"
                 },
                 {
-                    "command": "gitmaster.applyShelf",
+                    "command": "gitmaster.pinShelf",
                     "when": "view == gitmaster.shelves && viewItem == stash",
                     "group": "inline@1"
                 },
                 {
-                    "command": "gitmaster.popShelf",
-                    "when": "view == gitmaster.shelves && viewItem == stash",
-                    "group": "inline@2"
-                },
-                {
-                    "command": "gitmaster.mergeIntoShelf",
-                    "when": "view == gitmaster.shelves && viewItem == stash",
-                    "group": "inline@3"
-                },
-                {
-                    "command": "gitmaster.deleteShelf",
-                    "when": "view == gitmaster.shelves && viewItem == stash",
-                    "group": "inline@4"
+                    "command": "gitmaster.unpinShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stashPinned",
+                    "group": "inline@1"
                 },
                 {
                     "command": "gitmaster.applyShelf",
+                    "when": "view == gitmaster.shelves && viewItem =~ /^(stash|stashPinned|stashConflict|stashPinnedConflict)$/",
+                    "group": "inline@2"
+                },
+                {
+                    "command": "gitmaster.popShelf",
+                    "when": "view == gitmaster.shelves && viewItem =~ /^(stash|stashPinned|stashConflict|stashPinnedConflict)$/",
+                    "group": "inline@3"
+                },
+                {
+                    "command": "gitmaster.mergeIntoShelf",
+                    "when": "view == gitmaster.shelves && (viewItem == stash || viewItem == stashPinned)",
+                    "group": "inline@4"
+                },
+                {
+                    "command": "gitmaster.deleteShelf",
+                    "when": "view == gitmaster.shelves && viewItem =~ /^(stash|stashPinned|stashConflict|stashPinnedConflict)$/",
+                    "group": "inline@5"
+                },
+                {
+                    "command": "gitmaster.pinShelf",
                     "when": "view == gitmaster.shelves && viewItem == stash",
+                    "group": "0_pin"
+                },
+                {
+                    "command": "gitmaster.unpinShelf",
+                    "when": "view == gitmaster.shelves && viewItem == stashPinned",
+                    "group": "0_pin"
+                },
+                {
+                    "command": "gitmaster.applyShelf",
+                    "when": "view == gitmaster.shelves && viewItem =~ /^(stash|stashPinned|stashConflict|stashPinnedConflict)$/",
                     "group": "1_stash"
                 },
                 {
                     "command": "gitmaster.popShelf",
-                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "when": "view == gitmaster.shelves && viewItem =~ /^(stash|stashPinned|stashConflict|stashPinnedConflict)$/",
                     "group": "1_stash"
                 },
                 {
                     "command": "gitmaster.mergeIntoShelf",
-                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "when": "view == gitmaster.shelves && (viewItem == stash || viewItem == stashPinned)",
                     "group": "1_stash"
                 },
                 {
                     "command": "gitmaster.deleteShelf",
-                    "when": "view == gitmaster.shelves && viewItem == stash",
+                    "when": "view == gitmaster.shelves && viewItem =~ /^(stash|stashPinned|stashConflict|stashPinnedConflict)$/",
                     "group": "2_danger"
                 },
                 {

@@ -194,7 +194,7 @@ function initializeServices(context: vscode.ExtensionContext): void {
     diffService = new DiffService(gitService);
     fileHistoryProvider = new FileHistoryProvider(gitService, context);
     commitDetailsProvider = new CommitDetailsProvider(gitService);
-    shelvesProvider = new ShelvesProvider(gitService);
+    shelvesProvider = new ShelvesProvider(gitService, context);
     reflogProvider = new ReflogProvider(gitService);
     repositoryLogProvider = new RepositoryLogProvider(gitService);
     branchesProvider = new BranchesProvider(gitService, context);
@@ -377,6 +377,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
     const shelveFileToCommand = vscode.commands.registerCommand(
         'gitmaster.shelveFileTo',
         async (...resources) => stashCommands.shelveFileTo(...resources),
+    );
+
+    const pinShelfCommand = vscode.commands.registerCommand(
+        'gitmaster.pinShelf',
+        async (stashItem) => await stashCommands.pinShelf(stashItem),
+    );
+
+    const unpinShelfCommand = vscode.commands.registerCommand(
+        'gitmaster.unpinShelf',
+        async (stashItem) => await stashCommands.unpinShelf(stashItem),
     );
 
     // Reflog commands
@@ -708,6 +718,8 @@ function registerCommands(context: vscode.ExtensionContext): void {
         refreshShelvesCommand,
         showStashFileDiffCommand,
         shelveFileToCommand,
+        pinShelfCommand,
+        unpinShelfCommand,
         checkoutFromReflogCommand,
         refreshReflogCommand,
         loadMoreReflogCommand,

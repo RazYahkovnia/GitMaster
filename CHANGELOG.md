@@ -1,5 +1,28 @@
 # Change Log
 
+## [0.0.16] - 2025-12-11
+### 📌 Shelf Management
+- **Pin/Unpin Shelves**: Pin your favorite or important shelves to keep them at the top of the list.
+  - 📍 **Visual Indicator**: Pinned shelves show a pin icon with blue color.
+  - 🔒 **Persistent State**: Pin state is saved per repository and persists across sessions.
+  - 🔄 **Smart Sorting**: Pinned shelves always appear first, followed by newest shelves.
+
+### ⚠️ Conflict Detection
+- **Smart Conflict Warnings**: Automatically detects when a shelf would conflict with your current working directory changes.
+  - ⚠️ **Visual Warning**: Conflicting shelves display a warning icon (highest priority).
+  - 📝 **Conflict Details**: Tooltip shows list of conflicting files (up to 5 files displayed).
+  - 🛡️ **Prevent Data Loss**: Helps avoid failed operations and unexpected overwrites.
+
+### 📊 Enhanced Shelf Information
+- **Detailed Statistics**: Each shelf now displays comprehensive change information.
+  - ➕➖ **Line Stats**: Shows additions and deletions (+X -Y) for all changes.
+  - ⏰ **Relative Time**: Displays human-readable time (e.g., "2 hours ago").
+  - 🎨 **Age-Based Icons**: Visual indicators based on shelf age:
+    - 📥 Fresh (<24h): Green inbox icon
+    - 📦 Recent (<7d): Blue archive icon
+    - 📦 Week-old (<30d): Yellow package icon
+    - 📦 Old (≥30d): Orange archive icon
+
 ## [0.0.15] - 2025-12-21
 ### ✨ New Features
 - **MCP (Cursor integration)**: Added 2 new MCP tools for agents:

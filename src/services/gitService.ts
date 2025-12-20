@@ -189,6 +189,10 @@ export class GitService {
         return this.stashService.getStashes(repoRoot);
     }
 
+    async checkStashConflicts(stashIndex: string, repoRoot: string): Promise<string[]> {
+        return this.stashService.checkStashConflicts(stashIndex, repoRoot);
+    }
+
     async stashHasUntrackedFiles(stashIndex: string, repoRoot: string): Promise<boolean> {
         return this.stashService.stashHasUntrackedFiles(stashIndex, repoRoot);
     }

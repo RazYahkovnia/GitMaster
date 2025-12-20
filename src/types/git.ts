@@ -42,6 +42,18 @@ export interface StashInfo {
     message: string;
     /** Number of files changed in the stash */
     fileCount: number;
+    /** Timestamp of when stash was created (ISO format) */
+    timestamp: string;
+    /** Relative time (e.g., "2 hours ago") */
+    relativeTime: string;
+    /** Total lines added across all files */
+    additions: number;
+    /** Total lines deleted across all files */
+    deletions: number;
+    /** Whether this stash has conflicting files with current changes */
+    hasConflicts?: boolean;
+    /** List of conflicting file paths */
+    conflictingFiles?: string[];
 }
 
 /**

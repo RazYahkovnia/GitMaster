@@ -422,9 +422,10 @@ export class StashCommands {
      * This adds ALL current changes to the selected shelf
      */
     async mergeIntoShelf(stashItem: StashTreeItem): Promise<void> {
-        try {
-            const repoRoot = stashItem.repoRoot;
+        const repoRoot = stashItem.repoRoot;
+        let tempStashCreated = false;
 
+        try {
             // Check if there are uncommitted changes
             const hasChanges = await this.gitService.hasChangesToStash(repoRoot);
             if (!hasChanges) {
@@ -477,7 +478,9 @@ export class StashCommands {
                 for (const f of preview.unstaged.slice(0, maxFilesToShow - filesShown)) {
                     modalLines.push(`   • ${f.file} (+${f.additions} -${f.deletions})`);
                     filesShown++;
-                    if (filesShown >= maxFilesToShow) { break; }
+                    if (filesShown >= maxFilesToShow) {
+                        break;
+                    }
                 }
                 if (filesShown >= maxFilesToShow) {
                     const remaining = totalFiles - filesShown;
@@ -494,7 +497,9 @@ export class StashCommands {
                 for (const f of preview.untracked.slice(0, maxFilesToShow - filesShown)) {
                     modalLines.push(`   + ${f}`);
                     filesShown++;
-                    if (filesShown >= maxFilesToShow) { break; }
+                    if (filesShown >= maxFilesToShow) {
+                        break;
+                    }
                 }
                 const remaining = totalFiles - filesShown;
                 if (remaining > 0) {
@@ -516,20 +521,75 @@ export class StashCommands {
             const originalMessage = stashItem.stash.message;
             const stashIndex = stashItem.stash.index;
 
-            // Step 1: Apply the target shelf to working directory
-            await this.gitService.applyStash(stashIndex, repoRoot);
+            // Extract the numeric index from the stash reference (e.g., "stash@{2}" -> 2)
+            const stashNumMatch = stashIndex.match(/stash@\{(\d+)\}/);
+            if (!stashNumMatch) {
+                throw new Error('Invalid stash index format');
+            }
+            const originalStashNum = parseInt(stashNumMatch[1]);
 
-            // Step 2: Delete the old shelf
-            await this.gitService.deleteStash(stashIndex, repoRoot);
+            // SAFE MERGE PROCESS:
+            // Step 1: Save current changes in a temporary stash (backup)
+            await this.gitService.createStash(repoRoot, 'TEMP-MERGE-BACKUP', hasUntracked);
+            tempStashCreated = true;
 
-            // Step 3: Create new shelf with all combined changes (current + applied)
+            // Step 2: Calculate the new index of the target stash (shifted by +1 due to temp stash)
+            const shiftedStashIndex = `stash@{${originalStashNum + 1}}`;
+
+            // Step 3: Try to apply the target shelf to working directory
+            try {
+                await this.gitService.applyStash(shiftedStashIndex, repoRoot);
+            } catch (applyError) {
+                // Conflict detected! Try to restore original state
+                try {
+                    await this.gitService.popStash('stash@{0}', repoRoot); // Pop the temp backup
+                    tempStashCreated = false;
+                } catch (popError) {
+                    // Pop failed, but we still want to report the original conflict
+                    // Leave tempStashCreated = true so cleanup can try alternate methods
+                    console.error('Failed to restore temp backup via pop:', popError);
+                }
+
+                throw new Error('CONFLICT_DETECTED: ' + String(applyError));
+            }
+
+            // Step 4: Delete the old shelf (safe now, apply succeeded)
+            await this.gitService.deleteStash(shiftedStashIndex, repoRoot);
+
+            // Step 5: Pop the temp stash to merge with applied changes
+            await this.gitService.popStash('stash@{0}', repoRoot);
+            tempStashCreated = false;
+
+            // Step 6: Create new shelf with all combined changes
             await this.gitService.createStash(repoRoot, originalMessage, hasUntracked);
 
             this.shelvesProvider.refresh();
             vscode.window.showInformationMessage(`Added all changes to shelf "${originalMessage}"`);
         } catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error);
-            if (errorMsg.includes('would be overwritten') || errorMsg.includes('conflicts')) {
+
+            // Cleanup: Try to remove temp stash if it still exists
+            if (tempStashCreated) {
+                try {
+                    // Check if temp backup still exists by trying to pop it
+                    await this.gitService.popStash('stash@{0}', repoRoot);
+                } catch (restoreError) {
+                    console.error('Failed to restore temporary stash:', restoreError);
+                    // If pop failed, try to drop it instead (cleanup)
+                    try {
+                        const stashes = await this.gitService.getStashes(repoRoot);
+                        const tempStash = stashes.find(s => s.message === 'TEMP-MERGE-BACKUP');
+                        if (tempStash) {
+                            await this.gitService.deleteStash(tempStash.index, repoRoot);
+                            console.log('Cleaned up temp backup stash');
+                        }
+                    } catch (cleanupError) {
+                        console.error('Failed to cleanup temp stash:', cleanupError);
+                    }
+                }
+            }
+
+            if (errorMsg.includes('CONFLICT_DETECTED') || errorMsg.includes('would be overwritten') || errorMsg.includes('conflicts')) {
                 vscode.window.showErrorMessage(
                     'Cannot add to shelf: Changes conflict with the shelf contents. ' +
                     'Please resolve conflicts manually or create a new shelf instead.',
@@ -631,6 +691,32 @@ export class StashCommands {
      */
     refreshShelves(): void {
         this.shelvesProvider.refresh();
+    }
+
+    /**
+     * Pin a shelf
+     */
+    async pinShelf(stashItem: StashTreeItem): Promise<void> {
+        try {
+            await this.shelvesProvider.pinShelf(stashItem.stash.index);
+            vscode.window.showInformationMessage(`Pinned shelf "${stashItem.stash.message}"`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to pin shelf: ${error}`);
+            console.error('Error pinning shelf:', error);
+        }
+    }
+
+    /**
+     * Unpin a shelf
+     */
+    async unpinShelf(stashItem: StashTreeItem): Promise<void> {
+        try {
+            await this.shelvesProvider.unpinShelf(stashItem.stash.index);
+            vscode.window.showInformationMessage(`Unpinned shelf "${stashItem.stash.message}"`);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to unpin shelf: ${error}`);
+            console.error('Error unpinning shelf:', error);
+        }
     }
 
     /**
