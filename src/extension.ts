@@ -78,7 +78,7 @@ export async function activate(context: vscode.ExtensionContext) {
         const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
         const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
 
-        mcpOutput.appendLine(`Starting MCP server (SSE) on 127.0.0.1:${finalPort}...`);
+        mcpOutput.appendLine(`Starting MCP server on 127.0.0.1:${finalPort}...`);
         startGitMasterUiMcpBridge(context, {
             port: finalPort,
             log: (message: string) => mcpOutput.appendLine(message),
@@ -94,7 +94,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 await vscode.commands.executeCommand('gitmaster.commitDetails.focus');
             }
         }).then(({ port: startedPort }) => {
-            const url = `http://127.0.0.1:${startedPort}/sse`;
+            const url = `http://127.0.0.1:${startedPort}/mcp`;
             console.log(`GitMaster MCP server started on ${url}`);
             mcpOutput.appendLine(`MCP server started: ${url}`);
         }).catch(err => {
@@ -700,7 +700,7 @@ function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
     const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
     const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
     const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
-    const mcpUrl = `http://127.0.0.1:${finalPort}/sse`;
+    const mcpUrl = `http://127.0.0.1:${finalPort}/mcp`;
 
     // Build the MCP server config (just the server config, not the full mcpServers object)
     const mcpConfig = {
