@@ -11,7 +11,7 @@ export class ReflogCommands {
     constructor(
         private gitService: GitService,
         private reflogProvider: ReflogProvider,
-        private commitDetailsProvider: CommitDetailsProvider
+        private commitDetailsProvider: CommitDetailsProvider,
     ) { }
 
     /**
@@ -33,7 +33,7 @@ export class ReflogCommands {
 
             if (hasChanges) {
                 vscode.window.showErrorMessage(
-                    'Cannot checkout: You have uncommitted changes. Please commit or stash your changes first.'
+                    'Cannot checkout: You have uncommitted changes. Please commit or stash your changes first.',
                 );
                 return;
             }
@@ -43,7 +43,7 @@ export class ReflogCommands {
             const action = await vscode.window.showWarningMessage(
                 message,
                 { modal: true },
-                'Checkout'
+                'Checkout',
             );
 
             if (action !== 'Checkout') {
@@ -54,7 +54,7 @@ export class ReflogCommands {
             await this.gitService.checkoutCommit(entry.hash, actualRepoRoot);
 
             vscode.window.showInformationMessage(
-                `Checked out to ${entry.shortHash}. You are now in detached HEAD state.`
+                `Checked out to ${entry.shortHash}. You are now in detached HEAD state.`,
             );
 
             // Refresh views
@@ -108,7 +108,7 @@ export class ReflogCommands {
                 message: entry.message,
                 author: '', // Will be fetched from git
                 date: '',
-                relativeDate: ''
+                relativeDate: '',
             };
 
             // Get full commit details including author and date
@@ -130,4 +130,3 @@ export class ReflogCommands {
         }
     }
 }
-

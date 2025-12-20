@@ -12,7 +12,7 @@ export class RebaseTreeItem extends vscode.TreeItem {
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public readonly commit?: RebaseCommit,
         public readonly type?: 'header' | 'commit' | 'info' | 'status',
-        public readonly repoRoot?: string
+        public readonly repoRoot?: string,
     ) {
         super(label, collapsibleState);
 
@@ -26,7 +26,7 @@ export class RebaseTreeItem extends vscode.TreeItem {
             this.command = {
                 command: 'gitmaster.showRebaseCommitDetails',
                 title: 'Show Commit Details',
-                arguments: [this]
+                arguments: [this],
             };
         } else if (type === 'header') {
             this.contextValue = 'rebaseHeader';
@@ -72,7 +72,7 @@ export class RebaseTreeItem extends vscode.TreeItem {
             'edit': '✋',
             'squash': '⬆',
             'fixup': '⬆',
-            'drop': '✗'
+            'drop': '✗',
         };
         return badges[action as keyof typeof badges] || '?';
     }
@@ -84,7 +84,7 @@ export class RebaseTreeItem extends vscode.TreeItem {
             'edit': new vscode.ThemeIcon('debug-pause', new vscode.ThemeColor('gitDecoration.modifiedResourceForeground')),
             'squash': new vscode.ThemeIcon('arrow-down', new vscode.ThemeColor('charts.orange')),
             'fixup': new vscode.ThemeIcon('arrow-down', new vscode.ThemeColor('charts.purple')),
-            'drop': new vscode.ThemeIcon('trash', new vscode.ThemeColor('gitDecoration.deletedResourceForeground'))
+            'drop': new vscode.ThemeIcon('trash', new vscode.ThemeColor('gitDecoration.deletedResourceForeground')),
         };
         return icons[action as keyof typeof icons] || new vscode.ThemeIcon('circle-outline');
     }
@@ -156,7 +156,7 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                 baseBranch: defaultBranch,
                 commits: commitsDescending,
                 isInProgress: false,
-                hasConflicts: false
+                hasConflicts: false,
             };
 
             if (commits.length > 0) {
@@ -251,8 +251,8 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                     'Open a Git repository',
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
-                    'info'
-                )
+                    'info',
+                ),
             ];
         }
 
@@ -261,15 +261,15 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
         // Show rebase status header
         if (this.rebaseState.isInProgress) {
             const statusItem = new RebaseTreeItem(
-                `⚠️ Rebase in Progress`,
+                '⚠️ Rebase in Progress',
                 vscode.TreeItemCollapsibleState.None,
                 undefined,
-                'status'
+                'status',
             );
             statusItem.description = this.rebaseState.hasConflicts ? 'Conflicts!' : 'Working...';
             statusItem.iconPath = new vscode.ThemeIcon(
                 this.rebaseState.hasConflicts ? 'warning' : 'sync~spin',
-                new vscode.ThemeColor(this.rebaseState.hasConflicts ? 'errorForeground' : 'charts.blue')
+                new vscode.ThemeColor(this.rebaseState.hasConflicts ? 'errorForeground' : 'charts.blue'),
             );
             items.push(statusItem);
 
@@ -278,7 +278,7 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                     this.rebaseState.conflictMessage,
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
-                    'info'
+                    'info',
                 );
                 conflictItem.iconPath = new vscode.ThemeIcon('error', new vscode.ThemeColor('errorForeground'));
                 items.push(conflictItem);
@@ -289,7 +289,7 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                 `Based on: ${this.rebaseState.baseBranch}`,
                 vscode.TreeItemCollapsibleState.None,
                 undefined,
-                'header'
+                'header',
             );
             headerItem.iconPath = new vscode.ThemeIcon('git-branch', new vscode.ThemeColor('charts.blue'));
             headerItem.description = `${this.rebaseState.commits.length} commit${this.rebaseState.commits.length !== 1 ? 's' : ''} ahead`;
@@ -303,8 +303,8 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                     'Up to date with base branch',
                     vscode.TreeItemCollapsibleState.None,
                     undefined,
-                    'info'
-                )
+                    'info',
+                ),
             );
         } else {
             for (const commit of this.rebaseState.commits) {
@@ -313,14 +313,14 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
                     vscode.TreeItemCollapsibleState.None,
                     commit,
                     'commit',
-                    this.rebaseState.repoRoot
+                    this.rebaseState.repoRoot,
                 );
 
                 // Add color coding by author
                 const color = getAuthorColor(commit.author);
                 item.iconPath = new vscode.ThemeIcon(
                     this.getIconNameForAction(commit.action),
-                    color
+                    color,
                 );
 
                 items.push(item);
@@ -337,7 +337,7 @@ export class RebaseProvider implements vscode.TreeDataProvider<RebaseTreeItem> {
             'edit': 'debug-pause',
             'squash': 'arrow-down',
             'fixup': 'arrow-down',
-            'drop': 'trash'
+            'drop': 'trash',
         };
         return icons[action as keyof typeof icons] || 'circle-outline';
     }

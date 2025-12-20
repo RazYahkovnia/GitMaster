@@ -6,7 +6,7 @@ import { GitUtils } from './utils';
 export class GitLogService {
     constructor(
         private executor: GitExecutor,
-        private statusService: GitStatusService
+        private statusService: GitStatusService,
     ) { }
 
     /**
@@ -30,7 +30,7 @@ export class GitLogService {
 
             const { stdout } = await this.executor.exec(
                 args,
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -58,7 +58,7 @@ export class GitLogService {
 
             const { stdout } = await this.executor.exec(
                 args,
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -83,7 +83,7 @@ export class GitLogService {
                         author,
                         date,
                         message,
-                        parentHashes
+                        parentHashes,
                     });
                 }
             }
@@ -103,7 +103,7 @@ export class GitLogService {
             // Format: hash|shortHash|selector|message|timestamp|relativeTime
             const { stdout } = await this.executor.exec(
                 ['reflog', '--format=%H|%h|%gd|%gs|%ci|%cr', '-n', limit.toString()],
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -134,7 +134,7 @@ export class GitLogService {
                         action,
                         message,
                         timestamp,
-                        relativeTime
+                        relativeTime,
                     };
 
                     entries.push(entry);

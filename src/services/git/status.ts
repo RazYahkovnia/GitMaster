@@ -36,7 +36,7 @@ export class GitStatusService {
 
             const { stdout } = await this.executor.exec(['rev-parse', '--show-toplevel'], {
                 cwd: dirPath,
-                timeout: options?.timeoutMs
+                timeout: options?.timeoutMs,
             });
             const result = path.normalize(stdout.trim());
 
@@ -58,7 +58,7 @@ export class GitStatusService {
             const dirPath = path.dirname(filePath);
             const fileName = path.basename(filePath);
             await this.executor.exec(['ls-files', '--error-unmatch', fileName], {
-                cwd: dirPath
+                cwd: dirPath,
             });
             return true;
         } catch (error) {

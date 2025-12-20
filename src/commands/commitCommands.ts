@@ -12,7 +12,7 @@ export class CommitCommands {
     constructor(
         private gitService: GitService,
         private diffService: DiffService,
-        private commitDetailsProvider: CommitDetailsProvider
+        private commitDetailsProvider: CommitDetailsProvider,
     ) { }
 
     /**
@@ -75,7 +75,7 @@ export class CommitCommands {
                 repoRoot,
                 currentFile?.oldPath,
                 currentFile?.status,
-                line
+                line,
             );
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);
@@ -120,7 +120,7 @@ export class CommitCommands {
                 message: repoCommit.message,
                 author: repoCommit.author,
                 date: repoCommit.date,
-                relativeDate: repoCommit.date // Use date as relative date for now
+                relativeDate: repoCommit.date, // Use date as relative date for now
             };
 
             // Update the commit details view in sidebar
@@ -148,7 +148,7 @@ export class CommitCommands {
                 commit = this.commitDetailsProvider.currentCommitInfo;
             }
 
-            if (!commit || !commit.hash) {
+            if (!commit?.hash) {
                 vscode.window.showErrorMessage('No commit information available');
                 return;
             }
@@ -185,8 +185,7 @@ export class CommitCommands {
     private findFileInCommit(changedFiles: ChangedFile[], relativePath: string): ChangedFile | undefined {
         return changedFiles.find(f =>
             f.path === relativePath ||
-            f.oldPath === relativePath
+            f.oldPath === relativePath,
         );
     }
 }
-

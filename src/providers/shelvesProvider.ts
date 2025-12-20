@@ -9,7 +9,7 @@ export class StashTreeItem extends vscode.TreeItem {
     constructor(
         public readonly stash: StashInfo,
         public readonly repoRoot: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(stash.message, collapsibleState);
 
@@ -32,7 +32,7 @@ export class StashFileTreeItem extends vscode.TreeItem {
         public readonly file: ChangedFile,
         public readonly stashIndex: string,
         public readonly repoRoot: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(file.path, collapsibleState);
 
@@ -45,7 +45,7 @@ export class StashFileTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.showStashFileDiff',
             title: 'Show Stash File Diff',
-            arguments: [this.file, this.stashIndex, this.repoRoot]
+            arguments: [this.file, this.stashIndex, this.repoRoot],
         };
     }
 }
@@ -94,8 +94,8 @@ export class ShelvesProvider implements vscode.TreeDataProvider<vscode.TreeItem>
                     new StashTreeItem(
                         stash,
                         this.currentRepoRoot!,
-                        vscode.TreeItemCollapsibleState.Collapsed
-                    )
+                        vscode.TreeItemCollapsibleState.Collapsed,
+                    ),
                 );
             } catch (error) {
                 console.error('Error getting stashes:', error);
@@ -108,15 +108,15 @@ export class ShelvesProvider implements vscode.TreeDataProvider<vscode.TreeItem>
             try {
                 const files = await this.gitService.getStashFiles(
                     element.stash.index,
-                    element.repoRoot
+                    element.repoRoot,
                 );
                 return files.map(file =>
                     new StashFileTreeItem(
                         file,
                         element.stash.index,
                         element.repoRoot,
-                        vscode.TreeItemCollapsibleState.None
-                    )
+                        vscode.TreeItemCollapsibleState.None,
+                    ),
                 );
             } catch (error) {
                 console.error('Error getting stash files:', error);
@@ -136,4 +136,3 @@ export class ShelvesProvider implements vscode.TreeDataProvider<vscode.TreeItem>
         return this.currentRepoRoot;
     }
 }
-

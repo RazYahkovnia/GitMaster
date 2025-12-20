@@ -15,8 +15,8 @@ export class BlameDecorator implements vscode.Disposable {
             after: {
                 margin: '0 0 0 3em',
                 color: new vscode.ThemeColor('gitDecoration.ignoredResourceForeground'),
-                fontStyle: 'italic'
-            }
+                fontStyle: 'italic',
+            },
         });
 
         this.disposables.push(this.decorationType);
@@ -92,7 +92,7 @@ export class BlameDecorator implements vscode.Disposable {
                     author: blame.author,
                     date: blame.date,
                     relativeDate: blame.relativeDate,
-                    path: blame.filename // Pass the filename from blame (might be different from current if renamed)
+                    path: blame.filename, // Pass the filename from blame (might be different from current if renamed)
                 };
 
                 // Argument for command: [commitInfo, filePath, lineNumber]
@@ -105,13 +105,13 @@ export class BlameDecorator implements vscode.Disposable {
 
                 const args = [commitInfo, uriString, line];
                 const commandUri = vscode.Uri.parse(
-                    `command:gitmaster.showCommitDiff?${encodeURIComponent(JSON.stringify(args))}`
+                    `command:gitmaster.showCommitDiff?${encodeURIComponent(JSON.stringify(args))}`,
                 );
 
                 const hoverMessage = new vscode.MarkdownString(
                     `**${blame.author}** committed ${blame.relativeDate}\n\n` +
                     `${blame.message}\n\n` +
-                    `[View Commit Details](${commandUri})`
+                    `[View Commit Details](${commandUri})`,
                 );
                 hoverMessage.isTrusted = true;
 
@@ -120,9 +120,9 @@ export class BlameDecorator implements vscode.Disposable {
                     renderOptions: {
                         after: {
                             contentText,
-                        }
+                        },
                     },
-                    hoverMessage
+                    hoverMessage,
                 };
 
                 editor.setDecorations(this.decorationType, [decoration]);
@@ -139,4 +139,3 @@ export class BlameDecorator implements vscode.Disposable {
         }
     }
 }
-

@@ -19,7 +19,7 @@ export const ENDPOINTS = {
     /** SSE endpoint (deprecated fallback) */
     SSE: '/sse',
     /** SSE message endpoint */
-    MESSAGE: '/message'
+    MESSAGE: '/message',
 } as const;
 
 // ============================================================================
@@ -33,14 +33,14 @@ export const SHELVES_LIMITS = {
     MAX_SHELVES: 200,
     DEFAULT_MAX_FILES_PER_SHELF: 500,
     MIN_FILES_PER_SHELF: 1,
-    MAX_FILES_PER_SHELF: 5000
+    MAX_FILES_PER_SHELF: 5000,
 } as const;
 
 /** Commit explain tool limits */
 export const COMMIT_EXPLAIN_LIMITS = {
     DEFAULT_MAX_FILES: 200,
     MIN_FILES: 1,
-    MAX_FILES: 2000
+    MAX_FILES: 2000,
 } as const;
 
 // ============================================================================
@@ -54,7 +54,7 @@ export const TIMEOUTS = {
     /** Timeout for fetching commit info */
     COMMIT_INFO: 10_000,
     /** Timeout for fetching changed files */
-    CHANGED_FILES: 15_000
+    CHANGED_FILES: 15_000,
 } as const;
 
 // ============================================================================
@@ -63,4 +63,3 @@ export const TIMEOUTS = {
 
 /** Minimum duration (ms) before logging slow tool calls */
 export const SLOW_TOOL_THRESHOLD_MS = 2000;
-

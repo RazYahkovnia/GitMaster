@@ -18,7 +18,7 @@ export class DiffService {
         repoRoot: string,
         oldPath?: string,
         status?: string,
-        line?: number
+        line?: number,
     ): Promise<void> {
         try {
             const parentCommit = await this.gitService.getParentCommit(commit.hash, repoRoot);
@@ -27,13 +27,13 @@ export class DiffService {
                 commit,
                 repoRoot,
                 parentCommit,
-                oldPath
+                oldPath,
             );
             const { rightContent, rightTitle } = await this.getRightSideContent(
                 relativePath,
                 commit,
                 repoRoot,
-                status
+                status,
             );
 
             const title = this.getDiffTitle(relativePath, commit, oldPath, status);
@@ -54,7 +54,7 @@ export class DiffService {
                 repoRoot,
                 parentCommit || undefined,
                 commit.hash,
-                line
+                line,
             );
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show diff: ${error}`);
@@ -69,7 +69,7 @@ export class DiffService {
         commit: CommitInfo,
         repoRoot: string,
         parentCommit: string | null,
-        oldPath?: string
+        oldPath?: string,
     ): Promise<{ leftContent: string; leftTitle: string }> {
         const fileName = path.basename(relativePath);
         let leftContent = '';
@@ -98,7 +98,7 @@ export class DiffService {
         relativePath: string,
         commit: CommitInfo,
         repoRoot: string,
-        status?: string
+        status?: string,
     ): Promise<{ rightContent: string; rightTitle: string }> {
         const fileName = path.basename(relativePath);
         let rightContent = '';
@@ -128,7 +128,7 @@ export class DiffService {
         relativePath: string,
         commit: CommitInfo,
         oldPath?: string,
-        status?: string
+        status?: string,
     ): string {
         const fileName = path.basename(relativePath);
 
@@ -159,27 +159,27 @@ export class DiffService {
         repoRoot?: string,
         leftCommit?: string,
         rightCommit?: string,
-        line?: number
+        line?: number,
     ): Promise<void> {
         const leftData = {
             content: leftContent,
-            commit: leftCommit
+            commit: leftCommit,
         };
 
         const rightData = {
             content: rightContent,
-            commit: rightCommit
+            commit: rightCommit,
         };
 
         // Use vscode.Uri.file to properly handle paths (Windows/Unix), then change scheme
         const leftUri = vscode.Uri.file(leftPath).with({
             scheme: 'gitmaster-diff',
-            query: Buffer.from(JSON.stringify(leftData)).toString('base64')
+            query: Buffer.from(JSON.stringify(leftData)).toString('base64'),
         });
 
         const rightUri = vscode.Uri.file(rightPath).with({
             scheme: 'gitmaster-diff',
-            query: Buffer.from(JSON.stringify(rightData)).toString('base64')
+            query: Buffer.from(JSON.stringify(rightData)).toString('base64'),
         });
 
         const provider = new DiffContentProvider();
@@ -226,4 +226,3 @@ export class DiffContentProvider implements vscode.TextDocumentContentProvider {
         }
     }
 }
-

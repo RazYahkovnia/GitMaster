@@ -7,7 +7,7 @@ import { BlameInfo } from '../../types/git';
 export class GitContentService {
     constructor(
         private executor: GitExecutor,
-        private statusService: GitStatusService
+        private statusService: GitStatusService,
     ) { }
 
     /**
@@ -17,7 +17,7 @@ export class GitContentService {
         try {
             const { stdout } = await this.executor.exec(
                 ['show', `${commitHash}:${relativePath}`],
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
             return stdout;
         } catch (error) {
@@ -83,7 +83,7 @@ export class GitContentService {
 
                         try {
                             const data = JSON.parse(decoded);
-                            if (data && data.commit) {
+                            if (data?.commit) {
                                 blameCommitHash = data.commit;
                             }
                         } catch {
@@ -165,7 +165,7 @@ export class GitContentService {
                 date: formattedDate,
                 relativeDate,
                 message,
-                filename
+                filename,
             };
         } catch (error) {
             // Ignore errors (e.g. line out of range, file not tracked)

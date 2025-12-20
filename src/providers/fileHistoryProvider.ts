@@ -9,7 +9,7 @@ export class CommitTreeItem extends vscode.TreeItem {
     constructor(
         public readonly commit: CommitInfo,
         public readonly filePath: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(commit.message, collapsibleState);
 
@@ -25,14 +25,14 @@ export class CommitTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.showCommitDiff',
             title: 'Show Commit Diff',
-            arguments: [this.commit, this.filePath]
+            arguments: [this.commit, this.filePath],
         };
     }
 
     private createTooltip(): vscode.MarkdownString {
         const tooltip = new vscode.MarkdownString();
         tooltip.appendMarkdown(`**${this.commit.message}**\n\n`);
-        tooltip.appendMarkdown(`---\n\n`);
+        tooltip.appendMarkdown('---\n\n');
         tooltip.appendMarkdown(`**Commit:** ${this.commit.hash}\n\n`);
         tooltip.appendMarkdown(`**Author:** ${this.commit.author}\n\n`);
         tooltip.appendMarkdown(`**Date:** ${this.commit.date}\n\n`);
@@ -53,7 +53,7 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
 
     constructor(
         private gitService: GitService,
-        private context: vscode.ExtensionContext
+        private context: vscode.ExtensionContext,
     ) {
         this.fileExpertsView = new FileExpertsView(context, gitService);
     }
@@ -95,7 +95,7 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
             // Get commit history for the current file (with filter applied at git level)
             const commits = await this.gitService.getFileHistory(
                 this.currentFilePath,
-                this.messageFilter.getFilter()
+                this.messageFilter.getFilter(),
             );
 
             if (commits.length === 0) {
@@ -111,8 +111,8 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
                 new CommitTreeItem(
                     commit,
                     this.currentFilePath!,
-                    vscode.TreeItemCollapsibleState.None
-                )
+                    vscode.TreeItemCollapsibleState.None,
+                ),
             );
         } catch (error) {
             const errorItem = new vscode.TreeItem('Failed to load file history');
@@ -174,4 +174,3 @@ export class FileHistoryProvider implements vscode.TreeDataProvider<vscode.TreeI
         }
     }
 }
-

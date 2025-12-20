@@ -75,7 +75,7 @@ export class GitBranchService {
             const format = '%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
             const { stdout } = await this.executor.execShell(
                 `git branch -a --sort=-committerdate --format="${format}" | head -n ${limit}`,
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -120,7 +120,7 @@ export class GitBranchService {
                         lastCommitMessage,
                         lastCommitAuthor,
                         lastCommitDate,
-                        upstream
+                        upstream,
                     });
                 }
             }
@@ -151,7 +151,7 @@ export class GitBranchService {
         try {
             const { stdout } = await this.executor.execShell(
                 'git for-each-ref --format="%(authorname)" refs/heads refs/remotes | sort -u',
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -173,7 +173,7 @@ export class GitBranchService {
             // Try to detect default branch from remote HEAD
             try {
                 const { stdout } = await this.executor.exec(['symbolic-ref', 'refs/remotes/origin/HEAD'], {
-                    cwd: repoRoot
+                    cwd: repoRoot,
                 });
                 const match = stdout.trim().match(/refs\/remotes\/origin\/(.+)/);
                 if (match) {
@@ -228,7 +228,7 @@ export class GitBranchService {
     async getCurrentBranch(repoRoot: string): Promise<string | null> {
         try {
             const { stdout } = await this.executor.exec(['rev-parse', '--abbrev-ref', 'HEAD'], {
-                cwd: repoRoot
+                cwd: repoRoot,
             });
             const branch = stdout.trim();
             // Check if in detached HEAD state
@@ -249,7 +249,7 @@ export class GitBranchService {
         try {
             const { stdout } = await this.executor.exec(
                 ['merge-base', branch1, branch2],
-                { cwd: repoRoot }
+                { cwd: repoRoot },
             );
             return stdout.trim();
         } catch (error) {

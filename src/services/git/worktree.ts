@@ -10,7 +10,7 @@ export class GitWorktreeService {
     async getWorktrees(repoRoot: string): Promise<GitWorktree[]> {
         try {
             const { stdout } = await this.executor.exec(['worktree', 'list', '--porcelain'], {
-                cwd: repoRoot
+                cwd: repoRoot,
             });
 
             if (!stdout.trim()) {
@@ -57,8 +57,8 @@ export class GitWorktreeService {
 
                 // Usually the first worktree listed is the main one (bare repo or main worktree)
                 // A better check for main worktree might be checking if .git is a directory inside it vs a file
-                // But simply assuming the first one is main is common heuristic, 
-                // OR we can check if the worktree path contains the .git directory directly. 
+                // But simply assuming the first one is main is common heuristic,
+                // OR we can check if the worktree path contains the .git directory directly.
                 // For now, let's treat the first entry as main if we can't determine otherwise.
                 if (worktrees.length === 0) {
                     isMain = true;
@@ -69,7 +69,7 @@ export class GitWorktreeService {
                     head,
                     branch,
                     isMain,
-                    isCurrent: normalizedWtPath === normalizedRepoRoot || normalizedRepoRoot.startsWith(normalizedWtPath) // Approximate check
+                    isCurrent: normalizedWtPath === normalizedRepoRoot || normalizedRepoRoot.startsWith(normalizedWtPath), // Approximate check
                 });
             }
 
@@ -99,7 +99,7 @@ export class GitWorktreeService {
     private async getWorktreesLegacy(repoRoot: string): Promise<GitWorktree[]> {
         try {
             const { stdout } = await this.executor.exec(['worktree', 'list'], { cwd: repoRoot });
-            if (!stdout.trim()) return [];
+            if (!stdout.trim()) { return []; }
 
             const worktrees: GitWorktree[] = [];
             const fs = await import('fs');
@@ -125,7 +125,7 @@ export class GitWorktreeService {
                         head,
                         branch,
                         isMain: worktrees.length === 0,
-                        isCurrent: wtReal === currentRealRoot
+                        isCurrent: wtReal === currentRealRoot,
                     });
                 }
             }

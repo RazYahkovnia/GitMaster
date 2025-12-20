@@ -9,7 +9,7 @@ import { RepositoryCommit } from '../types/git';
 export class RepositoryLogCommands {
     constructor(
         private gitService: GitService,
-        private repositoryLogProvider: RepositoryLogProvider
+        private repositoryLogProvider: RepositoryLogProvider,
     ) { }
 
     /**
@@ -31,7 +31,7 @@ export class RepositoryLogCommands {
                 const action = await vscode.window.showWarningMessage(
                     'You have uncommitted changes. Creating a new branch will keep these changes. Do you want to proceed?',
                     { modal: true },
-                    'Continue'
+                    'Continue',
                 );
                 if (action !== 'Continue') {
                     return;
@@ -52,7 +52,7 @@ export class RepositoryLogCommands {
                         return 'Branch name contains invalid characters';
                     }
                     return null;
-                }
+                },
             });
 
             if (!branchName) {
@@ -63,7 +63,7 @@ export class RepositoryLogCommands {
             await this.gitService.revertCommitInNewBranch(commit.hash, branchName, actualRepoRoot);
 
             vscode.window.showInformationMessage(
-                `Successfully reverted commit ${commit.shortHash} in branch "${branchName}"`
+                `Successfully reverted commit ${commit.shortHash} in branch "${branchName}"`,
             );
 
             // Refresh the repository log
@@ -93,7 +93,7 @@ export class RepositoryLogCommands {
                 const action = await vscode.window.showWarningMessage(
                     'You have uncommitted changes. Checking out to a different commit will discard them. Do you want to proceed?',
                     { modal: true },
-                    'Checkout Anyway'
+                    'Checkout Anyway',
                 );
                 if (action !== 'Checkout Anyway') {
                     return;
@@ -130,7 +130,7 @@ export class RepositoryLogCommands {
                 const action = await vscode.window.showWarningMessage(
                     'You have uncommitted changes. Cherry-picking may cause conflicts. Do you want to proceed?',
                     { modal: true },
-                    'Continue'
+                    'Continue',
                 );
                 if (action !== 'Continue') {
                     return;
@@ -139,7 +139,7 @@ export class RepositoryLogCommands {
 
             await this.gitService.cherryPickCommit(commit.hash, actualRepoRoot);
             vscode.window.showInformationMessage(
-                `Successfully cherry-picked commit ${commit.shortHash}`
+                `Successfully cherry-picked commit ${commit.shortHash}`,
             );
 
             // Refresh the repository log
@@ -149,7 +149,7 @@ export class RepositoryLogCommands {
             const errorMsg = String(error);
             if (errorMsg.includes('conflict') || errorMsg.includes('CONFLICT')) {
                 vscode.window.showWarningMessage(
-                    `Cherry-pick resulted in conflicts. Please resolve conflicts and complete the cherry-pick manually.`
+                    'Cherry-pick resulted in conflicts. Please resolve conflicts and complete the cherry-pick manually.',
                 );
             } else {
                 vscode.window.showErrorMessage(`Failed to cherry-pick commit: ${error}`);
@@ -184,7 +184,7 @@ export class RepositoryLogCommands {
                         return 'Branch name contains invalid characters';
                     }
                     return null;
-                }
+                },
             });
 
             if (!branchName) {
@@ -198,7 +198,7 @@ export class RepositoryLogCommands {
             const checkoutAction = await vscode.window.showInformationMessage(
                 `Branch "${branchName}" created from commit ${commit.shortHash}. Do you want to switch to it?`,
                 'Switch to Branch',
-                'Stay Here'
+                'Stay Here',
             );
 
             if (checkoutAction === 'Switch to Branch') {
@@ -208,7 +208,7 @@ export class RepositoryLogCommands {
                     const action = await vscode.window.showWarningMessage(
                         'You have uncommitted changes. Switching branches will discard them. Do you want to proceed?',
                         { modal: true },
-                        'Switch Anyway'
+                        'Switch Anyway',
                     );
                     if (action !== 'Switch Anyway') {
                         return;
@@ -241,4 +241,3 @@ export class RepositoryLogCommands {
         this.repositoryLogProvider.loadMore();
     }
 }
-

@@ -7,7 +7,7 @@ export class GitRemoteService {
     constructor(
         private executor: GitExecutor,
         private statusService: GitStatusService,
-        private branchService: GitBranchService
+        private branchService: GitBranchService,
     ) { }
 
     /**
@@ -17,7 +17,7 @@ export class GitRemoteService {
         try {
             const { stdout } = await this.executor.exec(
                 ['config', '--get', 'remote.origin.url'],
-                { cwd: repoRoot }
+                { cwd: repoRoot },
             );
 
             const url = stdout.trim();
@@ -34,7 +34,7 @@ export class GitRemoteService {
         try {
             const { stdout } = await this.executor.exec(
                 ['config', '--get', 'remote.origin.url'],
-                { cwd: repoRoot }
+                { cwd: repoRoot },
             );
 
             const url = stdout.trim();
@@ -83,7 +83,7 @@ export class GitRemoteService {
     async getRemoteFileUrl(
         filePath: string,
         startLine: number,
-        endLine?: number
+        endLine?: number,
     ): Promise<string | null> {
         try {
             const repoRoot = await this.statusService.getRepoRoot(filePath);
@@ -120,7 +120,7 @@ export class GitRemoteService {
         ref: string,
         relativePath: string,
         startLine: number,
-        endLine?: number
+        endLine?: number,
     ): string {
         // Normalize path separators to forward slashes
         const normalizedPath = relativePath.replace(/\\/g, '/');
@@ -163,7 +163,7 @@ export class GitRemoteService {
         try {
             await this.executor.exec(['fetch', remote], {
                 cwd: repoRoot,
-                maxBuffer: 10 * 1024 * 1024
+                maxBuffer: 10 * 1024 * 1024,
             });
         } catch (error) {
             throw new Error(`Failed to fetch from ${remote}: ${error}`);

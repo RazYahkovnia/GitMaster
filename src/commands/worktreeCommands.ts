@@ -11,7 +11,7 @@ import { GitWorktree } from '../types/git';
 export class WorktreeCommands {
     constructor(
         private gitService: GitService,
-        private worktreesProvider: WorktreesProvider
+        private worktreesProvider: WorktreesProvider,
     ) { }
 
     /**
@@ -25,7 +25,7 @@ export class WorktreeCommands {
             const action = await vscode.window.showErrorMessage(
                 `Worktree path does not exist: ${worktreePath}. Do you want to prune worktrees?`,
                 'Prune Worktrees',
-                'Cancel'
+                'Cancel',
             );
 
             if (action === 'Prune Worktrees') {
@@ -63,7 +63,7 @@ export class WorktreeCommands {
                     return 'Directory already exists';
                 }
                 return null;
-            }
+            },
         });
 
         if (!folderName) {
@@ -85,7 +85,7 @@ export class WorktreeCommands {
                     return 'Branch name contains invalid characters';
                 }
                 return null;
-            }
+            },
         });
 
         if (!branchName) {
@@ -102,12 +102,12 @@ export class WorktreeCommands {
         const branchItems = branches.map(b => ({
             label: b.name,
             description: b.isCurrent ? '(current)' : '',
-            detail: b.lastCommitMessage
+            detail: b.lastCommitMessage,
         }));
 
         const selectedOrigin = await vscode.window.showQuickPick(branchItems, {
             placeHolder: 'Select base branch (optional, defaults to HEAD)',
-            canPickMany: false
+            canPickMany: false,
         });
 
         const originBranch = selectedOrigin ? selectedOrigin.label : undefined;
@@ -120,7 +120,7 @@ export class WorktreeCommands {
             const openAction = await vscode.window.showInformationMessage(
                 'Worktree created. Open it now?',
                 'Open in New Window',
-                'Not Now'
+                'Not Now',
             );
 
             if (openAction === 'Open in New Window') {
@@ -151,7 +151,7 @@ export class WorktreeCommands {
         const confirm = await vscode.window.showWarningMessage(
             `Are you sure you want to remove worktree at "${item.worktree.path}"? This will delete the directory.`,
             { modal: true },
-            'Delete Worktree'
+            'Delete Worktree',
         );
 
         if (confirm !== 'Delete Worktree') {
@@ -167,7 +167,7 @@ export class WorktreeCommands {
             const forceConfirm = await vscode.window.showErrorMessage(
                 `Failed to remove worktree: ${error}. Force removal?`,
                 'Force Remove',
-                'Cancel'
+                'Cancel',
             );
 
             if (forceConfirm === 'Force Remove') {
@@ -207,4 +207,3 @@ export class WorktreeCommands {
         this.worktreesProvider.refresh();
     }
 }
-

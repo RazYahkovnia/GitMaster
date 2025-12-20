@@ -25,24 +25,24 @@ export class MarkdownString {
 export enum TreeItemCollapsibleState {
     None = 0,
     Collapsed = 1,
-    Expanded = 2
+    Expanded = 2,
 }
 
 export const window = {
     showInformationMessage: jest.fn(),
     showErrorMessage: jest.fn(),
-    createTreeView: jest.fn()
+    createTreeView: jest.fn(),
 };
 
 export const commands = {
-    registerCommand: jest.fn()
+    registerCommand: jest.fn(),
 };
 
 export const workspace = {
-    getConfiguration: jest.fn()
+    getConfiguration: jest.fn(),
 };
 
 export const Uri = {
     file: (path: string) => ({ fsPath: path, scheme: 'file' }),
-    parse: (path: string) => ({ fsPath: path, scheme: 'file' })
+    parse: (path: string) => ({ fsPath: path, scheme: 'file' }),
 };

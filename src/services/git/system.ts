@@ -22,7 +22,7 @@ export class GitSystemService {
                 'C:\\Program Files\\Git\\cmd',
                 'C:\\Program Files (x86)\\Git\\cmd',
                 process.env['ProgramW6432'] ? path.join(process.env['ProgramW6432'], 'Git', 'cmd') : '',
-                process.env['ProgramFiles'] ? path.join(process.env['ProgramFiles'], 'Git', 'cmd') : ''
+                process.env['ProgramFiles'] ? path.join(process.env['ProgramFiles'], 'Git', 'cmd') : '',
             ].filter(p => p); // Filter empty
 
             for (const p of possiblePaths) {

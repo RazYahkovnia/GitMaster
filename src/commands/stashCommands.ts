@@ -12,7 +12,7 @@ export class StashCommands {
     constructor(
         private gitService: GitService,
         private diffService: DiffService,
-        private shelvesProvider: ShelvesProvider
+        private shelvesProvider: ShelvesProvider,
     ) { }
 
     /**
@@ -72,7 +72,7 @@ export class StashCommands {
      */
     private async showAdvancedFilePicker(
         preview: { staged: any[]; unstaged: any[]; untracked: string[] },
-        repoRoot: string
+        repoRoot: string,
     ): Promise<{ files: string[]; includeUntracked: boolean } | null> {
         interface FilePickItem extends vscode.QuickPickItem {
             filePath?: string;
@@ -88,7 +88,7 @@ export class StashCommands {
                 description: `Unstaged • +${f.additions} -${f.deletions}`,
                 filePath: f.file,
                 type: 'unstaged',
-                picked: true  // Pre-checked
+                picked: true, // Pre-checked
             });
         });
 
@@ -97,10 +97,10 @@ export class StashCommands {
             const fileList = preview.untracked.slice(0, 3).join(', ');
             const more = preview.untracked.length > 3 ? '...' : '';
             items.push({
-                label: `$(new-file) Include ALL Untracked Files`,
+                label: '$(new-file) Include ALL Untracked Files',
                 description: `${preview.untracked.length} file(s): ${fileList}${more}`,
                 type: 'untracked-option',
-                picked: false  // Not checked by default
+                picked: false, // Not checked by default
             });
         }
 
@@ -112,7 +112,7 @@ export class StashCommands {
         const selected = await vscode.window.showQuickPick(items, {
             canPickMany: true,
             title: 'Select Files to Stash',
-            placeHolder: 'Choose specific files (all selected by default)'
+            placeHolder: 'Choose specific files (all selected by default)',
         });
 
         if (!selected || selected.length === 0) {
@@ -182,7 +182,7 @@ export class StashCommands {
                     id: 'save-all',
                     label: `$(package) Save All Changes${recommendedId === 'save-all' ? ' ⭐' : ''}`,
                     description: `${totalFiles} file(s)`,
-                    detail: 'Stash everything for a clean workspace'
+                    detail: 'Stash everything for a clean workspace',
                 });
             }
 
@@ -192,7 +192,7 @@ export class StashCommands {
                     id: 'keep-staged',
                     label: `$(sync) Keep Staged Work${recommendedId === 'keep-staged' ? ' ⭐' : ''}`,
                     description: `${unstagedAndUntracked} file(s)`,
-                    detail: 'Stash unstaged/untracked, keep staged changes'
+                    detail: 'Stash unstaged/untracked, keep staged changes',
                 });
             }
 
@@ -202,7 +202,7 @@ export class StashCommands {
                     id: 'tracked-only',
                     label: `$(file-code) Tracked Only${recommendedId === 'tracked-only' ? ' ⭐' : ''}`,
                     description: `${trackedFiles} file(s)`,
-                    detail: 'Stash tracked files, leave untracked'
+                    detail: 'Stash tracked files, leave untracked',
                 });
             }
 
@@ -212,7 +212,7 @@ export class StashCommands {
                     id: 'untracked-only',
                     label: `$(new-file) Untracked Only${recommendedId === 'untracked-only' ? ' ⭐' : ''}`,
                     description: `${preview.untracked.length} file(s)`,
-                    detail: 'Stash only untracked files'
+                    detail: 'Stash only untracked files',
                 });
             }
 
@@ -224,7 +224,7 @@ export class StashCommands {
                     id: 'advanced',
                     label: '$(gear) Advanced Options...',
                     description: '',
-                    detail: 'Select specific files to stash'
+                    detail: 'Select specific files to stash',
                 });
             }
 
@@ -236,7 +236,7 @@ export class StashCommands {
             // Show preset picker
             const selectedPreset = await vscode.window.showQuickPick(presets, {
                 placeHolder: 'Choose what to stash',
-                title: 'Create Shelf'
+                title: 'Create Shelf',
             });
 
             if (!selectedPreset) {
@@ -254,7 +254,7 @@ export class StashCommands {
                 const message = await vscode.window.showInputBox({
                     prompt: 'Enter shelf name',
                     placeHolder: 'e.g., Work in progress on feature X',
-                    validateInput: (value) => value?.trim() ? null : 'Shelf name cannot be empty'
+                    validateInput: (value) => value?.trim() ? null : 'Shelf name cannot be empty',
                 });
 
                 if (!message) {
@@ -273,7 +273,7 @@ export class StashCommands {
                         selection.includeUntracked,
                         false,
                         false,
-                        selection.files.length > 0 ? selection.files : undefined
+                        selection.files.length > 0 ? selection.files : undefined,
                     );
                 }
 
@@ -286,7 +286,7 @@ export class StashCommands {
             const message = await vscode.window.showInputBox({
                 prompt: 'Enter shelf name',
                 placeHolder: 'e.g., Work in progress on feature X',
-                validateInput: (value) => value?.trim() ? null : 'Shelf name cannot be empty'
+                validateInput: (value) => value?.trim() ? null : 'Shelf name cannot be empty',
             });
 
             if (!message) {
@@ -335,7 +335,7 @@ export class StashCommands {
                 const action = await vscode.window.showWarningMessage(
                     'You have uncommitted changes. Applying this shelf may cause conflicts.',
                     { modal: true },
-                    'Apply Anyway'
+                    'Apply Anyway',
                 );
 
                 if (action !== 'Apply Anyway') {
@@ -349,7 +349,7 @@ export class StashCommands {
             const errorMsg = error instanceof Error ? error.message : String(error);
             if (errorMsg.includes('would be overwritten')) {
                 vscode.window.showErrorMessage(
-                    'Cannot apply shelf: Your local changes would be overwritten. Please commit or stash your current changes first.'
+                    'Cannot apply shelf: Your local changes would be overwritten. Please commit or stash your current changes first.',
                 );
             } else {
                 vscode.window.showErrorMessage(`Failed to apply shelf: ${error}`);
@@ -369,7 +369,7 @@ export class StashCommands {
                 const action = await vscode.window.showWarningMessage(
                     'You have uncommitted changes. Popping this shelf may cause conflicts.',
                     { modal: true },
-                    'Pop Anyway'
+                    'Pop Anyway',
                 );
 
                 if (action !== 'Pop Anyway') {
@@ -384,7 +384,7 @@ export class StashCommands {
             const errorMsg = error instanceof Error ? error.message : String(error);
             if (errorMsg.includes('would be overwritten')) {
                 vscode.window.showErrorMessage(
-                    'Cannot pop shelf: Your local changes would be overwritten. Please commit or stash your current changes first.'
+                    'Cannot pop shelf: Your local changes would be overwritten. Please commit or stash your current changes first.',
                 );
             } else {
                 vscode.window.showErrorMessage(`Failed to pop shelf: ${error}`);
@@ -401,7 +401,7 @@ export class StashCommands {
             const confirm = await vscode.window.showWarningMessage(
                 `Delete shelf "${stashItem.stash.message}"?`,
                 { modal: true },
-                'Delete'
+                'Delete',
             );
 
             if (confirm !== 'Delete') {
@@ -437,15 +437,15 @@ export class StashCommands {
             const preview = await this.gitService.getStashPreview(repoRoot, hasUntracked);
 
             // Count totals for summary
-            let totalFiles = preview.staged.length + preview.unstaged.length + preview.untracked.length;
-            let totalAdditions = preview.staged.reduce((sum, f) => sum + f.additions, 0) +
+            const totalFiles = preview.staged.length + preview.unstaged.length + preview.untracked.length;
+            const totalAdditions = preview.staged.reduce((sum, f) => sum + f.additions, 0) +
                 preview.unstaged.reduce((sum, f) => sum + f.additions, 0);
-            let totalDeletions = preview.staged.reduce((sum, f) => sum + f.deletions, 0) +
+            const totalDeletions = preview.staged.reduce((sum, f) => sum + f.deletions, 0) +
                 preview.unstaged.reduce((sum, f) => sum + f.deletions, 0);
 
             // Build modal message with better formatting
             const modalLines: string[] = [];
-            modalLines.push(`📦 Add Changes to Shelf`);
+            modalLines.push('📦 Add Changes to Shelf');
             modalLines.push('');
             modalLines.push(`Target: "${stashItem.stash.message}"`);
             modalLines.push('');
@@ -477,7 +477,7 @@ export class StashCommands {
                 for (const f of preview.unstaged.slice(0, maxFilesToShow - filesShown)) {
                     modalLines.push(`   • ${f.file} (+${f.additions} -${f.deletions})`);
                     filesShown++;
-                    if (filesShown >= maxFilesToShow) break;
+                    if (filesShown >= maxFilesToShow) { break; }
                 }
                 if (filesShown >= maxFilesToShow) {
                     const remaining = totalFiles - filesShown;
@@ -494,7 +494,7 @@ export class StashCommands {
                 for (const f of preview.untracked.slice(0, maxFilesToShow - filesShown)) {
                     modalLines.push(`   + ${f}`);
                     filesShown++;
-                    if (filesShown >= maxFilesToShow) break;
+                    if (filesShown >= maxFilesToShow) { break; }
                 }
                 const remaining = totalFiles - filesShown;
                 if (remaining > 0) {
@@ -506,7 +506,7 @@ export class StashCommands {
             const confirm = await vscode.window.showInformationMessage(
                 modalLines.join('\n'),
                 { modal: true },
-                'Add All Changes'
+                'Add All Changes',
             );
 
             if (confirm !== 'Add All Changes') {
@@ -532,7 +532,7 @@ export class StashCommands {
             if (errorMsg.includes('would be overwritten') || errorMsg.includes('conflicts')) {
                 vscode.window.showErrorMessage(
                     'Cannot add to shelf: Changes conflict with the shelf contents. ' +
-                    'Please resolve conflicts manually or create a new shelf instead.'
+                    'Please resolve conflicts manually or create a new shelf instead.',
                 );
             } else {
                 vscode.window.showErrorMessage(`Failed to add to shelf: ${error}`);
@@ -577,12 +577,12 @@ export class StashCommands {
                 label: stash.message,
                 description: `${stash.fileCount} files • ${stash.branch}`,
                 detail: stash.index,
-                stash: stash
+                stash: stash,
             }));
 
             const selected = await vscode.window.showQuickPick(shelfItems, {
                 placeHolder: `Shelve ${relativeFilePaths.length} file(s) to...`,
-                title: 'Select Shelf'
+                title: 'Select Shelf',
             });
 
             if (!selected) {
@@ -596,7 +596,7 @@ export class StashCommands {
             const confirm = await vscode.window.showWarningMessage(
                 `Add ${relativeFilePaths.length} file(s) to shelf "${targetStash.message}"?\n\nFiles: ${fileNames}`,
                 { modal: true },
-                'Add to Shelf'
+                'Add to Shelf',
             );
 
             if (confirm !== 'Add to Shelf') {
@@ -657,11 +657,11 @@ export class StashCommands {
 
             // Create URIs for diff with file path to enable syntax highlighting
             const leftUri = vscode.Uri.parse(`gitmaster-diff:/${file.path}`).with({
-                query: Buffer.from(leftContent).toString('base64')
+                query: Buffer.from(leftContent).toString('base64'),
             });
 
             const rightUri = vscode.Uri.parse(`gitmaster-diff:/${file.path}`).with({
-                query: Buffer.from(rightContent).toString('base64')
+                query: Buffer.from(rightContent).toString('base64'),
             });
 
             // Register content provider
@@ -683,4 +683,3 @@ export class StashCommands {
         }
     }
 }
-

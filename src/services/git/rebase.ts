@@ -5,7 +5,7 @@ import { RebaseCommit } from '../../types/git';
 export class GitRebaseService {
     constructor(
         private executor: GitExecutor,
-        private branchService: GitBranchService
+        private branchService: GitBranchService,
     ) { }
 
     /**
@@ -28,7 +28,7 @@ export class GitRebaseService {
             const format = 'COMMIT|%H|%h|%an|%ar|%s';
             const { stdout } = await this.executor.exec(
                 ['log', `--format=${format}`, '--numstat', `${mergeBase}..${branch}`],
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -53,7 +53,7 @@ export class GitRebaseService {
                         action: 'pick',
                         fileCount: 0,
                         additions: 0,
-                        deletions: 0
+                        deletions: 0,
                     };
                     commits.push(currentCommit);
                 } else if (currentCommit && line.trim()) {
@@ -121,11 +121,11 @@ COMMIT_HASH=$(git rev-parse HEAD 2>/dev/null || echo "")
 
 # Map of commit hashes to new messages
 ${Array.from(rewordMessages.entries()).map(([hash, msg]) =>
-                    `if [ "$COMMIT_HASH" = "${hash}" ]; then
+        `if [ "$COMMIT_HASH" = "${hash}" ]; then
     echo "${msg.replace(/"/g, '\\"').replace(/\n/g, '\\n')}" > "$COMMIT_MSG_FILE"
     exit 0
-fi`
-                ).join('\n')}
+fi`,
+    ).join('\n')}
 
 # If no match found, keep original message (shouldn't happen)
 exit 0
@@ -138,7 +138,7 @@ exit 0
             const oldestCommit = commits[0];
             const { stdout: parentHash } = await this.executor.exec(
                 ['rev-parse', `${oldestCommit.hash}^`],
-                { cwd: repoRoot }
+                { cwd: repoRoot },
             );
             const base = parentHash.trim();
 
@@ -152,9 +152,9 @@ exit 0
                             ...process.env,
                             GIT_SEQUENCE_EDITOR: `sh -c 'echo "${todoContent.replace(/"/g, '\\"')}" > "$1"' --`,
                             GIT_EDITOR: editorScript || 'true',
-                            EDITOR: editorScript || 'true'
-                        }
-                    }
+                            EDITOR: editorScript || 'true',
+                        },
+                    },
                 );
             } finally {
                 // Clean up the temporary editor script
@@ -182,8 +182,8 @@ exit 0
                 env: {
                     ...process.env,
                     GIT_EDITOR: 'true',
-                    EDITOR: 'true'
-                }
+                    EDITOR: 'true',
+                },
             });
         } catch (error) {
             throw new Error(`Failed to continue rebase: ${error}`);
@@ -196,7 +196,7 @@ exit 0
     async abortRebase(repoRoot: string): Promise<void> {
         try {
             await this.executor.exec(['rebase', '--abort'], {
-                cwd: repoRoot
+                cwd: repoRoot,
             });
         } catch (error) {
             throw new Error(`Failed to abort rebase: ${error}`);
@@ -225,7 +225,7 @@ exit 0
     async getRebaseConflicts(repoRoot: string): Promise<string[]> {
         try {
             const { stdout } = await this.executor.exec(['diff', '--name-only', '--diff-filter=U'], {
-                cwd: repoRoot
+                cwd: repoRoot,
             });
 
             if (!stdout.trim()) {

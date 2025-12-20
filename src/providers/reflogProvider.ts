@@ -20,7 +20,7 @@ export class ReflogTreeItem extends vscode.TreeItem {
     constructor(
         public readonly entry: ReflogEntry,
         public readonly repoRoot: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(entry.message, collapsibleState);
 
@@ -33,7 +33,7 @@ export class ReflogTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.showReflogCommitDetails',
             title: 'Show Commit Details',
-            arguments: [this.entry, this.repoRoot]
+            arguments: [this.entry, this.repoRoot],
         };
     }
 
@@ -88,7 +88,7 @@ export class ReflogTreeItem extends vscode.TreeItem {
             /reset.*--hard/i,
             /push.*--force/i,
             /push.*-f\b/i,
-            /rebase.*--force/i
+            /rebase.*--force/i,
         ];
 
         return dangerousPatterns.some(pattern => pattern.test(this.entry.message));
@@ -105,7 +105,7 @@ export class LoadMoreReflogTreeItem extends vscode.TreeItem {
         this.iconPath = new vscode.ThemeIcon('fold-down');
         this.command = {
             command: 'gitmaster.loadMoreReflog',
-            title: 'Load More Operations'
+            title: 'Load More Operations',
         };
     }
 }
@@ -158,8 +158,8 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
                     new ReflogTreeItem(
                         entry,
                         this.currentRepoRoot!,
-                        vscode.TreeItemCollapsibleState.None
-                    )
+                        vscode.TreeItemCollapsibleState.None,
+                    ),
                 );
             }
 
@@ -184,8 +184,8 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
             new ReflogTreeItem(
                 entry,
                 this.currentRepoRoot!,
-                vscode.TreeItemCollapsibleState.None
-            )
+                vscode.TreeItemCollapsibleState.None,
+            ),
         );
 
         // Add "Load More" button at the bottom if we have entries equal to the limit
@@ -294,4 +294,3 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
         return this.currentRepoRoot;
     }
 }
-

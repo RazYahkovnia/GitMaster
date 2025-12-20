@@ -12,7 +12,7 @@ export class FileExpertsView {
 
     constructor(
         private context: vscode.ExtensionContext,
-        private gitService: GitService
+        private gitService: GitService,
     ) { }
 
     async show(filePath: string): Promise<void> {
@@ -36,8 +36,8 @@ export class FileExpertsView {
                 vscode.ViewColumn.One,
                 {
                     enableScripts: false,
-                    retainContextWhenHidden: true
-                }
+                    retainContextWhenHidden: true,
+                },
             );
 
             this.panel.onDidDispose(() => {
@@ -255,9 +255,8 @@ export class FileExpertsView {
             '<': '&lt;',
             '>': '&gt;',
             '"': '&quot;',
-            "'": '&#039;'
+            "'": '&#039;',
         };
         return text.replace(/[&<>"']/g, (m) => map[m]);
     }
 }
-

@@ -25,7 +25,7 @@ export class GitGraphView {
 
     constructor(
         private context: vscode.ExtensionContext,
-        private gitService: GitService
+        private gitService: GitService,
     ) { }
 
     async show(repoRoot: string): Promise<void> {
@@ -43,8 +43,8 @@ export class GitGraphView {
                 vscode.ViewColumn.One,
                 {
                     enableScripts: true,
-                    retainContextWhenHidden: true
-                }
+                    retainContextWhenHidden: true,
+                },
             );
 
             this.panel.onDidDispose(() => {
@@ -71,7 +71,7 @@ export class GitGraphView {
                     }
                 },
                 undefined,
-                this.context.subscriptions
+                this.context.subscriptions,
             );
         }
 
@@ -99,11 +99,11 @@ export class GitGraphView {
                     this.panel.webview.postMessage({
                         command: 'appendCommits',
                         commits: this.processCommits(newCommits),
-                        hasMore: newCommits.length === this.batchSize
+                        hasMore: newCommits.length === this.batchSize,
                     });
                 } else {
                     this.panel.webview.postMessage({
-                        command: 'noMoreCommits'
+                        command: 'noMoreCommits',
                     });
                 }
             }
@@ -191,7 +191,7 @@ export class GitGraphView {
             items.push({
                 label: '$(warning) Cannot Checkout/Revert (Uncommitted Changes)',
                 action: 'disabled',
-                description: 'Commit or stash changes first'
+                description: 'Commit or stash changes first',
             });
             items.push({ label: '$(git-branch) Create Branch', action: 'createBranch' });
         } else {
@@ -202,7 +202,7 @@ export class GitGraphView {
         }
 
         const selected = await vscode.window.showQuickPick(items, {
-            placeHolder: `Actions for ${commit.shortHash}: ${commit.message}`
+            placeHolder: `Actions for ${commit.shortHash}: ${commit.message}`,
         });
 
         if (!selected || selected.action === 'disabled') {
@@ -250,7 +250,7 @@ export class GitGraphView {
             const hash = crypto.createHash('md5').update(c.email ? c.email.trim().toLowerCase() : '').digest('hex');
             return {
                 ...c,
-                avatarUrl: `https://www.gravatar.com/avatar/${hash}?d=identicon&s=32`
+                avatarUrl: `https://www.gravatar.com/avatar/${hash}?d=identicon&s=32`,
             };
         });
     }

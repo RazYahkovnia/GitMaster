@@ -9,7 +9,7 @@ import { GitWorktree } from '../types/git';
 export class WorktreeTreeItem extends vscode.TreeItem {
     constructor(
         public readonly worktree: GitWorktree,
-        public readonly repoRoot: string
+        public readonly repoRoot: string,
     ) {
         super(path.basename(worktree.path), vscode.TreeItemCollapsibleState.None);
 
@@ -39,7 +39,7 @@ export class WorktreeTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.openWorktree',
             title: 'Open Worktree',
-            arguments: [this]
+            arguments: [this],
         };
     }
 
@@ -57,7 +57,7 @@ export class WorktreeTreeItem extends vscode.TreeItem {
         const lines = [
             `Path: ${this.worktree.path}`,
             `Branch: ${this.worktree.branch}`,
-            `HEAD: ${this.worktree.head}`
+            `HEAD: ${this.worktree.head}`,
         ];
 
         if (this.worktree.isMain) {
@@ -84,7 +84,7 @@ export class WorktreesProvider implements vscode.TreeDataProvider<vscode.TreeIte
     private currentRepoRoot: string | undefined;
 
     constructor(
-        private gitService: GitService
+        private gitService: GitService,
     ) { }
 
     /**
@@ -144,4 +144,3 @@ export class WorktreesProvider implements vscode.TreeDataProvider<vscode.TreeIte
         }
     }
 }
-

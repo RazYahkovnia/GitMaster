@@ -18,7 +18,7 @@ export class GitGraphService {
 
             // Get commits with branch/tag decorations
             // Use null byte as delimiter to avoid issues with | in commit messages
-            args.push(`--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%ad%x00%P%x00%D%x00`, '--date=short', `--skip=${skip}`, `-n`, limit.toString());
+            args.push('--format=%H%x00%h%x00%s%x00%an%x00%ae%x00%ad%x00%P%x00%D%x00', '--date=short', `--skip=${skip}`, '-n', limit.toString());
 
             // Add '--' to separate refs from file paths (fixes ambiguous argument error)
             // This must come AFTER all git options, not before
@@ -28,7 +28,7 @@ export class GitGraphService {
 
             const { stdout } = await this.executor.exec(
                 args,
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {
@@ -65,12 +65,12 @@ export class GitGraphService {
                         if (r.includes('HEAD')) {
                             return true;
                         }
-                        
+
                         // Exclude tags
                         if (r.startsWith('tag: ')) {
                             return false;
                         }
-                        
+
                         // Include all branches (local and remote)
                         return true;
                     }).map(r => r.replace('HEAD -> ', ''));
@@ -86,7 +86,7 @@ export class GitGraphService {
                         parents,
                         branches,
                         tags,
-                        refs
+                        refs,
                     });
                 }
             }

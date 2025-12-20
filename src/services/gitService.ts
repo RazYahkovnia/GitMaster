@@ -92,7 +92,7 @@ export class GitService {
     async getCommitInfo(
         commitHash: string,
         repoRoot: string,
-        options?: { timeoutMs?: number }
+        options?: { timeoutMs?: number },
     ): Promise<CommitInfo | null> {
         return this.commitService.getCommitInfo(commitHash, repoRoot, options);
     }
@@ -108,7 +108,7 @@ export class GitService {
     async getChangedFilesInCommit(
         commitHash: string,
         repoRoot: string,
-        options?: { timeoutMs?: number; detectRenames?: boolean }
+        options?: { timeoutMs?: number; detectRenames?: boolean },
     ): Promise<ChangedFile[]> {
         return this.commitService.getChangedFilesInCommit(commitHash, repoRoot, options);
     }

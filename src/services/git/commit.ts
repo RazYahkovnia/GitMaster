@@ -11,13 +11,13 @@ export class GitCommitService {
     async getCommitInfo(
         commitHash: string,
         repoRoot: string,
-        options?: { timeoutMs?: number }
+        options?: { timeoutMs?: number },
     ): Promise<CommitInfo | null> {
         try {
             const format = '%H|%h|%an|%ai|%ar|%s';
             const { stdout } = await this.executor.exec(
                 ['show', '--no-patch', `--format=${format}`, commitHash],
-                { cwd: repoRoot, timeout: options?.timeoutMs }
+                { cwd: repoRoot, timeout: options?.timeoutMs },
             );
 
             if (!stdout.trim()) {
@@ -40,7 +40,7 @@ export class GitCommitService {
             // git show provides the commit message and the diff
             const { stdout } = await this.executor.exec(['show', commitHash], {
                 cwd: repoRoot,
-                maxBuffer: 10 * 1024 * 1024
+                maxBuffer: 10 * 1024 * 1024,
             });
             return stdout;
         } catch (error) {
@@ -57,7 +57,7 @@ export class GitCommitService {
         try {
             const { stdout } = await this.executor.exec(
                 ['rev-parse', `${commitHash}^`],
-                { cwd: repoRoot }
+                { cwd: repoRoot },
             );
             return stdout.trim();
         } catch (error) {
@@ -71,7 +71,7 @@ export class GitCommitService {
     async getChangedFilesInCommit(
         commitHash: string,
         repoRoot: string,
-        options?: { timeoutMs?: number; detectRenames?: boolean }
+        options?: { timeoutMs?: number; detectRenames?: boolean },
     ): Promise<ChangedFile[]> {
         try {
             const files = await this.getChangedFilesStats(commitHash, repoRoot, options);
@@ -81,7 +81,7 @@ export class GitCommitService {
             return files.map(file => ({
                 ...file,
                 status: statusMap.get(file.path)?.status || file.status,
-                oldPath: statusMap.get(file.path)?.oldPath || file.oldPath
+                oldPath: statusMap.get(file.path)?.oldPath || file.oldPath,
             }));
         } catch (error) {
             throw new Error(`Failed to get changed files: ${error}`);
@@ -94,7 +94,7 @@ export class GitCommitService {
     private async getChangedFilesStats(
         commitHash: string,
         repoRoot: string,
-        options?: { timeoutMs?: number; detectRenames?: boolean }
+        options?: { timeoutMs?: number; detectRenames?: boolean },
     ): Promise<ChangedFile[]> {
         // Add --root flag to handle the initial commit (which has no parent)
         const detectRenames = options?.detectRenames ?? true;
@@ -106,9 +106,9 @@ export class GitCommitService {
                 '--numstat',
                 ...(detectRenames ? ['-M'] : []),
                 '-r',
-                commitHash
+                commitHash,
             ],
-            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024, timeout: options?.timeoutMs }
+            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024, timeout: options?.timeoutMs },
         );
 
         const files: ChangedFile[] = [];
@@ -126,7 +126,7 @@ export class GitCommitService {
                     oldPath,
                     status: 'M',
                     additions,
-                    deletions
+                    deletions,
                 });
             }
         }
@@ -140,8 +140,8 @@ export class GitCommitService {
     private async getFileStatuses(
         commitHash: string,
         repoRoot: string,
-        options?: { timeoutMs?: number; detectRenames?: boolean }
-    ): Promise<Map<string, { status: string, oldPath?: string }>> {
+        options?: { timeoutMs?: number; detectRenames?: boolean },
+    ): Promise<Map<string, { status: string; oldPath?: string }>> {
         // Add --root flag to handle the initial commit (which has no parent)
         const detectRenames = options?.detectRenames ?? true;
         const { stdout } = await this.executor.exec(
@@ -152,12 +152,12 @@ export class GitCommitService {
                 '--name-status',
                 ...(detectRenames ? ['-M'] : []),
                 '-r',
-                commitHash
+                commitHash,
             ],
-            { cwd: repoRoot, timeout: options?.timeoutMs }
+            { cwd: repoRoot, timeout: options?.timeoutMs },
         );
 
-        const statusMap = new Map<string, { status: string, oldPath?: string }>();
+        const statusMap = new Map<string, { status: string; oldPath?: string }>();
         const statusLines = stdout.trim().split('\n');
 
         for (const line of statusLines) {

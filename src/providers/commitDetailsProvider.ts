@@ -7,7 +7,7 @@ export class CommitFileTreeItem extends vscode.TreeItem {
         public readonly file: ChangedFile,
         public readonly commit: CommitInfo,
         public readonly repoRoot: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(file.oldPath && file.status === 'R' ? `${file.oldPath} → ${file.path}` : file.path, collapsibleState);
 
@@ -20,7 +20,7 @@ export class CommitFileTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.showFileDiff',
             title: 'Show File Diff',
-            arguments: [this.file, this.commit, this.repoRoot]
+            arguments: [this.file, this.commit, this.repoRoot],
         };
     }
 
@@ -54,7 +54,7 @@ export class CommitFileTreeItem extends vscode.TreeItem {
 export class CommitInfoTreeItem extends vscode.TreeItem {
     constructor(
         label: string,
-        description: string
+        description: string,
     ) {
         super(label, vscode.TreeItemCollapsibleState.None);
         this.description = description;
@@ -104,7 +104,7 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
             // Add commit info header
             const headerItem = new vscode.TreeItem(
                 this.currentCommit.message,
-                vscode.TreeItemCollapsibleState.None
+                vscode.TreeItemCollapsibleState.None,
             );
             headerItem.description = `${this.currentCommit.shortHash} • ${this.currentCommit.relativeDate}`;
             headerItem.iconPath = new vscode.ThemeIcon('git-commit');
@@ -123,7 +123,7 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
                 githubItem.command = {
                     command: 'gitmaster.openCommitInGitHub',
                     title: 'Open in GitHub',
-                    arguments: [this.githubUrl, this.currentCommit.hash]
+                    arguments: [this.githubUrl, this.currentCommit.hash],
                 };
                 items.push(githubItem);
             }
@@ -131,7 +131,7 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
             // Add separator
             const separatorItem = new vscode.TreeItem(
                 `${this.changedFiles.length} file(s) changed`,
-                vscode.TreeItemCollapsibleState.None
+                vscode.TreeItemCollapsibleState.None,
             );
             separatorItem.iconPath = new vscode.ThemeIcon('files');
             separatorItem.contextValue = 'separator';
@@ -143,7 +143,7 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
                     file,
                     this.currentCommit,
                     this.currentRepoRoot,
-                    vscode.TreeItemCollapsibleState.None
+                    vscode.TreeItemCollapsibleState.None,
                 ));
             }
 
@@ -179,4 +179,3 @@ export class CommitDetailsProvider implements vscode.TreeDataProvider<vscode.Tre
         this.refresh();
     }
 }
-

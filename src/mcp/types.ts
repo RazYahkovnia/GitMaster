@@ -150,4 +150,3 @@ export interface McpDependencies extends McpUiCallbacks {
 
 /** Dependencies for operations that don't need UI (resources, data queries) */
 export type McpCoreDependencies = Pick<McpDependencies, 'gitService' | 'defaultRepoPath'>;
-

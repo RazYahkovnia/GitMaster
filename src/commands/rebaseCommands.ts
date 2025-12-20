@@ -11,7 +11,7 @@ export class RebaseCommands {
     constructor(
         private gitService: GitService,
         private rebaseProvider: RebaseProvider,
-        private commitDetailsProvider: CommitDetailsProvider
+        private commitDetailsProvider: CommitDetailsProvider,
     ) { }
 
     /**
@@ -35,7 +35,7 @@ export class RebaseCommands {
             const hasChanges = await this.gitService.hasChangesToStash(repoRoot);
             if (hasChanges) {
                 vscode.window.showWarningMessage(
-                    'You have uncommitted changes. Please commit or stash them before rebasing.'
+                    'You have uncommitted changes. Please commit or stash them before rebasing.',
                 );
                 return;
             }
@@ -48,7 +48,7 @@ export class RebaseCommands {
                     label: b.name,
                     description: b.isRemote ? '(remote)' : '(local)',
                     detail: b.lastCommitMessage,
-                    branch: b
+                    branch: b,
                 }));
 
             // Add default branch suggestions at the top
@@ -66,7 +66,7 @@ export class RebaseCommands {
             const selectedItem = await vscode.window.showQuickPick(branchItems, {
                 placeHolder: `Select base branch to rebase ${currentBranch} onto`,
                 matchOnDescription: true,
-                matchOnDetail: true
+                matchOnDetail: true,
             });
 
             if (!selectedItem) {
@@ -101,7 +101,7 @@ export class RebaseCommands {
             const hasChanges = await this.gitService.hasChangesToStash(repoRoot);
             if (hasChanges) {
                 vscode.window.showWarningMessage(
-                    'You have uncommitted changes. Please commit or stash them before rebasing.'
+                    'You have uncommitted changes. Please commit or stash them before rebasing.',
                 );
                 return;
             }
@@ -133,8 +133,8 @@ export class RebaseCommands {
             // Show progress
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: "Fetching from remote...",
-                cancellable: false
+                title: 'Fetching from remote...',
+                cancellable: false,
             }, async (progress) => {
                 await this.gitService.fetchRemote(repoRoot);
             });
@@ -175,7 +175,7 @@ export class RebaseCommands {
                     description: 'Change the commit message',
                     detail: 'Keep the changes but write a new commit message',
                     action: 'reword' as const,
-                    picked: currentAction === 'reword'
+                    picked: currentAction === 'reword',
                 },
                 ...(canSquashOrFixup ? [
                     {
@@ -183,36 +183,36 @@ export class RebaseCommands {
                         description: 'Merge into the commit below (keep both messages)',
                         detail: 'Combines this commit with the one below it, keeping both commit messages',
                         action: 'squash' as const,
-                        picked: currentAction === 'squash'
+                        picked: currentAction === 'squash',
                     },
                     {
                         label: '$(arrow-down) Fixup',
                         description: 'Merge into the commit below (discard this message)',
                         detail: 'Combines this commit with the one below it, but discards this commit message',
                         action: 'fixup' as const,
-                        picked: currentAction === 'fixup'
-                    }
+                        picked: currentAction === 'fixup',
+                    },
                 ] : []),
                 {
                     label: '$(trash) Drop',
                     description: 'Remove this commit entirely',
                     detail: 'The changes in this commit will be discarded',
                     action: 'drop' as const,
-                    picked: currentAction === 'drop'
+                    picked: currentAction === 'drop',
                 },
                 {
                     label: '$(debug-pause) Edit',
                     description: 'Pause to modify this commit (advanced)',
                     detail: 'Rebase will pause here so you can amend the commit manually',
                     action: 'edit' as const,
-                    picked: currentAction === 'edit'
-                }
+                    picked: currentAction === 'edit',
+                },
             ];
 
             const selected = await vscode.window.showQuickPick(actions, {
                 placeHolder: `Action for: ${item.commit.message} (${item.commit.shortHash})`,
                 matchOnDescription: true,
-                matchOnDetail: true
+                matchOnDetail: true,
             });
 
             if (!selected) {
@@ -230,7 +230,7 @@ export class RebaseCommands {
                             return 'Commit message cannot be empty';
                         }
                         return null;
-                    }
+                    },
                 });
 
                 if (!newMessage) {
@@ -242,8 +242,8 @@ export class RebaseCommands {
                 this.rebaseProvider.updateCommitAction(item.commit.hash, 'reword');
                 this.rebaseProvider.refresh();
                 vscode.window.showInformationMessage(
-                    `✓ Commit message updated. Click Execute to apply rebase.`,
-                    'Execute Now'
+                    '✓ Commit message updated. Click Execute to apply rebase.',
+                    'Execute Now',
                 ).then(choice => {
                     if (choice === 'Execute Now') {
                         this.executeRebase();
@@ -261,14 +261,14 @@ export class RebaseCommands {
                 'edit': '⏸ Rebase will pause at this commit for editing',
                 'squash': '⬇ Commit will merge into the one below it (both messages kept)',
                 'fixup': '⬇ Commit will merge into the one below it (this message discarded)',
-                'drop': '✗ Commit will be removed'
+                'drop': '✗ Commit will be removed',
             };
 
             const message = messages[selected.action];
             vscode.window.showInformationMessage(
                 `${message}. Click Execute when ready.`,
                 'Execute Now',
-                'Configure More'
+                'Configure More',
             ).then(choice => {
                 if (choice === 'Execute Now') {
                     this.executeRebase();
@@ -299,7 +299,7 @@ export class RebaseCommands {
                         return 'Commit message cannot be empty';
                     }
                     return null;
-                }
+                },
             });
 
             if (!newMessage || newMessage === item.commit.message) {
@@ -313,7 +313,7 @@ export class RebaseCommands {
             vscode.window.showInformationMessage(
                 '✓ Commit message updated. Click Execute to apply.',
                 'Execute Now',
-                'Configure More'
+                'Configure More',
             ).then(choice => {
                 if (choice === 'Execute Now') {
                     this.executeRebase();
@@ -341,7 +341,7 @@ export class RebaseCommands {
                 `Execute rebase of ${rebaseState.commits.length} commit(s) based on ${rebaseState.baseBranch}?`,
                 { modal: true },
                 'Execute Rebase',
-                'Cancel'
+                'Cancel',
             );
 
             if (action !== 'Execute Rebase') {
@@ -351,8 +351,8 @@ export class RebaseCommands {
             // Execute with progress
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: "Executing rebase...",
-                cancellable: false
+                title: 'Executing rebase...',
+                cancellable: false,
             }, async (progress) => {
                 try {
                     // Reverse commits back to ascending order (oldest first) for Git
@@ -361,7 +361,7 @@ export class RebaseCommands {
                     await this.gitService.startInteractiveRebase(
                         rebaseState.repoRoot,
                         rebaseState.baseBranch,
-                        commitsForGit
+                        commitsForGit,
                     );
 
                     // Check if rebase completed or needs interaction
@@ -380,7 +380,7 @@ export class RebaseCommands {
                             vscode.window.showWarningMessage(
                                 `⚠️ Rebase paused: ${conflicts.length} file(s) have conflicts. Resolve them and continue.`,
                                 'Show Conflicts',
-                                'Abort'
+                                'Abort',
                             ).then(choice => {
                                 if (choice === 'Show Conflicts') {
                                     vscode.commands.executeCommand('workbench.view.scm');
@@ -397,7 +397,7 @@ export class RebaseCommands {
                             vscode.window.showInformationMessage(
                                 '⏸ Rebase paused for editing. Make changes and continue when ready.',
                                 'Continue',
-                                'Abort'
+                                'Abort',
                             ).then(choice => {
                                 if (choice === 'Continue') {
                                     this.continueRebase();
@@ -451,8 +451,8 @@ export class RebaseCommands {
 
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: "Continuing rebase...",
-                cancellable: false
+                title: 'Continuing rebase...',
+                cancellable: false,
             }, async (progress) => {
                 try {
                     await this.gitService.continueRebase(rebaseState.repoRoot);
@@ -502,7 +502,7 @@ export class RebaseCommands {
                 'Are you sure you want to abort the rebase? All changes will be lost.',
                 { modal: true },
                 'Abort Rebase',
-                'Cancel'
+                'Cancel',
             );
 
             if (action !== 'Abort Rebase') {
@@ -511,8 +511,8 @@ export class RebaseCommands {
 
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
-                title: "Aborting rebase...",
-                cancellable: false
+                title: 'Aborting rebase...',
+                cancellable: false,
             }, async (progress) => {
                 await this.gitService.abortRebase(rebaseState.repoRoot);
             });
@@ -547,7 +547,7 @@ export class RebaseCommands {
                 'Reset all changes and start over?',
                 { modal: true },
                 'Reset',
-                'Cancel'
+                'Cancel',
             );
 
             if (action !== 'Reset') {
@@ -585,7 +585,7 @@ export class RebaseCommands {
                     label: b.name,
                     description: b.isRemote ? '(remote)' : '(local)',
                     detail: b.lastCommitMessage,
-                    branch: b
+                    branch: b,
                 }));
 
             // Highlight current base branch
@@ -597,7 +597,7 @@ export class RebaseCommands {
             const selectedItem = await vscode.window.showQuickPick(branchItems, {
                 placeHolder: `Select new base branch (currently: ${rebaseState.baseBranch})`,
                 matchOnDescription: true,
-                matchOnDetail: true
+                matchOnDetail: true,
             });
 
             if (!selectedItem) {
@@ -608,7 +608,7 @@ export class RebaseCommands {
             await this.initializeRebase(rebaseState.repoRoot, selectedItem.label, currentBranch);
 
             vscode.window.showInformationMessage(
-                `Base branch changed to ${selectedItem.label}. Configure and execute when ready.`
+                `Base branch changed to ${selectedItem.label}. Configure and execute when ready.`,
             );
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to change base branch: ${error}`);
@@ -626,7 +626,7 @@ export class RebaseCommands {
 
             if (commits.length === 0) {
                 vscode.window.showInformationMessage(
-                    `No commits to rebase. ${currentBranch} is up to date with ${baseBranch}.`
+                    `No commits to rebase. ${currentBranch} is up to date with ${baseBranch}.`,
                 );
                 return;
             }
@@ -641,13 +641,13 @@ export class RebaseCommands {
                 baseBranch,
                 commits: commitsDescending,
                 isInProgress: false,
-                hasConflicts: false
+                hasConflicts: false,
             };
 
             await this.rebaseProvider.setRebaseState(rebaseState);
 
             vscode.window.showInformationMessage(
-                `Ready to rebase ${commits.length} commit(s) based on ${baseBranch}. Configure and execute when ready.`
+                `Ready to rebase ${commits.length} commit(s) based on ${baseBranch}. Configure and execute when ready.`,
             );
         } catch (error) {
             throw new Error(`Failed to initialize rebase: ${error}`);
@@ -702,7 +702,7 @@ export class RebaseCommands {
                 message: commit.message,
                 author: commit.author,
                 date: commit.date,
-                relativeDate: commit.date // Use same date as relative for now
+                relativeDate: commit.date, // Use same date as relative for now
             };
 
             // Update the commit details view in sidebar
@@ -716,4 +716,3 @@ export class RebaseCommands {
         }
     }
 }
-

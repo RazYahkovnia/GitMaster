@@ -18,12 +18,12 @@ import {
     McpResourcesResponse,
     McpResourceReadResponse,
     McpDependencies,
-    McpCoreDependencies
+    McpCoreDependencies,
 } from './types';
 import {
     SHELVES_LIMITS,
     COMMIT_EXPLAIN_LIMITS,
-    TIMEOUTS
+    TIMEOUTS,
 } from './constants';
 
 // ============================================================================
@@ -44,19 +44,19 @@ export const GITMASTER_MCP_TOOLS = [
             properties: {
                 repoPath: {
                     type: 'string',
-                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)'
+                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)',
                 },
                 commitId: {
                     type: 'string',
-                    description: 'Commit hash (full or short)'
+                    description: 'Commit hash (full or short)',
                 },
                 maxFiles: {
                     type: 'number',
-                    description: `Max changed files to return (default ${COMMIT_EXPLAIN_LIMITS.DEFAULT_MAX_FILES})`
-                }
+                    description: `Max changed files to return (default ${COMMIT_EXPLAIN_LIMITS.DEFAULT_MAX_FILES})`,
+                },
             },
-            required: ['commitId']
-        }
+            required: ['commitId'],
+        },
     },
     {
         name: 'gitmaster_show_git_graph',
@@ -66,11 +66,11 @@ export const GITMASTER_MCP_TOOLS = [
             properties: {
                 repoPath: {
                     type: 'string',
-                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)'
-                }
+                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)',
+                },
             },
-            required: []
-        }
+            required: [],
+        },
     },
     {
         name: 'gitmaster_shelves',
@@ -80,20 +80,20 @@ export const GITMASTER_MCP_TOOLS = [
             properties: {
                 repoPath: {
                     type: 'string',
-                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)'
+                    description: 'Path to a file/folder in the git repo (defaults to workspace/active editor)',
                 },
                 maxShelves: {
                     type: 'number',
-                    description: `Max shelves to return (default ${SHELVES_LIMITS.DEFAULT_MAX_SHELVES})`
+                    description: `Max shelves to return (default ${SHELVES_LIMITS.DEFAULT_MAX_SHELVES})`,
                 },
                 maxFilesPerShelf: {
                     type: 'number',
-                    description: `Max files per shelf (default ${SHELVES_LIMITS.DEFAULT_MAX_FILES_PER_SHELF})`
-                }
+                    description: `Max files per shelf (default ${SHELVES_LIMITS.DEFAULT_MAX_FILES_PER_SHELF})`,
+                },
             },
-            required: []
-        }
-    }
+            required: [],
+        },
+    },
 ] as const;
 
 /** Type for valid tool names */
@@ -115,7 +115,7 @@ export type GitMasterMcpToolName = (typeof GITMASTER_MCP_TOOLS)[number]['name'];
 export async function handleGitMasterMcpToolCall(
     name: string,
     args: Record<string, unknown>,
-    deps: McpDependencies
+    deps: McpDependencies,
 ): Promise<McpToolResponse> {
     switch (name) {
         case 'gitmaster_commit_explain':
@@ -141,7 +141,7 @@ export async function handleGitMasterMcpToolCall(
  */
 async function handleCommitExplain(
     args: Record<string, unknown>,
-    deps: McpDependencies
+    deps: McpDependencies,
 ): Promise<McpToolResponse> {
     const input = parseCommitExplainArgs(args);
     const payload = await buildCommitExplainPayload(input, deps);
@@ -151,7 +151,7 @@ async function handleCommitExplain(
         // Convert payload.commit to CommitInfo for the callback
         const commitInfo: CommitInfo = {
             ...payload.commit,
-            relativeDate: payload.commit.relativeDate
+            relativeDate: payload.commit.relativeDate,
         };
         await deps.openCommitDetails(commitInfo, payload.repoRoot);
     }
@@ -164,7 +164,7 @@ async function handleCommitExplain(
  */
 async function handleShowGitGraph(
     args: Record<string, unknown>,
-    deps: McpDependencies
+    deps: McpDependencies,
 ): Promise<McpToolResponse> {
     if (!deps.openGitGraph) {
         throw new Error('gitmaster_show_git_graph is only available inside the VS Code extension host');
@@ -182,7 +182,7 @@ async function handleShowGitGraph(
  */
 async function handleShelves(
     args: Record<string, unknown>,
-    deps: McpDependencies
+    deps: McpDependencies,
 ): Promise<McpToolResponse> {
     if (!deps.openShelvesView) {
         throw new Error('gitmaster_shelves is only available inside the VS Code extension host');
@@ -203,7 +203,7 @@ async function handleShelves(
  * List available MCP resources (exposes shelves as browsable resources).
  */
 export async function listGitMasterMcpResources(
-    deps: McpCoreDependencies
+    deps: McpCoreDependencies,
 ): Promise<McpResourcesResponse> {
     const shelves = await fetchShelves({ maxShelves: SHELVES_LIMITS.DEFAULT_MAX_SHELVES }, deps);
 
@@ -212,8 +212,8 @@ export async function listGitMasterMcpResources(
             uri: buildShelfUri(shelf.index),
             name: shelf.name || shelf.index,
             description: `Git stash ${shelf.index} from branch ${shelf.branch || 'unknown'} (${shelf.fileCount} files)`,
-            mimeType: 'application/json'
-        }))
+            mimeType: 'application/json',
+        })),
     };
 }
 
@@ -226,7 +226,7 @@ export async function listGitMasterMcpResources(
  */
 export async function readGitMasterMcpResource(
     uri: string,
-    deps: McpCoreDependencies
+    deps: McpCoreDependencies,
 ): Promise<McpResourceReadResponse> {
     const shelfIndex = parseShelfUri(uri);
     const shelves = await fetchShelves({ maxShelves: SHELVES_LIMITS.MAX_SHELVES }, deps);
@@ -240,8 +240,8 @@ export async function readGitMasterMcpResource(
         contents: [{
             uri,
             mimeType: 'application/json',
-            text: JSON.stringify(shelf, null, 2)
-        }]
+            text: JSON.stringify(shelf, null, 2),
+        }],
     };
 }
 
@@ -254,7 +254,7 @@ export async function readGitMasterMcpResource(
  */
 async function fetchShelves(
     input: ShelvesInput,
-    deps: McpCoreDependencies
+    deps: McpCoreDependencies,
 ): Promise<Shelf[]> {
     const { gitService } = deps;
     const repoRoot = await resolveRepoRoot(input.repoPath ?? deps.defaultRepoPath, gitService);
@@ -262,12 +262,12 @@ async function fetchShelves(
     const maxShelves = clamp(
         input.maxShelves ?? SHELVES_LIMITS.DEFAULT_MAX_SHELVES,
         SHELVES_LIMITS.MIN_SHELVES,
-        SHELVES_LIMITS.MAX_SHELVES
+        SHELVES_LIMITS.MAX_SHELVES,
     );
     const maxFilesPerShelf = clamp(
         input.maxFilesPerShelf ?? SHELVES_LIMITS.DEFAULT_MAX_FILES_PER_SHELF,
         SHELVES_LIMITS.MIN_FILES_PER_SHELF,
-        SHELVES_LIMITS.MAX_FILES_PER_SHELF
+        SHELVES_LIMITS.MAX_FILES_PER_SHELF,
     );
 
     const stashes = await gitService.getStashes(repoRoot);
@@ -280,9 +280,9 @@ async function fetchShelves(
                 name: stash.message,
                 branch: stash.branch,
                 fileCount: stash.fileCount,
-                files: files.slice(0, maxFilesPerShelf).map(toShelfFile)
+                files: files.slice(0, maxFilesPerShelf).map(toShelfFile),
             };
-        })
+        }),
     );
 }
 
@@ -291,7 +291,7 @@ async function fetchShelves(
  */
 async function buildCommitExplainPayload(
     input: CommitExplainInput,
-    deps: McpCoreDependencies
+    deps: McpCoreDependencies,
 ): Promise<CommitExplainPayload> {
     const commitId = input.commitId.trim();
     if (!commitId) {
@@ -303,7 +303,7 @@ async function buildCommitExplainPayload(
 
     // Fetch commit info with timeout for responsiveness
     const commitInfo = await gitService.getCommitInfo(commitId, repoRoot, {
-        timeoutMs: TIMEOUTS.COMMIT_INFO
+        timeoutMs: TIMEOUTS.COMMIT_INFO,
     });
     if (!commitInfo) {
         throw new Error(`Commit not found in repo: ${commitId}`);
@@ -314,7 +314,7 @@ async function buildCommitExplainPayload(
         commitInfo.hash,
         repoRoot,
         input.maxFiles ?? COMMIT_EXPLAIN_LIMITS.DEFAULT_MAX_FILES,
-        gitService
+        gitService,
     );
 
     const totals = calculateTotals(files);
@@ -327,14 +327,14 @@ async function buildCommitExplainPayload(
             message: commitInfo.message,
             author: commitInfo.author,
             date: commitInfo.date,
-            relativeDate: commitInfo.relativeDate ?? commitInfo.date
+            relativeDate: commitInfo.relativeDate ?? commitInfo.date,
         },
         files,
         totals,
         agentInstruction: 'GitMaster Commit Details view has been opened/focused. ' +
             'Inspect the changed files and diff, then summarize what the commit did ' +
             'using both the commit message and the actual file changes.',
-        ...(warning ? { warning } : {})
+        ...(warning ? { warning } : {}),
     };
 }
 
@@ -346,7 +346,7 @@ async function fetchChangedFilesSafely(
     commitHash: string,
     repoRoot: string,
     maxFiles: number,
-    gitService: GitService
+    gitService: GitService,
 ): Promise<{ files: CommitExplainPayload['files']; warning?: string }> {
     const limit = clamp(maxFiles, COMMIT_EXPLAIN_LIMITS.MIN_FILES, COMMIT_EXPLAIN_LIMITS.MAX_FILES);
 
@@ -354,7 +354,7 @@ async function fetchChangedFilesSafely(
         // Skip rename detection for speed - not needed for "explain" use case
         const changedFiles = await gitService.getChangedFilesInCommit(commitHash, repoRoot, {
             timeoutMs: TIMEOUTS.CHANGED_FILES,
-            detectRenames: false
+            detectRenames: false,
         });
 
         const files = changedFiles.slice(0, limit).map(f => ({
@@ -362,7 +362,7 @@ async function fetchChangedFilesSafely(
             oldPath: f.oldPath,
             status: f.status,
             additions: f.additions ?? 0,
-            deletions: f.deletions ?? 0
+            deletions: f.deletions ?? 0,
         }));
 
         return { files };
@@ -370,9 +370,9 @@ async function fetchChangedFilesSafely(
         const errorMessage = err instanceof Error ? err.message : String(err);
         return {
             files: [],
-            warning: `Failed to compute changed files within time limits. ` +
-                `Commit metadata is returned, but file list is empty. ` +
-                `Error: ${errorMessage}`
+            warning: 'Failed to compute changed files within time limits. ' +
+                'Commit metadata is returned, but file list is empty. ' +
+                `Error: ${errorMessage}`,
         };
     }
 }
@@ -386,7 +386,7 @@ function parseCommitExplainArgs(args: Record<string, unknown>): CommitExplainInp
     return {
         repoPath: parseStringArg(args.repoPath),
         commitId: String(args.commitId ?? ''),
-        maxFiles: parseNumberArg(args.maxFiles)
+        maxFiles: parseNumberArg(args.maxFiles),
     };
 }
 
@@ -395,7 +395,7 @@ function parseShelvesArgs(args: Record<string, unknown>): ShelvesInput {
     return {
         repoPath: parseStringArg(args.repoPath),
         maxShelves: parseNumberArg(args.maxShelves),
-        maxFilesPerShelf: parseNumberArg(args.maxFilesPerShelf)
+        maxFilesPerShelf: parseNumberArg(args.maxFilesPerShelf),
     };
 }
 
@@ -440,7 +440,7 @@ function parseShelfUri(uri: string): string {
  */
 async function resolveRepoRoot(
     repoPath: string | undefined,
-    gitService: GitService
+    gitService: GitService,
 ): Promise<string> {
     const candidate = repoPath?.trim()
         || vscode.workspace.workspaceFolders?.[0]?.uri.fsPath
@@ -461,7 +461,7 @@ function toShelfFile(file: ChangedFile): ShelfFile {
         status: file.status,
         additions: file.additions,
         deletions: file.deletions,
-        oldPath: file.oldPath
+        oldPath: file.oldPath,
     };
 }
 
@@ -471,9 +471,9 @@ function calculateTotals(files: CommitExplainPayload['files']): CommitExplainPay
         (acc, f) => ({
             fileCount: acc.fileCount + 1,
             totalAdditions: acc.totalAdditions + (f.additions || 0),
-            totalDeletions: acc.totalDeletions + (f.deletions || 0)
+            totalDeletions: acc.totalDeletions + (f.deletions || 0),
         }),
-        { fileCount: 0, totalAdditions: 0, totalDeletions: 0 }
+        { fileCount: 0, totalAdditions: 0, totalDeletions: 0 },
     );
 }
 

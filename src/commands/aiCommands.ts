@@ -43,11 +43,11 @@ export class AICommands {
 
         // List of commands to try - Prioritize Cursor specific ones
         const commandsToTry = [
-            'aichat.newchataction',            // Cursor: New Chat (most likely)
-            'aichat.focus',                    // Cursor: Focus Chat
-            'cursor.ai.newChat',               // Potential Cursor
-            'workbench.action.chat.open',      // VS Code Standard / Copilot
-            'workbench.panel.chat.view.focus'  // Generic Focus
+            'aichat.newchataction', // Cursor: New Chat (most likely)
+            'aichat.focus', // Cursor: Focus Chat
+            'cursor.ai.newChat', // Potential Cursor
+            'workbench.action.chat.open', // VS Code Standard / Copilot
+            'workbench.panel.chat.view.focus', // Generic Focus
         ];
 
         for (const command of commandsToTry) {
@@ -79,4 +79,3 @@ export class AICommands {
         await vscode.window.showInformationMessage(message, 'OK');
     }
 }
-

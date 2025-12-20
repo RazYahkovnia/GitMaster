@@ -11,7 +11,7 @@ export class BranchTreeItem extends vscode.TreeItem {
         public readonly branch: BranchInfo,
         public readonly repoRoot: string,
         public readonly isPinned: boolean,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(branch.name, collapsibleState);
 
@@ -42,7 +42,7 @@ export class BranchTreeItem extends vscode.TreeItem {
     private buildDescription(): string {
         const parts = [
             this.branch.shortCommitHash,
-            this.branch.lastCommitDate
+            this.branch.lastCommitDate,
         ];
 
         if (this.branch.isCurrent) {
@@ -58,7 +58,7 @@ export class BranchTreeItem extends vscode.TreeItem {
             `Commit: ${this.branch.commitHash}`,
             `Last Commit: ${this.branch.lastCommitMessage}`,
             `Author: ${this.branch.lastCommitAuthor}`,
-            `Date: ${this.branch.lastCommitDate}`
+            `Date: ${this.branch.lastCommitDate}`,
         ];
 
         if (this.branch.upstream) {
@@ -88,7 +88,7 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
 
     constructor(
         private gitService: GitService,
-        private context: vscode.ExtensionContext
+        private context: vscode.ExtensionContext,
     ) { }
 
     /**
@@ -238,8 +238,8 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
                     branch,
                     this.currentRepoRoot!,
                     pinnedBranches.has(branch.name),
-                    vscode.TreeItemCollapsibleState.None
-                )
+                    vscode.TreeItemCollapsibleState.None,
+                ),
             );
         } catch (error) {
             console.error('Error getting branches:', error);
@@ -250,4 +250,3 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
         }
     }
 }
-

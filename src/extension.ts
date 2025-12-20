@@ -75,7 +75,7 @@ export async function activate(context: vscode.ExtensionContext) {
         // Port can be set via config or env var (config takes precedence)
         const configPort = vscode.workspace.getConfiguration('gitmaster').get<number>('mcp.port', 8765);
         const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
-        const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
+        const port = uiPortStr?.trim() ? parseInt(uiPortStr, 10) : configPort;
         const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
 
         mcpOutput.appendLine(`Starting MCP server on 127.0.0.1:${finalPort}...`);
@@ -92,7 +92,7 @@ export async function activate(context: vscode.ExtensionContext) {
                 await vscode.commands.executeCommand('gitmaster.showRepositoryCommitDetails', commitInfo, repoRoot);
                 await vscode.commands.executeCommand('workbench.view.extension.gitmaster');
                 await vscode.commands.executeCommand('gitmaster.commitDetails.focus');
-            }
+            },
         }).then(({ port: startedPort }) => {
             const url = `http://127.0.0.1:${startedPort}/mcp`;
             console.log(`GitMaster MCP server started on ${url}`);
@@ -101,7 +101,7 @@ export async function activate(context: vscode.ExtensionContext) {
             console.warn('GitMaster: failed to start MCP server:', err);
             mcpOutput.appendLine(`Failed to start MCP server: ${err?.message ?? String(err)}`);
             vscode.window.showWarningMessage(
-                `GitMaster MCP failed to start on port ${finalPort}. Check Output → "GitMaster MCP" for details.`
+                `GitMaster MCP failed to start on port ${finalPort}. Check Output → "GitMaster MCP" for details.`,
             );
         });
     } else {
@@ -157,49 +157,49 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
     // File History tree view
     const fileHistoryTreeView = vscode.window.createTreeView('gitmaster.fileHistory', {
         treeDataProvider: fileHistoryProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Commit Details tree view
     const commitDetailsTreeView = vscode.window.createTreeView('gitmaster.commitDetails', {
         treeDataProvider: commitDetailsProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Shelves tree view
     const shelvesTreeView = vscode.window.createTreeView('gitmaster.shelves', {
         treeDataProvider: shelvesProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Git Operations (Reflog) tree view
     const reflogTreeView = vscode.window.createTreeView('gitmaster.reflog', {
         treeDataProvider: reflogProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Repository Log tree view
     const repositoryLogTreeView = vscode.window.createTreeView('gitmaster.repositoryLog', {
         treeDataProvider: repositoryLogProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Branches tree view
     const branchesTreeView = vscode.window.createTreeView('gitmaster.branches', {
         treeDataProvider: branchesProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Interactive Rebase tree view
     const rebaseTreeView = vscode.window.createTreeView('gitmaster.rebase', {
         treeDataProvider: rebaseProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     // Worktrees tree view
     const worktreesTreeView = vscode.window.createTreeView('gitmaster.worktrees', {
         treeDataProvider: worktreesProvider,
-        showCollapseAll: false
+        showCollapseAll: false,
     });
 
     context.subscriptions.push(
@@ -210,7 +210,7 @@ function registerTreeViews(context: vscode.ExtensionContext): void {
         repositoryLogTreeView,
         branchesTreeView,
         rebaseTreeView,
-        worktreesTreeView
+        worktreesTreeView,
     );
 }
 
@@ -221,166 +221,166 @@ function registerCommands(context: vscode.ExtensionContext): void {
     // File History commands
     const refreshCommand = vscode.commands.registerCommand(
         'gitmaster.refreshFileHistory',
-        () => fileHistoryProvider.refresh()
+        () => fileHistoryProvider.refresh(),
     );
 
     const filterFileHistoryByMessageCommand = vscode.commands.registerCommand(
         'gitmaster.filterFileHistoryByMessage',
-        async () => await fileHistoryProvider.setMessageFilter()
+        async () => fileHistoryProvider.setMessageFilter(),
     );
 
     const clearFileHistoryFilterCommand = vscode.commands.registerCommand(
         'gitmaster.clearFileHistoryFilter',
-        () => fileHistoryProvider.clearMessageFilter()
+        () => fileHistoryProvider.clearMessageFilter(),
     );
 
     const showFileExpertsCommand = vscode.commands.registerCommand(
         'gitmaster.showFileExperts',
-        async () => await fileHistoryProvider.showFileExperts()
+        async () => fileHistoryProvider.showFileExperts(),
     );
 
     // Show commit details command
     const showCommitDiffCommand = vscode.commands.registerCommand(
         'gitmaster.showCommitDiff',
-        async (commit, filePath, line) => await commitCommands.showCommitDetails(commit, filePath, line)
+        async (commit, filePath, line) => commitCommands.showCommitDetails(commit, filePath, line),
     );
 
     // Show repository commit details command
     const showRepositoryCommitDetailsCommand = vscode.commands.registerCommand(
         'gitmaster.showRepositoryCommitDetails',
-        async (commitOrTreeItem, repoRoot) => await commitCommands.showRepositoryCommitDetails(commitOrTreeItem, repoRoot)
+        async (commitOrTreeItem, repoRoot) => commitCommands.showRepositoryCommitDetails(commitOrTreeItem, repoRoot),
     );
 
     // Show file diff command
     const showFileDiffCommand = vscode.commands.registerCommand(
         'gitmaster.showFileDiff',
-        async (file, commit, repoRoot) => await commitCommands.showFileDiff(file, commit, repoRoot)
+        async (file, commit, repoRoot) => commitCommands.showFileDiff(file, commit, repoRoot),
     );
 
     // Open commit in GitHub command
     const openGitHubCommand = vscode.commands.registerCommand(
         'gitmaster.openCommitInGitHub',
-        async (githubUrl, commitHash) => await commitCommands.openCommitInGitHub(githubUrl, commitHash)
+        async (githubUrl, commitHash) => commitCommands.openCommitInGitHub(githubUrl, commitHash),
     );
 
     // Copy commit ID command
     const copyCommitIdCommand = vscode.commands.registerCommand(
         'gitmaster.copyCommitId',
-        async (commit) => await commitCommands.copyCommitId(commit)
+        async (commit) => commitCommands.copyCommitId(commit),
     );
 
     // Copy commit file relative path command
     const copyCommitFileRelativePathCommand = vscode.commands.registerCommand(
         'gitmaster.copyCommitFileRelativePath',
-        async (treeItem) => await commitCommands.copyCommitFileRelativePath(treeItem)
+        async (treeItem) => commitCommands.copyCommitFileRelativePath(treeItem),
     );
 
     // Stash/Shelf commands
     const createShelfCommand = vscode.commands.registerCommand(
         'gitmaster.createShelf',
-        async () => await stashCommands.createShelf()
+        async () => stashCommands.createShelf(),
     );
 
     const applyShelfCommand = vscode.commands.registerCommand(
         'gitmaster.applyShelf',
-        async (stashItem) => await stashCommands.applyShelf(stashItem)
+        async (stashItem) => stashCommands.applyShelf(stashItem),
     );
 
     const popShelfCommand = vscode.commands.registerCommand(
         'gitmaster.popShelf',
-        async (stashItem) => await stashCommands.popShelf(stashItem)
+        async (stashItem) => stashCommands.popShelf(stashItem),
     );
 
     const deleteShelfCommand = vscode.commands.registerCommand(
         'gitmaster.deleteShelf',
-        async (stashItem) => await stashCommands.deleteShelf(stashItem)
+        async (stashItem) => stashCommands.deleteShelf(stashItem),
     );
 
     const mergeIntoShelfCommand = vscode.commands.registerCommand(
         'gitmaster.mergeIntoShelf',
-        async (stashItem) => await stashCommands.mergeIntoShelf(stashItem)
+        async (stashItem) => stashCommands.mergeIntoShelf(stashItem),
     );
 
     const refreshShelvesCommand = vscode.commands.registerCommand(
         'gitmaster.refreshShelves',
-        () => stashCommands.refreshShelves()
+        () => stashCommands.refreshShelves(),
     );
 
     const showStashFileDiffCommand = vscode.commands.registerCommand(
         'gitmaster.showStashFileDiff',
-        async (file, stashIndex, repoRoot) => await stashCommands.showStashFileDiff(file, stashIndex, repoRoot)
+        async (file, stashIndex, repoRoot) => stashCommands.showStashFileDiff(file, stashIndex, repoRoot),
     );
 
     const shelveFileToCommand = vscode.commands.registerCommand(
         'gitmaster.shelveFileTo',
-        async (...resources) => await stashCommands.shelveFileTo(...resources)
+        async (...resources) => stashCommands.shelveFileTo(...resources),
     );
 
     // Reflog commands
     const checkoutFromReflogCommand = vscode.commands.registerCommand(
         'gitmaster.checkoutFromReflog',
-        async (entryOrTreeItem, repoRoot) => await reflogCommands.checkoutFromReflog(entryOrTreeItem, repoRoot)
+        async (entryOrTreeItem, repoRoot) => reflogCommands.checkoutFromReflog(entryOrTreeItem, repoRoot),
     );
 
     const refreshReflogCommand = vscode.commands.registerCommand(
         'gitmaster.refreshReflog',
-        () => reflogCommands.refreshReflog()
+        () => reflogCommands.refreshReflog(),
     );
 
     const loadMoreReflogCommand = vscode.commands.registerCommand(
         'gitmaster.loadMoreReflog',
-        () => reflogCommands.loadMoreReflog()
+        () => reflogCommands.loadMoreReflog(),
     );
 
     const showReflogCommitDetailsCommand = vscode.commands.registerCommand(
         'gitmaster.showReflogCommitDetails',
-        async (entryOrTreeItem, repoRoot) => await reflogCommands.showReflogCommitDetails(entryOrTreeItem, repoRoot)
+        async (entryOrTreeItem, repoRoot) => reflogCommands.showReflogCommitDetails(entryOrTreeItem, repoRoot),
     );
 
     const toggleReflogGroupByDateCommand = vscode.commands.registerCommand(
         'gitmaster.toggleReflogGroupByDate',
-        () => reflogCommands.toggleReflogGroupByDate()
+        () => reflogCommands.toggleReflogGroupByDate(),
     );
 
     // Repository Log commands
     const revertCommitInNewBranchCommand = vscode.commands.registerCommand(
         'gitmaster.revertCommitInNewBranch',
-        async (commit, repoRoot) => await repositoryLogCommands.revertCommitInNewBranch(commit, repoRoot)
+        async (commit, repoRoot) => repositoryLogCommands.revertCommitInNewBranch(commit, repoRoot),
     );
 
     const checkoutCommitFromRepoLogCommand = vscode.commands.registerCommand(
         'gitmaster.checkoutCommitFromRepoLog',
-        async (commit, repoRoot) => await repositoryLogCommands.checkoutCommit(commit, repoRoot)
+        async (commit, repoRoot) => repositoryLogCommands.checkoutCommit(commit, repoRoot),
     );
 
     const cherryPickCommitCommand = vscode.commands.registerCommand(
         'gitmaster.cherryPickCommit',
-        async (commit, repoRoot) => await repositoryLogCommands.cherryPickCommit(commit, repoRoot)
+        async (commit, repoRoot) => repositoryLogCommands.cherryPickCommit(commit, repoRoot),
     );
 
     const createBranchFromCommitCommand = vscode.commands.registerCommand(
         'gitmaster.createBranchFromCommit',
-        async (commit, repoRoot) => await repositoryLogCommands.createBranchFromCommit(commit, repoRoot)
+        async (commit, repoRoot) => repositoryLogCommands.createBranchFromCommit(commit, repoRoot),
     );
 
     const refreshRepositoryLogCommand = vscode.commands.registerCommand(
         'gitmaster.refreshRepositoryLog',
-        () => repositoryLogCommands.refreshRepositoryLog()
+        () => repositoryLogCommands.refreshRepositoryLog(),
     );
 
     const loadMoreRepositoryLogCommand = vscode.commands.registerCommand(
         'gitmaster.loadMoreRepositoryLog',
-        () => repositoryLogCommands.loadMoreRepositoryLog()
+        () => repositoryLogCommands.loadMoreRepositoryLog(),
     );
 
     const filterRepositoryLogByMessageCommand = vscode.commands.registerCommand(
         'gitmaster.filterRepositoryLogByMessage',
-        async () => await repositoryLogProvider.setMessageFilter()
+        async () => repositoryLogProvider.setMessageFilter(),
     );
 
     const clearRepositoryLogFilterCommand = vscode.commands.registerCommand(
         'gitmaster.clearRepositoryLogFilter',
-        () => repositoryLogProvider.clearMessageFilter()
+        () => repositoryLogProvider.clearMessageFilter(),
     );
 
     const showGitGraphCommand = vscode.commands.registerCommand(
@@ -392,140 +392,140 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 return;
             }
             await gitGraphView.show(repoRoot);
-        }
+        },
     );
 
     // Branch commands
     const checkoutBranchCommand = vscode.commands.registerCommand(
         'gitmaster.checkoutBranch',
-        async (branch, repoRoot) => await branchCommands.checkoutBranch(branch, repoRoot)
+        async (branch, repoRoot) => branchCommands.checkoutBranch(branch, repoRoot),
     );
 
     const deleteBranchCommand = vscode.commands.registerCommand(
         'gitmaster.deleteBranch',
-        async (branch, repoRoot) => await branchCommands.deleteBranch(branch, repoRoot)
+        async (branch, repoRoot) => branchCommands.deleteBranch(branch, repoRoot),
     );
 
     const createNewBranchCommand = vscode.commands.registerCommand(
         'gitmaster.createNewBranch',
-        async () => await branchCommands.createNewBranch()
+        async () => branchCommands.createNewBranch(),
     );
 
     const refreshBranchesCommand = vscode.commands.registerCommand(
         'gitmaster.refreshBranches',
-        () => branchCommands.refreshBranches()
+        () => branchCommands.refreshBranches(),
     );
 
     const filterByMyBranchesCommand = vscode.commands.registerCommand(
         'gitmaster.filterByMyBranches',
-        async () => await branchCommands.filterByMyBranches()
+        async () => branchCommands.filterByMyBranches(),
     );
 
     const filterByAuthorCommand = vscode.commands.registerCommand(
         'gitmaster.filterByAuthor',
-        async () => await branchCommands.filterByAuthor()
+        async () => branchCommands.filterByAuthor(),
     );
 
     const clearBranchFilterCommand = vscode.commands.registerCommand(
         'gitmaster.clearBranchFilter',
-        () => branchCommands.clearBranchFilter()
+        () => branchCommands.clearBranchFilter(),
     );
 
     const pinBranchCommand = vscode.commands.registerCommand(
         'gitmaster.pinBranch',
-        async (branchOrTreeItem) => await branchCommands.pinBranch(branchOrTreeItem)
+        async (branchOrTreeItem) => branchCommands.pinBranch(branchOrTreeItem),
     );
 
     const unpinBranchCommand = vscode.commands.registerCommand(
         'gitmaster.unpinBranch',
-        async (branchOrTreeItem) => await branchCommands.unpinBranch(branchOrTreeItem)
+        async (branchOrTreeItem) => branchCommands.unpinBranch(branchOrTreeItem),
     );
 
     // Rebase commands
     const startRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.startRebase',
-        async () => await rebaseCommands.startRebase()
+        async () => rebaseCommands.startRebase(),
     );
 
     const startRebaseOnDefaultCommand = vscode.commands.registerCommand(
         'gitmaster.startRebaseOnDefault',
-        async () => await rebaseCommands.startRebaseOnDefault()
+        async () => rebaseCommands.startRebaseOnDefault(),
     );
 
     const fetchAndRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.fetchAndRebase',
-        async () => await rebaseCommands.fetchAndRebase()
+        async () => rebaseCommands.fetchAndRebase(),
     );
 
     const changeRebaseActionCommand = vscode.commands.registerCommand(
         'gitmaster.changeRebaseAction',
-        async (item) => await rebaseCommands.changeCommitAction(item)
+        async (item) => rebaseCommands.changeCommitAction(item),
     );
 
     const rewordCommitCommand = vscode.commands.registerCommand(
         'gitmaster.rewordCommit',
-        async (item) => await rebaseCommands.rewordCommit(item)
+        async (item) => rebaseCommands.rewordCommit(item),
     );
 
     const executeRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.executeRebase',
-        async () => await rebaseCommands.executeRebase()
+        async () => rebaseCommands.executeRebase(),
     );
 
     const continueRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.continueRebase',
-        async () => await rebaseCommands.continueRebase()
+        async () => rebaseCommands.continueRebase(),
     );
 
     const abortRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.abortRebase',
-        async () => await rebaseCommands.abortRebase()
+        async () => rebaseCommands.abortRebase(),
     );
 
     const refreshRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.refreshRebase',
-        () => rebaseCommands.refreshRebase()
+        () => rebaseCommands.refreshRebase(),
     );
 
     const changeBaseBranchCommand = vscode.commands.registerCommand(
         'gitmaster.changeBaseBranch',
-        async () => await rebaseCommands.changeBaseBranch()
+        async () => rebaseCommands.changeBaseBranch(),
     );
 
     const resetRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.resetRebase',
-        async () => await rebaseCommands.resetRebase()
+        async () => rebaseCommands.resetRebase(),
     );
 
     const showRebaseCommitDetailsCommand = vscode.commands.registerCommand(
         'gitmaster.showRebaseCommitDetails',
-        async (treeItem) => await rebaseCommands.showCommitDetails(treeItem)
+        async (treeItem) => rebaseCommands.showCommitDetails(treeItem),
     );
 
     // Worktree commands
     const addWorktreeCommand = vscode.commands.registerCommand(
         'gitmaster.addWorktree',
-        async () => await worktreeCommands.addWorktree()
+        async () => worktreeCommands.addWorktree(),
     );
 
     const removeWorktreeCommand = vscode.commands.registerCommand(
         'gitmaster.removeWorktree',
-        async (item) => await worktreeCommands.removeWorktree(item)
+        async (item) => worktreeCommands.removeWorktree(item),
     );
 
     const openWorktreeCommand = vscode.commands.registerCommand(
         'gitmaster.openWorktree',
-        async (item) => await worktreeCommands.openWorktree(item)
+        async (item) => worktreeCommands.openWorktree(item),
     );
 
     const pruneWorktreesCommand = vscode.commands.registerCommand(
         'gitmaster.pruneWorktrees',
-        async () => await worktreeCommands.pruneWorktrees()
+        async () => worktreeCommands.pruneWorktrees(),
     );
 
     const refreshWorktreesCommand = vscode.commands.registerCommand(
         'gitmaster.refreshWorktrees',
-        () => worktreeCommands.refresh()
+        () => worktreeCommands.refresh(),
     );
 
     // AI Commands
@@ -546,7 +546,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
             }
 
             await aiCommands.explainCommit(commit, repoRoot);
-        }
+        },
     );
 
     // Copy remote line URL command
@@ -568,7 +568,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
             const url = await gitService.getRemoteFileUrl(
                 filePath,
                 startLine,
-                selection.isEmpty ? undefined : endLine
+                selection.isEmpty ? undefined : endLine,
             );
 
             if (!url) {
@@ -583,7 +583,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
                 ? `line ${startLine}`
                 : `lines ${startLine}-${endLine}`;
             vscode.window.showInformationMessage(`Copied remote URL for ${lineInfo} to clipboard`);
-        }
+        },
     );
 
     // Open Shelves view command (for agents / quick navigation)
@@ -592,7 +592,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async () => {
             await vscode.commands.executeCommand('workbench.view.extension.gitmaster');
             await vscode.commands.executeCommand('gitmaster.shelves.focus');
-        }
+        },
     );
 
     // Setup MCP in Cursor using deep link (recommended)
@@ -605,16 +605,16 @@ function registerCommands(context: vscode.ExtensionContext): void {
             try {
                 await vscode.env.openExternal(vscode.Uri.parse(deepLink));
                 vscode.window.showInformationMessage(
-                    'GitMaster: Opening Cursor MCP installer. Click "Install" to set up the MCP server automatically.'
+                    'GitMaster: Opening Cursor MCP installer. Click "Install" to set up the MCP server automatically.',
                 );
             } catch (err) {
                 // If opening fails, copy to clipboard as fallback
                 await vscode.env.clipboard.writeText(deepLink);
                 vscode.window.showInformationMessage(
-                    'GitMaster: MCP installer link copied to clipboard. Paste it in your browser or Cursor to install.'
+                    'GitMaster: MCP installer link copied to clipboard. Paste it in your browser or Cursor to install.',
                 );
             }
-        }
+        },
     );
 
     // Open GitMaster settings
@@ -623,7 +623,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async () => {
             // Open settings filtered to GitMaster extension
             await vscode.commands.executeCommand('workbench.action.openSettings', '@ext:razyahkovnia.gitmaster');
-        }
+        },
     );
 
     context.subscriptions.push(
@@ -689,7 +689,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         copyRemoteLineUrlCommand,
         openShelvesViewCommand,
         setupCursorMcpCommand,
-        openSettingsCommand
+        openSettingsCommand,
     );
 }
 
@@ -698,13 +698,13 @@ function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
     // Get port from config or env var (config takes precedence)
     const configPort = vscode.workspace.getConfiguration('gitmaster').get<number>('mcp.port', 8765);
     const uiPortStr = process.env.GITMASTER_MCP_UI_PORT;
-    const port = uiPortStr && uiPortStr.trim() ? parseInt(uiPortStr, 10) : configPort;
+    const port = uiPortStr?.trim() ? parseInt(uiPortStr, 10) : configPort;
     const finalPort = Number.isFinite(port) && port >= 1024 && port <= 65535 ? port : 8765;
     const mcpUrl = `http://127.0.0.1:${finalPort}/mcp`;
 
     // Build the MCP server config (just the server config, not the full mcpServers object)
     const mcpConfig = {
-        url: mcpUrl
+        url: mcpUrl,
     };
 
     // Base64 encode the config and URL encode it for the deep link
@@ -725,12 +725,12 @@ function buildCursorMcpDeepLink(context: vscode.ExtensionContext): string {
 function registerEventListeners(context: vscode.ExtensionContext): void {
     // Listen to active editor changes
     const editorChangeDisposable = vscode.window.onDidChangeActiveTextEditor(
-        editor => updateFileHistory(editor)
+        editor => updateFileHistory(editor),
     );
 
     // Listen to visible text editors changes (for split views)
     const visibleEditorsChangeDisposable = vscode.window.onDidChangeVisibleTextEditors(
-        () => updateFileHistory(vscode.window.activeTextEditor)
+        () => updateFileHistory(vscode.window.activeTextEditor),
     );
 
     // Listen to workspace folder changes
@@ -738,7 +738,7 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
         () => {
             gitService.clearCache();
             initializeFromWorkspace();
-        }
+        },
     );
 
     // Listen to Git repository changes (commits, checkouts, etc.)
@@ -782,7 +782,7 @@ function registerEventListeners(context: vscode.ExtensionContext): void {
         visibleEditorsChangeDisposable,
         workspaceFoldersChangeDisposable,
         gitChangeDisposable,
-        fsWatcher
+        fsWatcher,
     );
 }
 

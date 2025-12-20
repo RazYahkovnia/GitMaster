@@ -9,7 +9,7 @@ import { BranchInfo } from '../types/git';
 export class BranchCommands {
     constructor(
         private gitService: GitService,
-        private branchesProvider: BranchesProvider
+        private branchesProvider: BranchesProvider,
     ) { }
 
     /**
@@ -37,7 +37,7 @@ export class BranchCommands {
                 const action = await vscode.window.showWarningMessage(
                     'You have uncommitted changes. Checking out to a different branch will discard them. Do you want to proceed?',
                     { modal: true },
-                    'Checkout Anyway'
+                    'Checkout Anyway',
                 );
                 if (action !== 'Checkout Anyway') {
                     return;
@@ -93,7 +93,7 @@ export class BranchCommands {
                 `Are you sure you want to delete branch "${branch.name}"?`,
                 { modal: true },
                 'Delete',
-                'Force Delete'
+                'Force Delete',
             );
 
             if (!action) {
@@ -137,7 +137,7 @@ export class BranchCommands {
                         return 'Branch name contains invalid characters';
                     }
                     return null;
-                }
+                },
             });
 
             if (!branchName) {
@@ -158,7 +158,7 @@ export class BranchCommands {
             const checkoutAction = await vscode.window.showInformationMessage(
                 `Branch "${branchName}" created. Do you want to switch to it?`,
                 'Switch to Branch',
-                'Stay Here'
+                'Stay Here',
             );
 
             if (checkoutAction === 'Switch to Branch') {
@@ -227,7 +227,7 @@ export class BranchCommands {
             // Show quick pick to select author
             const selectedAuthor = await vscode.window.showQuickPick(authors, {
                 placeHolder: 'Select an author to filter branches',
-                matchOnDescription: true
+                matchOnDescription: true,
             });
 
             if (!selectedAuthor) {
@@ -278,4 +278,3 @@ export class BranchCommands {
         }
     }
 }
-

@@ -21,14 +21,14 @@ import {
     GITMASTER_MCP_TOOLS,
     handleGitMasterMcpToolCall,
     listGitMasterMcpResources,
-    readGitMasterMcpResource
+    readGitMasterMcpResource,
 } from './tools';
 import { McpDependencies } from './types';
 import {
     DEFAULT_HOST,
     DEFAULT_PORT,
     ENDPOINTS,
-    SLOW_TOOL_THRESHOLD_MS
+    SLOW_TOOL_THRESHOLD_MS,
 } from './constants';
 
 // ============================================================================
@@ -74,7 +74,7 @@ type McpSdkModules = Record<string, any>;
  */
 export async function startGitMasterMcpServer(
     context: vscode.ExtensionContext,
-    options: McpServerOptions = {}
+    options: McpServerOptions = {},
 ): Promise<{ host: string; port: number }> {
     const host = options.host ?? DEFAULT_HOST;
     const port = options.port ?? DEFAULT_PORT;
@@ -114,7 +114,7 @@ async function loadMcpSdk(): Promise<McpSdkModules> {
         import('@modelcontextprotocol/sdk/server/index.js'),
         import('@modelcontextprotocol/sdk/server/streamableHttp.js'),
         import('@modelcontextprotocol/sdk/server/sse.js'),
-        import('@modelcontextprotocol/sdk/types.js')
+        import('@modelcontextprotocol/sdk/types.js'),
     ]);
 
     return {
@@ -124,7 +124,7 @@ async function loadMcpSdk(): Promise<McpSdkModules> {
         ListToolsRequestSchema: sdkTypes.ListToolsRequestSchema,
         CallToolRequestSchema: sdkTypes.CallToolRequestSchema,
         ListResourcesRequestSchema: sdkTypes.ListResourcesRequestSchema,
-        ReadResourceRequestSchema: sdkTypes.ReadResourceRequestSchema
+        ReadResourceRequestSchema: sdkTypes.ReadResourceRequestSchema,
     };
 }
 
@@ -141,7 +141,7 @@ function createDependencies(options: McpServerOptions): McpDependencies {
         defaultRepoPath: getDefaultRepoPath(),
         openShelvesView: options.openShelvesView,
         openGitGraph: options.openGitGraph,
-        openCommitDetails: options.openCommitDetails
+        openCommitDetails: options.openCommitDetails,
     };
 }
 
@@ -161,18 +161,18 @@ function getDefaultRepoPath(): string | undefined {
 function createConfiguredServer(
     sdk: McpSdkModules,
     deps: McpDependencies,
-    log: Logger
+    log: Logger,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): any {
     const { Server } = sdk;
     const server = new Server(
         { name: 'gitmaster', version: '0.0.0' },
-        { capabilities: { tools: {}, resources: {} } }
+        { capabilities: { tools: {}, resources: {} } },
     );
 
     // Register tool handlers
     server.setRequestHandler(sdk.ListToolsRequestSchema, async () => ({
-        tools: [...GITMASTER_MCP_TOOLS]
+        tools: [...GITMASTER_MCP_TOOLS],
     }));
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -186,7 +186,7 @@ function createConfiguredServer(
     server.setRequestHandler(sdk.ListResourcesRequestSchema, async () => {
         return listGitMasterMcpResources({
             gitService: deps.gitService,
-            defaultRepoPath: deps.defaultRepoPath
+            defaultRepoPath: deps.defaultRepoPath,
         });
     });
 
@@ -198,7 +198,7 @@ function createConfiguredServer(
         }
         return readGitMasterMcpResource(uri, {
             gitService: deps.gitService,
-            defaultRepoPath: deps.defaultRepoPath
+            defaultRepoPath: deps.defaultRepoPath,
         });
     });
 
@@ -212,7 +212,7 @@ async function executeToolWithTiming(
     toolName: string,
     args: Record<string, unknown>,
     deps: McpDependencies,
-    log: Logger
+    log: Logger,
 ): Promise<unknown> {
     const startTime = Date.now();
     log(`[MCP] callTool start: ${toolName}`);
@@ -247,7 +247,7 @@ interface TransportState {
 function createTransportState(): TransportState {
     return {
         streamable: new Map(),
-        sse: {}
+        sse: {},
     };
 }
 
@@ -280,7 +280,7 @@ function createHttpServer(
     createMcpServer: () => any,
     state: TransportState,
     log: Logger,
-    host: string
+    host: string,
 ): http.Server {
     return http.createServer(async (req, res) => {
         try {
@@ -314,7 +314,7 @@ async function handleStreamableRequest(
     createMcpServer: () => any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     transports: Map<string, any>,
-    log: Logger
+    log: Logger,
 ): Promise<void> {
     const sessionId = req.headers['mcp-session-id'] as string | undefined;
 
@@ -328,7 +328,7 @@ async function handleStreamableRequest(
             onsessioninitialized: (id: string) => {
                 log(`[MCP] StreamableHTTP session initialized: ${id}`);
                 transports.set(id, transport);
-            }
+            },
         });
 
         // Clean up on transport close
@@ -357,7 +357,7 @@ async function handleSseConnect(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     createMcpServer: () => any,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    state: { transport?: any; connectPromise?: Promise<void> }
+    state: { transport?: any; connectPromise?: Promise<void> },
 ): Promise<void> {
     // Close existing connection to allow reconnects
     safeClose(state.transport);
@@ -384,7 +384,7 @@ async function handleSseMessage(
     req: http.IncomingMessage,
     res: http.ServerResponse,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    state: { transport?: any; connectPromise?: Promise<void> }
+    state: { transport?: any; connectPromise?: Promise<void> },
 ): Promise<void> {
     // Wait for SSE connection if in progress
     if (state.connectPromise) {
@@ -410,7 +410,7 @@ async function handleSseMessage(
 function handleRequestError(
     err: unknown,
     res: http.ServerResponse,
-    log: Logger
+    log: Logger,
 ): void {
     const message = err instanceof Error ? err.message : String(err);
     log(`[MCP] Error handling request: ${message}`);
@@ -431,7 +431,7 @@ function handleRequestError(
 function startServer(
     server: http.Server,
     host: string,
-    port: number
+    port: number,
 ): Promise<number> {
     return new Promise((resolve, reject) => {
         server.once('error', reject);
@@ -449,7 +449,7 @@ function startServer(
 function registerCleanup(
     context: vscode.ExtensionContext,
     server: http.Server,
-    state: TransportState
+    state: TransportState,
 ): void {
     context.subscriptions.push(
         new vscode.Disposable(() => {
@@ -459,7 +459,7 @@ function registerCleanup(
             } catch {
                 // Ignore cleanup errors
             }
-        })
+        }),
     );
 }
 

@@ -11,7 +11,7 @@ export class RepositoryCommitTreeItem extends vscode.TreeItem {
     constructor(
         public readonly commit: RepositoryCommit,
         public readonly repoRoot: string,
-        public readonly collapsibleState: vscode.TreeItemCollapsibleState
+        public readonly collapsibleState: vscode.TreeItemCollapsibleState,
     ) {
         super(commit.message, collapsibleState);
 
@@ -27,7 +27,7 @@ export class RepositoryCommitTreeItem extends vscode.TreeItem {
         this.command = {
             command: 'gitmaster.showRepositoryCommitDetails',
             title: 'Show Commit Details',
-            arguments: [this]
+            arguments: [this],
         };
     }
 
@@ -36,7 +36,7 @@ export class RepositoryCommitTreeItem extends vscode.TreeItem {
             `Commit: ${this.commit.hash}`,
             `Author: ${this.commit.author}`,
             `Date: ${this.commit.date}`,
-            `Message: ${this.commit.message}`
+            `Message: ${this.commit.message}`,
         ];
 
         if (this.commit.parentHashes.length > 0) {
@@ -57,7 +57,7 @@ export class LoadMoreTreeItem extends vscode.TreeItem {
         this.iconPath = new vscode.ThemeIcon('fold-down');
         this.command = {
             command: 'gitmaster.loadMoreRepositoryLog',
-            title: 'Load More Commits'
+            title: 'Load More Commits',
         };
     }
 }
@@ -153,10 +153,10 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
                     author: '',
                     date: '',
                     message: 'No repository opened',
-                    parentHashes: []
+                    parentHashes: [],
                 },
                 '',
-                vscode.TreeItemCollapsibleState.None
+                vscode.TreeItemCollapsibleState.None,
             );
             emptyItem.contextValue = 'empty';
             return [emptyItem];
@@ -167,7 +167,7 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
             const commits = await this.gitService.getRepositoryLog(
                 this.currentRepoRoot,
                 this.commitLimit,
-                this.messageFilter.getFilter()
+                this.messageFilter.getFilter(),
             );
 
             if (commits.length === 0) {
@@ -179,10 +179,10 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
                         author: '',
                         date: '',
                         message,
-                        parentHashes: []
+                        parentHashes: [],
                     },
                     this.currentRepoRoot,
-                    vscode.TreeItemCollapsibleState.None
+                    vscode.TreeItemCollapsibleState.None,
                 );
                 emptyItem.contextValue = 'empty';
                 return [emptyItem];
@@ -192,8 +192,8 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
                 new RepositoryCommitTreeItem(
                     commit,
                     this.currentRepoRoot!,
-                    vscode.TreeItemCollapsibleState.None
-                )
+                    vscode.TreeItemCollapsibleState.None,
+                ),
             );
 
             // Add "Load More" button at the bottom if we have commits equal to the limit
@@ -209,4 +209,3 @@ export class RepositoryLogProvider implements vscode.TreeDataProvider<vscode.Tre
         }
     }
 }
-

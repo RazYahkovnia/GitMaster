@@ -5,7 +5,7 @@ import { GitStatusService } from './status';
 export class GitContributorsService {
     constructor(
         private executor: GitExecutor,
-        private statusService: GitStatusService
+        private statusService: GitStatusService,
     ) {}
 
     /**
@@ -21,7 +21,7 @@ export class GitContributorsService {
             // Get file history with numstat to count line changes
             const { stdout } = await this.executor.exec(
                 ['log', '--follow', '--numstat', '--format=%an%x00', '--', path.basename(filePath)],
-                { cwd: path.dirname(filePath), maxBuffer: 10 * 1024 * 1024 }
+                { cwd: path.dirname(filePath), maxBuffer: 10 * 1024 * 1024 },
             );
 
             if (!stdout.trim()) {

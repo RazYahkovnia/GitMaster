@@ -13,7 +13,7 @@ export class MessageFilter {
         const filter = await vscode.window.showInputBox({
             prompt: 'Enter text to filter commit messages',
             placeHolder: 'e.g., "fix bug", "feature", "refactor"',
-            value: currentValue || ''
+            value: currentValue || '',
         });
 
         if (filter !== undefined) {
@@ -61,7 +61,7 @@ export class MessageFilter {
 
         const filterLower = this.filter.toLowerCase();
         return items.filter(item =>
-            item.message.toLowerCase().includes(filterLower)
+            item.message.toLowerCase().includes(filterLower),
         );
     }
 
@@ -74,4 +74,3 @@ export class MessageFilter {
             : defaultMessage;
     }
 }
-

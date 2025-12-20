@@ -28,7 +28,7 @@ export class GitStashService {
                         index,
                         branch,
                         message,
-                        fileCount
+                        fileCount,
                     });
                 }
             }
@@ -51,7 +51,7 @@ export class GitStashService {
             try {
                 const { stdout } = await this.executor.exec(
                     ['stash', 'show', '--numstat', stashIndex],
-                    { cwd: repoRoot }
+                    { cwd: repoRoot },
                 );
                 const lines = stdout.trim().split('\n').filter(line => line.trim());
                 count += lines.length;
@@ -63,7 +63,7 @@ export class GitStashService {
             try {
                 const { stdout } = await this.executor.exec(
                     ['ls-tree', '-r', `${stashIndex}^3`, '--name-only'],
-                    { cwd: repoRoot }
+                    { cwd: repoRoot },
                 );
                 const untrackedFiles = stdout.trim().split('\n').filter(line => line.trim());
                 count += untrackedFiles.length;
@@ -84,7 +84,7 @@ export class GitStashService {
         try {
             await this.executor.exec(
                 ['rev-parse', '--verify', `${stashIndex}^3`],
-                { cwd: repoRoot }
+                { cwd: repoRoot },
             );
             return true;
         } catch (error) {
@@ -187,7 +187,7 @@ export class GitStashService {
             const result = {
                 staged: [] as Array<{ file: string; additions: number; deletions: number }>,
                 unstaged: [] as Array<{ file: string; additions: number; deletions: number }>,
-                untracked: [] as string[]
+                untracked: [] as string[],
             };
 
             // Get staged files with stats
@@ -199,7 +199,7 @@ export class GitStashService {
                         result.staged.push({
                             file: parts[2],
                             additions: parseInt(parts[0]) || 0,
-                            deletions: parseInt(parts[1]) || 0
+                            deletions: parseInt(parts[1]) || 0,
                         });
                     }
                 });
@@ -214,7 +214,7 @@ export class GitStashService {
                         result.unstaged.push({
                             file: parts[2],
                             additions: parseInt(parts[0]) || 0,
-                            deletions: parseInt(parts[1]) || 0
+                            deletions: parseInt(parts[1]) || 0,
                         });
                     }
                 });
@@ -241,7 +241,7 @@ export class GitStashService {
     async createStash(repoRoot: string, message: string, includeUntracked: boolean = false, keepIndex: boolean = false, stagedOnly: boolean = false, specificFiles?: string[]): Promise<void> {
         try {
             const args = ['stash', 'push'];
-            
+
             if (stagedOnly) {
                 // --staged requires Git 2.35+
                 args.push('--staged');
@@ -253,7 +253,7 @@ export class GitStashService {
                     args.push('--keep-index');
                 }
             }
-            
+
             args.push('-m', message);
 
             // Build file path arguments if specific files are provided
@@ -355,7 +355,7 @@ export class GitStashService {
             try {
                 const { stdout } = await this.executor.exec(
                     ['stash', 'show', '--numstat', stashIndex],
-                    { cwd: repoRoot }
+                    { cwd: repoRoot },
                 );
 
                 const lines = stdout.trim().split('\n').filter(line => line.trim());
@@ -371,7 +371,7 @@ export class GitStashService {
                             path: filePath,
                             status: 'M',
                             additions,
-                            deletions
+                            deletions,
                         });
                     }
                 }
@@ -383,7 +383,7 @@ export class GitStashService {
             try {
                 const { stdout: untrackedStdout } = await this.executor.exec(
                     ['ls-tree', '-r', `${stashIndex}^3`, '--name-only'],
-                    { cwd: repoRoot }
+                    { cwd: repoRoot },
                 );
 
                 const untrackedFiles = untrackedStdout.trim().split('\n').filter(line => line.trim());
@@ -393,7 +393,7 @@ export class GitStashService {
                     try {
                         const { stdout: content } = await this.executor.exec(
                             ['show', `${stashIndex}^3:${filePath}`],
-                            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                            { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
                         );
                         const lineCount = content.split('\n').length;
 
@@ -401,7 +401,7 @@ export class GitStashService {
                             path: filePath,
                             status: 'A', // Untracked files shown as Added
                             additions: lineCount,
-                            deletions: 0
+                            deletions: 0,
                         });
                     } catch {
                         // If we can't read the file, still show it
@@ -409,7 +409,7 @@ export class GitStashService {
                             path: filePath,
                             status: 'A',
                             additions: 0,
-                            deletions: 0
+                            deletions: 0,
                         });
                     }
                 }
@@ -432,14 +432,14 @@ export class GitStashService {
             try {
                 const { stdout } = await this.executor.exec(
                     ['show', `${stashIndex}:${relativePath}`],
-                    { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                    { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
                 );
                 return stdout;
             } catch (error) {
                 // File might be in untracked files (third parent)
                 const { stdout } = await this.executor.exec(
                     ['show', `${stashIndex}^3:${relativePath}`],
-                    { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                    { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
                 );
                 return stdout;
             }
@@ -455,7 +455,7 @@ export class GitStashService {
         try {
             const { stdout } = await this.executor.exec(
                 ['show', `${stashIndex}^:${relativePath}`],
-                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 }
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
             );
             return stdout;
         } catch (error) {
