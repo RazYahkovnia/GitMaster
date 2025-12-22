@@ -530,3 +530,85 @@ describe('StashCommands - mergeIntoShelf', () => {
     });
 });
 
+describe('StashCommands - pinShelf and unpinShelf', () => {
+    let stashCommands: StashCommands;
+    let mockGitService: jest.Mocked<GitService>;
+    let mockDiffService: jest.Mocked<DiffService>;
+    let mockShelvesProvider: jest.Mocked<ShelvesProvider>;
+    let mockStashItem: StashTreeItem;
+
+    beforeEach(() => {
+        jest.clearAllMocks();
+
+        mockGitService = new GitService() as jest.Mocked<GitService>;
+        mockDiffService = new DiffService(mockGitService) as jest.Mocked<DiffService>;
+
+        const mockContext = {
+            workspaceState: {
+                get: jest.fn().mockReturnValue({}),
+                update: jest.fn().mockResolvedValue(undefined)
+            }
+        } as any;
+
+        mockShelvesProvider = new ShelvesProvider(mockGitService, mockContext) as jest.Mocked<ShelvesProvider>;
+        mockShelvesProvider.pinShelf = jest.fn().mockResolvedValue(undefined);
+        mockShelvesProvider.unpinShelf = jest.fn().mockResolvedValue(undefined);
+
+        stashCommands = new StashCommands(mockGitService, mockDiffService, mockShelvesProvider);
+
+        const mockStash: StashInfo = {
+            index: 'stash@{0}',
+            branch: 'main',
+            message: 'Test shelf',
+            fileCount: 2,
+            timestamp: '2024-01-01T12:00:00Z',
+            relativeTime: '1 hour ago',
+            additions: 10,
+            deletions: 5
+        };
+
+        mockStashItem = new StashTreeItem(
+            mockStash,
+            '/repo/root',
+            false,
+            vscode.TreeItemCollapsibleState.Collapsed
+        );
+    });
+
+    test('pinShelf calls provider pinShelf and shows success message', async () => {
+        await stashCommands.pinShelf(mockStashItem);
+
+        expect(mockShelvesProvider.pinShelf).toHaveBeenCalledWith('stash@{0}');
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('Pinned shelf "Test shelf"');
+    });
+
+    test('pinShelf handles errors gracefully', async () => {
+        (mockShelvesProvider.pinShelf as jest.Mock).mockRejectedValueOnce(new Error('Pin failed'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await stashCommands.pinShelf(mockStashItem);
+
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Failed to pin shelf: Error: Pin failed');
+        expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
+    });
+
+    test('unpinShelf calls provider unpinShelf and shows success message', async () => {
+        await stashCommands.unpinShelf(mockStashItem);
+
+        expect(mockShelvesProvider.unpinShelf).toHaveBeenCalledWith('stash@{0}');
+        expect(vscode.window.showInformationMessage).toHaveBeenCalledWith('Unpinned shelf "Test shelf"');
+    });
+
+    test('unpinShelf handles errors gracefully', async () => {
+        (mockShelvesProvider.unpinShelf as jest.Mock).mockRejectedValueOnce(new Error('Unpin failed'));
+        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
+
+        await stashCommands.unpinShelf(mockStashItem);
+
+        expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Failed to unpin shelf: Error: Unpin failed');
+        expect(consoleSpy).toHaveBeenCalled();
+        consoleSpy.mockRestore();
+    });
+});
+

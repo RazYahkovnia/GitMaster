@@ -292,5 +292,263 @@ describe('ShelvesProvider', () => {
         expect(mockGitService.checkStashConflicts).toHaveBeenCalledWith('stash@{0}', '/root');
         expect(mockGitService.checkStashConflicts).toHaveBeenCalledWith('stash@{1}', '/root');
     });
+
+    test('pinned shelf with conflict has stashPinnedConflict contextValue', async () => {
+        const mockStashes: StashInfo[] = [
+            {
+                index: 'stash@{0}',
+                branch: 'master',
+                message: 'Pinned conflicting shelf',
+                fileCount: 2,
+                timestamp: '2024-01-01T12:00:00Z',
+                relativeTime: '1 hour ago',
+                additions: 10,
+                deletions: 5
+            }
+        ];
+
+        mockGitService.getStashes.mockResolvedValue(mockStashes);
+        mockGitService.checkStashConflicts = jest.fn().mockResolvedValue(['file1.ts', 'file2.ts']);
+
+        provider.setRepoRoot('/root');
+        await provider.pinShelf('stash@{0}');
+        const items = await provider.getChildren();
+
+        const shelf = items[0] as StashTreeItem;
+        expect(shelf.contextValue).toBe('stashPinnedConflict');
+        expect(shelf.isPinned).toBe(true);
+        expect(shelf.stash.hasConflicts).toBe(true);
+    });
+
+    test('pinned shelves persist across provider instances', async () => {
+        // Setup initial state with pinned shelf
+        const pinnedData: Record<string, string[]> = {
+            '/root': ['stash@{0}']
+        };
+        (mockContext.workspaceState.get as jest.Mock).mockReturnValue(pinnedData);
+
+        // Create new provider instance (simulates reload)
+        const newProvider = new ShelvesProvider(mockGitService, mockContext);
+        newProvider.setRepoRoot('/root');
+
+        expect(newProvider.isShelfPinned('stash@{0}')).toBe(true);
+        expect(newProvider.isShelfPinned('stash@{1}')).toBe(false);
+    });
+
+    test('unpinning non-existent shelf does not throw', async () => {
+        mockGitService.checkStashConflicts = jest.fn().mockResolvedValue([]);
+        provider.setRepoRoot('/root');
+
+        // Should not throw
+        await expect(provider.unpinShelf('stash@{99}')).resolves.not.toThrow();
+    });
+
+    test('pinning same shelf twice is idempotent', async () => {
+        mockGitService.checkStashConflicts = jest.fn().mockResolvedValue([]);
+        provider.setRepoRoot('/root');
+
+        await provider.pinShelf('stash@{0}');
+        await provider.pinShelf('stash@{0}');
+
+        expect(provider.isShelfPinned('stash@{0}')).toBe(true);
+        // Should only save once (Set behavior)
+        const updateCalls = (mockContext.workspaceState.update as jest.Mock).mock.calls;
+        const lastCall = updateCalls[updateCalls.length - 1];
+        const savedPins = lastCall[1]['/root'];
+        expect(savedPins.filter((p: string) => p === 'stash@{0}').length).toBe(1);
+    });
+});
+
+describe('StashTreeItem', () => {
+    const createStash = (overrides: Partial<StashInfo> = {}): StashInfo => ({
+        index: 'stash@{0}',
+        branch: 'main',
+        message: 'Test shelf',
+        fileCount: 3,
+        timestamp: new Date().toISOString(),
+        relativeTime: '1 hour ago',
+        additions: 10,
+        deletions: 5,
+        ...overrides
+    });
+
+    describe('description formatting', () => {
+        test('shows line stats and file count', () => {
+            const stash = createStash({ additions: 15, deletions: 8, fileCount: 3 });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.description).toContain('+15 -8');
+            expect(item.description).toContain('3 files');
+        });
+
+        test('shows singular file for single file', () => {
+            const stash = createStash({ fileCount: 1 });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.description).toContain('1 file');
+            expect(item.description).not.toContain('1 files');
+        });
+
+        test('shows relative time', () => {
+            const stash = createStash({ relativeTime: '3 days ago' });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.description).toContain('3 days ago');
+        });
+
+        test('shows conflict warning in description', () => {
+            const stash = createStash({
+                hasConflicts: true,
+                conflictingFiles: ['file1.ts', 'file2.ts']
+            });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.description).toContain('⚠️');
+            expect(item.description).toContain('2 conflicts');
+        });
+
+        test('shows singular conflict for single file', () => {
+            const stash = createStash({
+                hasConflicts: true,
+                conflictingFiles: ['file1.ts']
+            });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.description).toContain('1 conflict');
+            expect(item.description).not.toContain('1 conflicts');
+        });
+    });
+
+    describe('tooltip content', () => {
+        test('includes message and line stats', () => {
+            const stash = createStash({ message: 'My stash message', additions: 20, deletions: 10 });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.tooltip).toContain('My stash message');
+            expect(item.tooltip).toContain('+20 -10');
+        });
+
+        test('includes conflicting files in tooltip', () => {
+            const stash = createStash({
+                hasConflicts: true,
+                conflictingFiles: ['src/file1.ts', 'src/file2.ts', 'src/file3.ts']
+            });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.tooltip).toContain('3 conflicting file(s)');
+            expect(item.tooltip).toContain('src/file1.ts');
+            expect(item.tooltip).toContain('src/file2.ts');
+            expect(item.tooltip).toContain('src/file3.ts');
+        });
+
+        test('truncates conflict list at 5 files', () => {
+            const stash = createStash({
+                hasConflicts: true,
+                conflictingFiles: ['f1.ts', 'f2.ts', 'f3.ts', 'f4.ts', 'f5.ts', 'f6.ts', 'f7.ts']
+            });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.tooltip).toContain('f1.ts');
+            expect(item.tooltip).toContain('f5.ts');
+            expect(item.tooltip).not.toContain('f6.ts');
+            expect(item.tooltip).toContain('and 2 more');
+        });
+    });
+
+    describe('icon selection', () => {
+        test('uses warning icon for conflicting shelf', () => {
+            const stash = createStash({ hasConflicts: true, conflictingFiles: ['file.ts'] });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('warning');
+        });
+
+        test('uses pinned icon for pinned shelf (without conflicts)', () => {
+            const stash = createStash();
+            const item = new StashTreeItem(stash, '/root', true, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('pinned');
+        });
+
+        test('conflict icon takes priority over pinned', () => {
+            const stash = createStash({ hasConflicts: true, conflictingFiles: ['file.ts'] });
+            const item = new StashTreeItem(stash, '/root', true, vscode.TreeItemCollapsibleState.Collapsed);
+
+            // Conflict takes highest priority
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('warning');
+        });
+
+        test('uses inbox icon for fresh shelf (<24h)', () => {
+            const now = new Date();
+            const stash = createStash({ timestamp: now.toISOString() });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('inbox');
+        });
+
+        test('uses archive icon for recent shelf (1-7 days)', () => {
+            const threeDaysAgo = new Date();
+            threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+            const stash = createStash({ timestamp: threeDaysAgo.toISOString() });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('archive');
+        });
+
+        test('uses package icon for week-old shelf (7-30 days)', () => {
+            const twoWeeksAgo = new Date();
+            twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+            const stash = createStash({ timestamp: twoWeeksAgo.toISOString() });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('package');
+        });
+
+        test('uses archive icon for old shelf (>30 days)', () => {
+            const twoMonthsAgo = new Date();
+            twoMonthsAgo.setDate(twoMonthsAgo.getDate() - 60);
+            const stash = createStash({ timestamp: twoMonthsAgo.toISOString() });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('archive');
+        });
+
+        test('uses default archive icon when timestamp is missing', () => {
+            const stash = createStash({ timestamp: '' });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect((item.iconPath as vscode.ThemeIcon).id).toBe('archive');
+        });
+    });
+
+    describe('contextValue', () => {
+        test('is "stash" for normal shelf', () => {
+            const stash = createStash();
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.contextValue).toBe('stash');
+        });
+
+        test('is "stashPinned" for pinned shelf', () => {
+            const stash = createStash();
+            const item = new StashTreeItem(stash, '/root', true, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.contextValue).toBe('stashPinned');
+        });
+
+        test('is "stashConflict" for conflicting shelf', () => {
+            const stash = createStash({ hasConflicts: true, conflictingFiles: ['f.ts'] });
+            const item = new StashTreeItem(stash, '/root', false, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.contextValue).toBe('stashConflict');
+        });
+
+        test('is "stashPinnedConflict" for pinned conflicting shelf', () => {
+            const stash = createStash({ hasConflicts: true, conflictingFiles: ['f.ts'] });
+            const item = new StashTreeItem(stash, '/root', true, vscode.TreeItemCollapsibleState.Collapsed);
+
+            expect(item.contextValue).toBe('stashPinnedConflict');
+        });
+    });
 });
 
