@@ -24,6 +24,7 @@ import {
     McpDependencies,
     McpCoreDependencies,
 } from './types';
+import { McpCommandRouter, RoutedCommand } from './commandRouter';
 import {
     SHELVES_LIMITS,
     COMMIT_EXPLAIN_LIMITS,
@@ -189,15 +190,19 @@ async function handleCommitExplain(
     const input = parseCommitExplainArgs(args);
     const payload = await buildCommitExplainPayload(input, deps);
 
-    // Open UI if callback is provided
-    if (deps.openCommitDetails) {
-        // Convert payload.commit to CommitInfo for the callback
-        const commitInfo: CommitInfo = {
-            ...payload.commit,
-            relativeDate: payload.commit.relativeDate,
-        };
-        await deps.openCommitDetails(commitInfo, payload.repoRoot);
-    }
+    // Open UI - route through command router if available
+    await routeUiCommand(deps, {
+        id: McpCommandRouter.generateCommandId(),
+        type: 'openCommitDetails',
+        repoRoot: payload.repoRoot,
+        payload: {
+            commitInfo: {
+                ...payload.commit,
+                relativeDate: payload.commit.relativeDate,
+            },
+        },
+        timestamp: Date.now(),
+    });
 
     return createTextResponse(payload);
 }
@@ -209,13 +214,16 @@ async function handleShowGitGraph(
     args: Record<string, unknown>,
     deps: McpDependencies,
 ): Promise<McpToolResponse> {
-    if (!deps.openGitGraph) {
-        throw new Error('gitmaster_show_git_graph is only available inside the VS Code extension host');
-    }
-
     const repoPath = parseStringArg(args.repoPath);
     const repoRoot = await resolveRepoRoot(repoPath ?? deps.defaultRepoPath, deps.gitService);
-    await deps.openGitGraph(repoRoot);
+
+    await routeUiCommand(deps, {
+        id: McpCommandRouter.generateCommandId(),
+        type: 'openGitGraph',
+        repoRoot,
+        payload: {},
+        timestamp: Date.now(),
+    });
 
     return createTextResponse('ok');
 }
@@ -227,13 +235,17 @@ async function handleShelves(
     args: Record<string, unknown>,
     deps: McpDependencies,
 ): Promise<McpToolResponse> {
-    if (!deps.openShelvesView) {
-        throw new Error('gitmaster_shelves is only available inside the VS Code extension host');
-    }
-
     const input = parseShelvesArgs(args);
     const shelves = await fetchShelves(input, deps);
-    await deps.openShelvesView();
+    const repoRoot = await resolveRepoRoot(input.repoPath ?? deps.defaultRepoPath, deps.gitService);
+
+    await routeUiCommand(deps, {
+        id: McpCommandRouter.generateCommandId(),
+        type: 'openShelvesView',
+        repoRoot,
+        payload: {},
+        timestamp: Date.now(),
+    });
 
     return createTextResponse(shelves);
 }
@@ -257,13 +269,17 @@ async function handleShowFileHistory(
     args: Record<string, unknown>,
     deps: McpDependencies,
 ): Promise<McpToolResponse> {
-    if (!deps.openFileHistory) {
-        throw new Error('gitmaster_show_file_history is only available inside the VS Code extension host');
-    }
-
     const input = parseShowFileHistoryArgs(args);
     const filePath = await resolveFilePath(input.filePath, deps);
-    await deps.openFileHistory(filePath);
+    const repoRoot = await resolveRepoRoot(filePath, deps.gitService);
+
+    await routeUiCommand(deps, {
+        id: McpCommandRouter.generateCommandId(),
+        type: 'openFileHistory',
+        repoRoot,
+        payload: { filePath },
+        timestamp: Date.now(),
+    });
 
     return createTextResponse({
         filePath,
@@ -581,6 +597,68 @@ function parseShelfUri(uri: string): string {
         throw new Error(`Invalid resource URI: ${uri}. Expected format: ${SHELF_URI_PREFIX}{index}`);
     }
     return decodeURIComponent(match[1]);
+}
+
+// ============================================================================
+// Command Routing
+// ============================================================================
+
+/**
+ * Route a UI command through the command router, or execute directly if local.
+ * This enables cross-window UI operations when MCP server runs in a different window.
+ */
+async function routeUiCommand(
+    deps: McpDependencies,
+    command: RoutedCommand,
+): Promise<void> {
+    // If we have a command router, use it to route to the correct window
+    if (deps.commandRouter) {
+        const executedLocally = await deps.commandRouter.routeCommand(command);
+        if (executedLocally) {
+            return; // Command was executed in this window
+        }
+        // Command was routed to another window - it will be executed there
+        return;
+    }
+
+    // Fallback: execute directly using UI callbacks (legacy behavior)
+    await executeUiCommandLocally(deps, command);
+}
+
+/**
+ * Execute a UI command locally using the provided callbacks.
+ */
+async function executeUiCommandLocally(
+    deps: McpDependencies,
+    command: RoutedCommand,
+): Promise<void> {
+    switch (command.type) {
+        case 'openCommitDetails':
+            if (deps.openCommitDetails) {
+                const commitInfo = command.payload.commitInfo as CommitInfo;
+                await deps.openCommitDetails(commitInfo, command.repoRoot);
+            }
+            break;
+
+        case 'openGitGraph':
+            if (deps.openGitGraph) {
+                await deps.openGitGraph(command.repoRoot);
+            }
+            break;
+
+        case 'openShelvesView':
+            if (deps.openShelvesView) {
+                await deps.openShelvesView();
+            }
+            break;
+
+        case 'openFileHistory':
+            if (deps.openFileHistory) {
+                const filePath = command.payload.filePath as string;
+                await deps.openFileHistory(filePath);
+            }
+            break;
+    }
 }
 
 // ============================================================================

@@ -102,15 +102,21 @@ You can customize GitMaster in VS Code Settings (**Cmd+','** or **Ctrl+','**). S
 
 ### 🤝 MCP (Cursor integration)
 
-GitMaster can expose a local **MCP SSE endpoint** (running inside the extension host) so Cursor can call GitMaster tools.
+GitMaster can expose a local **MCP server** (running inside the extension host) so Cursor can call GitMaster tools.
 
-- **Enable**: `gitmaster.mcp.enabled` (default: `true`)
-- **Port**: `gitmaster.mcp.port` (default: `8765`)
-- **Endpoint**: `http://127.0.0.1:8765/sse`
+> ⚠️ **MCP is disabled by default.** You must enable it first in settings.
 
-**Recommended (one-click):** run the VS Code command **`GitMaster: Install MCP in Cursor`**.
+**How to enable MCP:**
+1. Open VS Code Settings (**Cmd+,** or **Ctrl+,**)
+2. Search for `gitmaster.mcp.enabled`
+3. Check the box to enable MCP
+4. Run the VS Code command **`GitMaster: Install MCP in Cursor`** to configure Cursor
 
-Then in Cursor, use GitMaster MCP tools like **Commit Explain**, **Show Git Graph**, and **Shelves**.
+**Settings:**
+- `gitmaster.mcp.enabled` (default: `false`) - Enable the MCP server
+- `gitmaster.mcp.port` (default: `8765`) - Port for the MCP server
+
+Then in Cursor, use GitMaster MCP tools like **Commit Explain**, **Show Git Graph**, **Shelves**, **File Experts**, and **File History**.
 
 ## 🎨 Why GitMaster?
 

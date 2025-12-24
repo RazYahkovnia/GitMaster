@@ -30,6 +30,7 @@ import {
     ENDPOINTS,
     SLOW_TOOL_THRESHOLD_MS,
 } from './constants';
+import { McpCommandRouter } from './commandRouter';
 
 // ============================================================================
 // Types
@@ -43,6 +44,8 @@ export interface McpServerOptions {
     port?: number;
     /** Logger function for diagnostics */
     log?: (message: string) => void;
+    /** Command router for cross-window UI commands */
+    commandRouter?: McpCommandRouter;
     /** UI callback: open the Shelves view */
     openShelvesView?: () => Promise<void>;
     /** UI callback: open the Git Graph view */
@@ -70,14 +73,19 @@ type McpSdkModules = Record<string, any>;
 /**
  * Start the GitMaster MCP server.
  *
+ * Uses a single fixed port (8765 by default) shared across all windows.
+ * Only the first window to start will successfully bind to the port.
+ * Other windows should still function - they just won't host the MCP server,
+ * but they can receive routed commands via the command router.
+ *
  * @param context - VS Code extension context for lifecycle management
  * @param options - Server configuration options
- * @returns The host and port the server is listening on
+ * @returns The host and port the server is listening on, or null if port was in use
  */
 export async function startGitMasterMcpServer(
     context: vscode.ExtensionContext,
     options: McpServerOptions = {},
-): Promise<{ host: string; port: number }> {
+): Promise<{ host: string; port: number } | null> {
     const host = options.host ?? DEFAULT_HOST;
     const port = options.port ?? DEFAULT_PORT;
     const log: Logger = options.log ?? console.log;
@@ -94,13 +102,25 @@ export async function startGitMasterMcpServer(
 
     // Create and start HTTP server
     const httpServer = createHttpServer(sdk, createMcpServer, transportState, log, host);
-    const startedPort = await startServer(httpServer, host, port);
 
-    // Register cleanup on extension deactivation
-    registerCleanup(context, httpServer, transportState);
+    try {
+        const startedPort = await startServer(httpServer, host, port);
 
-    log(`GitMaster MCP server listening on http://${host}:${startedPort}${ENDPOINTS.MCP}`);
-    return { host, port: startedPort };
+        // Register cleanup on extension deactivation
+        registerCleanup(context, httpServer, transportState);
+
+        log(`GitMaster MCP server listening on http://${host}:${startedPort}${ENDPOINTS.MCP}`);
+        return { host, port: startedPort };
+    } catch (err) {
+        // Port is likely in use by another window - this is expected behavior
+        const errorCode = (err as NodeJS.ErrnoException).code;
+        if (errorCode === 'EADDRINUSE') {
+            log(`[MCP] Port ${port} already in use (another window is hosting the MCP server)`);
+            log('[MCP] This window will receive routed commands via the command router');
+            return null;
+        }
+        throw err;
+    }
 }
 
 // ============================================================================
@@ -141,6 +161,7 @@ function createDependencies(options: McpServerOptions): McpDependencies {
     return {
         gitService: new GitService(),
         defaultRepoPath: getDefaultRepoPath(),
+        commandRouter: options.commandRouter,
         openShelvesView: options.openShelvesView,
         openGitGraph: options.openGitGraph,
         openCommitDetails: options.openCommitDetails,

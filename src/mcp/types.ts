@@ -5,6 +5,7 @@
 
 import { CommitInfo } from '../types/git';
 import { GitService } from '../services/gitService';
+import { McpCommandRouter } from './commandRouter';
 
 // ============================================================================
 // Tool Input Types
@@ -188,6 +189,8 @@ export interface McpDependencies extends McpUiCallbacks {
     gitService: GitService;
     /** Default path to resolve repo root when not provided */
     defaultRepoPath?: string;
+    /** Command router for cross-window UI commands */
+    commandRouter?: McpCommandRouter;
 }
 
 /** Dependencies for operations that don't need UI (resources, data queries) */

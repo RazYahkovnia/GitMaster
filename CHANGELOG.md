@@ -6,6 +6,13 @@
   - `gitmaster_file_experts` - Find top contributors/experts for any file based on commit history
   - `gitmaster_show_file_history` - Open the File History view for a specific file
 
+### 🔧 Changes
+- **MCP server disabled by default**: The MCP server is now off by default for better security and resource usage. To enable it:
+  1. Open VS Code Settings (**Cmd+,** or **Ctrl+,**)
+  2. Search for `gitmaster.mcp.enabled`
+  3. Check the box to enable MCP
+  4. Run **GitMaster: Install MCP in Cursor** command to configure Cursor
+
 ## [0.0.14] - 2025-12-20
 ### ✨ New Features
 - **MCP (Cursor integration)**: Added 3 MCP tools for agents:
