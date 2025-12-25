@@ -16,6 +16,8 @@
         "editor.formatOnSave": true
     },
     "cSpell.words": [
+        "glassmorphism",
+        "modelcontextprotocol",
         "Streamable",
         "Worktree"
     ]

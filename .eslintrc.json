@@ -128,5 +128,5 @@
         "spaced-comment": ["error", "always"],
         "eol-last": ["error", "always"]
     },
-    "ignorePatterns": ["out", "dist", "**/*.d.ts", "node_modules", "*.js"]
+    "ignorePatterns": ["out", "dist", "**/*.d.ts", "node_modules", "*.js", "test"]
 }
