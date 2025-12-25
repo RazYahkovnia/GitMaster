@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import * as path from 'path';
 import { GitService } from '../services/gitService';
 import { StashInfo, ChangedFile } from '../types/git';
 
@@ -120,7 +121,8 @@ export class StashFileTreeItem extends vscode.TreeItem {
 
         this.description = `+${file.additions} -${file.deletions}`;
         this.contextValue = 'stashFile';
-        this.iconPath = new vscode.ThemeIcon('file');
+        // Use VS Code's file icon theme (same icons as Explorer)
+        this.resourceUri = vscode.Uri.file(path.join(repoRoot, file.path));
 
         // Set command to show diff when clicked
         this.command = {

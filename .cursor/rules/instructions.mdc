@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+
+# GitMaster Agent Rules 
+
+## Important
+- Follow `documentation/CODE_GUIDE.md` for code instructions and project structure.
+- Every change should be covered by tests.
+- Changes should follow best practices without hacks.
+- Every change should be shortly mentioned in `CHANGELOG.md` while bumping the version.
+- If the change introduces a new big feature or changes a big feature --> update the `README.md`
+- New Git operations, should implement in `src/services/git/*`, expose via `src/services/gitService.ts`, then use from commands/providers.
+- Make sure to reuse functions and don't duplicate them.
+- Follow best code practices.
+- For each feature, if you think it can be helpful to expose it as a new tool in mcp, ask the user if he wants to.
