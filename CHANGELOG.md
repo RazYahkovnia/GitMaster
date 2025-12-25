@@ -1,6 +1,10 @@
 # Change Log
 
-## [0.0.16] - 2025-12-11
+## [0.0.17] - 2025-12-25
+### ⚡ Performance
+- **Shelves view**: Reduced total git operations by reusing parsed stash `--numstat` results, caching stash file lists, and using a single `git status --porcelain` call for conflict detection.
+
+## [0.0.16] - 2025-12-24
 ### 📌 Shelf Management
 - **Pin/Unpin Shelves**: Pin your favorite or important shelves to keep them at the top of the list.
   - 📍 **Visual Indicator**: Pinned shelves show a pin icon with blue color.

@@ -21,9 +21,8 @@ describe('GitStashService', () => {
             // Stash has file1.ts
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts', stderr: '' }) // stash show --numstat
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // staged files
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // unstaged files
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }); // untracked files
+                .mockRejectedValueOnce(new Error('no third parent')) // show --numstat stash^3
+                .mockResolvedValueOnce({ stdout: '', stderr: '' }); // status --porcelain
 
             const conflicts = await service.checkStashConflicts('stash@{0}', '/repo');
 
@@ -31,13 +30,10 @@ describe('GitStashService', () => {
         });
 
         test('detects conflicts with staged files', async () => {
-            // Mock getStashFiles - stash has file1.ts
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts', stderr: '' }) // stash show --numstat
-                .mockRejectedValueOnce(new Error('no third parent')) // ls-tree for untracked
-                .mockResolvedValueOnce({ stdout: 'file1.ts', stderr: '' }) // staged files
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // unstaged files
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }); // untracked files
+                .mockRejectedValueOnce(new Error('no third parent')) // show --numstat stash^3
+                .mockResolvedValueOnce({ stdout: 'M  file1.ts\n', stderr: '' }); // status --porcelain
 
             const conflicts = await service.checkStashConflicts('stash@{0}', '/repo');
 
@@ -46,11 +42,9 @@ describe('GitStashService', () => {
 
         test('detects conflicts with unstaged files', async () => {
             mockExecutor.exec
-                .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts', stderr: '' }) // stash show
-                .mockRejectedValueOnce(new Error('no third parent')) // ls-tree
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // staged files
-                .mockResolvedValueOnce({ stdout: 'file1.ts', stderr: '' }) // unstaged files
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }); // untracked files
+                .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts', stderr: '' }) // stash show --numstat
+                .mockRejectedValueOnce(new Error('no third parent')) // show --numstat stash^3
+                .mockResolvedValueOnce({ stdout: ' M file1.ts\n', stderr: '' }); // status --porcelain
 
             const conflicts = await service.checkStashConflicts('stash@{0}', '/repo');
 
@@ -59,11 +53,9 @@ describe('GitStashService', () => {
 
         test('detects conflicts with untracked files', async () => {
             mockExecutor.exec
-                .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts', stderr: '' }) // stash show
-                .mockRejectedValueOnce(new Error('no third parent')) // ls-tree
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // staged files
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // unstaged files
-                .mockResolvedValueOnce({ stdout: 'file1.ts', stderr: '' }); // untracked files
+                .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts', stderr: '' }) // stash show --numstat
+                .mockRejectedValueOnce(new Error('no third parent')) // show --numstat stash^3
+                .mockResolvedValueOnce({ stdout: '?? file1.ts\n', stderr: '' }); // status --porcelain
 
             const conflicts = await service.checkStashConflicts('stash@{0}', '/repo');
 
@@ -73,10 +65,8 @@ describe('GitStashService', () => {
         test('handles multiple conflicting files', async () => {
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts\n3\t1\tfile2.ts\n10\t0\tfile3.ts', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'))
-                .mockResolvedValueOnce({ stdout: 'file1.ts\nfile3.ts', stderr: '' }) // staged
-                .mockResolvedValueOnce({ stdout: 'file2.ts', stderr: '' }) // unstaged
-                .mockResolvedValueOnce({ stdout: '', stderr: '' }); // untracked
+                .mockRejectedValueOnce(new Error('no third parent')) // show --numstat stash^3
+                .mockResolvedValueOnce({ stdout: 'M  file1.ts\n M file2.ts\nM  file3.ts\n', stderr: '' }); // status --porcelain
 
             const conflicts = await service.checkStashConflicts('stash@{0}', '/repo');
 
@@ -110,10 +100,8 @@ describe('GitStashService', () => {
             const stashListOutput = 'stash@{0}|On main: My stash message|2024-01-01 12:00:00 +0000|2 hours ago';
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: stashListOutput, stderr: '' }) // stash list
-                .mockResolvedValueOnce({ stdout: '5\t2\tfile.ts', stderr: '' }) // getStashFileCount - numstat
-                .mockRejectedValueOnce(new Error('no third parent')) // getStashFileCount - ls-tree
-                .mockResolvedValueOnce({ stdout: '5\t2\tfile.ts', stderr: '' }) // getStashStats - numstat
-                .mockRejectedValueOnce(new Error('no third parent')); // getStashStats - ls-tree
+                .mockResolvedValueOnce({ stdout: '5\t2\tfile.ts', stderr: '' }) // stash show --numstat
+                .mockRejectedValueOnce(new Error('no third parent')); // show --numstat stash^3
 
             const stashes = await service.getStashes('/repo');
 
@@ -130,10 +118,8 @@ describe('GitStashService', () => {
             const stashListOutput = 'stash@{0}|WIP on feature: work in progress|2024-01-01 12:00:00 +0000|1 hour ago';
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: stashListOutput, stderr: '' })
-                .mockResolvedValueOnce({ stdout: '', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'))
-                .mockResolvedValueOnce({ stdout: '', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'));
+                .mockResolvedValueOnce({ stdout: '', stderr: '' }) // stash show --numstat
+                .mockRejectedValueOnce(new Error('no third parent')); // show --numstat stash^3
 
             const stashes = await service.getStashes('/repo');
 
@@ -148,16 +134,12 @@ describe('GitStashService', () => {
 
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: stashListOutput, stderr: '' })
-                // First stash counts/stats
-                .mockResolvedValueOnce({ stdout: '3\t1\tfile1.ts', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'))
-                .mockResolvedValueOnce({ stdout: '3\t1\tfile1.ts', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'))
-                // Second stash counts/stats
-                .mockResolvedValueOnce({ stdout: '5\t2\tfile2.ts\n2\t0\tfile3.ts', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'))
-                .mockResolvedValueOnce({ stdout: '5\t2\tfile2.ts\n2\t0\tfile3.ts', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'));
+                // First stash file list (tracked + optional untracked)
+                .mockResolvedValueOnce({ stdout: '3\t1\tfile1.ts', stderr: '' }) // stash show --numstat
+                .mockRejectedValueOnce(new Error('no third parent')) // show --numstat stash^3
+                // Second stash file list (tracked + optional untracked)
+                .mockResolvedValueOnce({ stdout: '5\t2\tfile2.ts\n2\t0\tfile3.ts', stderr: '' }) // stash show --numstat
+                .mockRejectedValueOnce(new Error('no third parent')); // show --numstat stash^3
 
             const stashes = await service.getStashes('/repo');
 
@@ -486,7 +468,7 @@ describe('GitStashService', () => {
         test('returns tracked files from stash', async () => {
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: '5\t2\tfile1.ts\n3\t1\tfile2.ts', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'));
+                .mockRejectedValueOnce(new Error('no third parent')); // show --numstat stash^3
 
             const files = await service.getStashFiles('stash@{0}', '/repo');
 
@@ -498,8 +480,7 @@ describe('GitStashService', () => {
         test('includes untracked files from third parent', async () => {
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: '', stderr: '' }) // no tracked changes
-                .mockResolvedValueOnce({ stdout: 'newfile.ts', stderr: '' }) // ls-tree
-                .mockResolvedValueOnce({ stdout: 'line1\nline2\nline3', stderr: '' }); // show file content
+                .mockResolvedValueOnce({ stdout: '3\t0\tnewfile.ts\n', stderr: '' }); // show --numstat stash^3
 
             const files = await service.getStashFiles('stash@{0}', '/repo');
 
@@ -507,12 +488,13 @@ describe('GitStashService', () => {
             expect(files[0].path).toBe('newfile.ts');
             expect(files[0].status).toBe('A');
             expect(files[0].additions).toBe(3); // 3 lines
+            expect(files[0].deletions).toBe(0);
         });
 
         test('handles binary files in numstat (- for additions/deletions)', async () => {
             mockExecutor.exec
                 .mockResolvedValueOnce({ stdout: '-\t-\tbinary.png', stderr: '' })
-                .mockRejectedValueOnce(new Error('no third parent'));
+                .mockRejectedValueOnce(new Error('no third parent')); // show --numstat stash^3
 
             const files = await service.getStashFiles('stash@{0}', '/repo');
 
