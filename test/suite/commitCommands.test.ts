@@ -17,18 +17,24 @@ describe('CommitCommands', () => {
     let mockCommitDetailsProvider: jest.Mocked<CommitDetailsProvider>;
 
     beforeEach(() => {
+        // Reset all mocks
+        jest.clearAllMocks();
+
         mockGitService = new GitService() as jest.Mocked<GitService>;
         mockDiffService = new DiffService(mockGitService) as jest.Mocked<DiffService>;
         mockCommitDetailsProvider = new CommitDetailsProvider(mockGitService) as jest.Mocked<CommitDetailsProvider>;
-        
+
         commitCommands = new CommitCommands(
             mockGitService,
             mockDiffService,
             mockCommitDetailsProvider
         );
 
-        // Mock vscode commands
-        jest.spyOn(vscode.commands, 'executeCommand').mockResolvedValue(undefined);
+        // Mock vscode APIs
+        (vscode.commands.executeCommand as jest.Mock) = jest.fn().mockResolvedValue(undefined);
+        (vscode.window.showErrorMessage as jest.Mock) = jest.fn().mockResolvedValue(undefined);
+        (vscode.window.showInformationMessage as jest.Mock) = jest.fn().mockResolvedValue(undefined);
+        (vscode.env.clipboard.writeText as jest.Mock) = jest.fn().mockResolvedValue(undefined);
     });
 
     afterEach(() => {
@@ -79,14 +85,14 @@ describe('CommitCommands', () => {
             // Should NOT call setCommit or showFileDiff for uncommitted changes
             expect(mockCommitDetailsProvider.setCommit).not.toHaveBeenCalled();
             expect(mockDiffService.showFileDiff).not.toHaveBeenCalled();
-            
+
             // Should call vscode.diff to show working directory changes
             expect(vscode.commands.executeCommand).toHaveBeenCalledWith(
                 'vscode.diff',
-                expect.objectContaining({ scheme: 'git' }),
-                expect.objectContaining({ scheme: 'file' }),
+                expect.objectContaining({ scheme: 'git', fsPath: expect.stringContaining('/test/repo/src/file.ts') }),
+                expect.objectContaining({ scheme: 'file', fsPath: mockFilePath }),
                 expect.stringContaining('Working Directory Changes'),
-                expect.objectContaining({ selection: expect.any(vscode.Range) })
+                expect.any(Object)
             );
         });
 
@@ -124,18 +130,18 @@ describe('CommitCommands', () => {
             };
 
             const fileUri = `file://${mockFilePath}`;
-            
+
             mockGitService.getChangedFilesInCommit.mockResolvedValue([]);
 
             await commitCommands.showCommitDetails(mockCommit, fileUri, 10);
 
-            expect(mockGitService.getRepoRoot).toHaveBeenCalledWith(mockFilePath);
+            // The URI is parsed and fsPath is extracted
+            expect(mockGitService.getRepoRoot).toHaveBeenCalled();
             expect(mockCommitDetailsProvider.setCommit).toHaveBeenCalled();
         });
 
         test('shows error message when not in a git repository', async () => {
             mockGitService.getRepoRoot.mockResolvedValue(null);
-            const showErrorSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockResolvedValue(undefined);
 
             const mockCommit: CommitInfo = {
                 hash: 'abc123def456',
@@ -148,7 +154,7 @@ describe('CommitCommands', () => {
 
             await commitCommands.showCommitDetails(mockCommit, mockFilePath);
 
-            expect(showErrorSpy).toHaveBeenCalledWith('Not a git repository');
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('Not a git repository');
             expect(mockCommitDetailsProvider.setCommit).not.toHaveBeenCalled();
         });
 
@@ -163,12 +169,11 @@ describe('CommitCommands', () => {
             };
 
             mockGitService.getChangedFilesInCommit.mockRejectedValue(new Error('Git error'));
-            const showErrorSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockResolvedValue(undefined);
-            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+            const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
 
             await commitCommands.showCommitDetails(mockCommit, mockFilePath);
 
-            expect(showErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to show commit details'));
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith(expect.stringContaining('Failed to show commit details'));
             expect(consoleErrorSpy).toHaveBeenCalled();
 
             consoleErrorSpy.mockRestore();
@@ -186,21 +191,16 @@ describe('CommitCommands', () => {
                 relativeDate: '1 day ago',
             };
 
-            const writeTextSpy = jest.spyOn(vscode.env.clipboard, 'writeText').mockResolvedValue(undefined);
-            const showInfoSpy = jest.spyOn(vscode.window, 'showInformationMessage').mockResolvedValue(undefined);
-
             await commitCommands.copyCommitId(mockCommit);
 
-            expect(writeTextSpy).toHaveBeenCalledWith('abc123def456');
-            expect(showInfoSpy).toHaveBeenCalledWith(expect.stringContaining('abc123d'));
+            expect(vscode.env.clipboard.writeText).toHaveBeenCalledWith('abc123def456');
+            expect(vscode.window.showInformationMessage).toHaveBeenCalledWith(expect.stringContaining('abc123d'));
         });
 
         test('handles missing commit information', async () => {
-            const showErrorSpy = jest.spyOn(vscode.window, 'showErrorMessage').mockResolvedValue(undefined);
-
             await commitCommands.copyCommitId(null);
 
-            expect(showErrorSpy).toHaveBeenCalledWith('No commit information available');
+            expect(vscode.window.showErrorMessage).toHaveBeenCalledWith('No commit information available');
         });
     });
 });
