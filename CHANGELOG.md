@@ -1,8 +1,10 @@
 # Change Log
 
-## [0.0.17] - 2025-12-25
+
+## [0.0.17] - 2025-12-29
 ### ⚡ Performance
 - **Shelves view**: Reduced total git operations by reusing parsed stash `--numstat` results, caching stash file lists, and using a single `git status --porcelain` call for conflict detection.
+- **Inline Git Blame**: Fixed error when clicking "View Commit Details" on uncommitted changes. Now properly shows working directory diff using VS Code's built-in diff view instead of trying to fetch an invalid commit.
 
 ## [0.0.16] - 2025-12-24
 ### 📌 Shelf Management

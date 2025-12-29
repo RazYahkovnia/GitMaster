@@ -49,6 +49,15 @@ export class CommitCommands {
                 return;
             }
 
+            // Check if this is uncommitted changes (git blame returns hash of all zeros)
+            const isUncommitted = /^0+$/.test(commit.hash);
+
+            if (isUncommitted) {
+                // For uncommitted changes, show the working directory diff using VS Code's built-in diff
+                await this.showUncommittedChanges(actualFilePath, line);
+                return;
+            }
+
             // Update the commit details view in sidebar
             await this.commitDetailsProvider.setCommit(commit, repoRoot);
 
@@ -80,6 +89,37 @@ export class CommitCommands {
         } catch (error) {
             vscode.window.showErrorMessage(`Failed to show commit details: ${error}`);
             console.error('Error showing commit details:', error);
+        }
+    }
+
+    /**
+     * Show uncommitted changes for a file using VS Code's built-in diff
+     */
+    private async showUncommittedChanges(filePath: string, line?: number): Promise<void> {
+        try {
+            const fileUri = vscode.Uri.file(filePath);
+            const repoRoot = await this.gitService.getRepoRoot(filePath);
+
+            if (!repoRoot) {
+                vscode.window.showErrorMessage('Not a git repository');
+                return;
+            }
+
+            // Create git URI for HEAD version of the file
+            const headUri = vscode.Uri.parse(`git:${filePath}?${JSON.stringify({ path: filePath, ref: 'HEAD' })}`);
+
+            const title = `${path.basename(filePath)} (Working Directory Changes)`;
+
+            const options: vscode.TextDocumentShowOptions = {};
+            if (typeof line === 'number') {
+                options.selection = new vscode.Range(line, 0, line, 0);
+            }
+
+            // Use VS Code's built-in diff view to compare HEAD vs working directory
+            await vscode.commands.executeCommand('vscode.diff', headUri, fileUri, title, options);
+        } catch (error) {
+            vscode.window.showErrorMessage(`Failed to show uncommitted changes: ${error}`);
+            console.error('Error showing uncommitted changes:', error);
         }
     }
 

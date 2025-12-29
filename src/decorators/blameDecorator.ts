@@ -84,6 +84,9 @@ export class BlameDecorator implements vscode.Disposable {
             if (blame) {
                 const contentText = `     ${blame.author}, ${blame.relativeDate} • ${blame.message}`;
 
+                // Check if this is uncommitted changes (git blame returns hash of all zeros)
+                const isUncommitted = /^0+$/.test(blame.hash);
+
                 // Construct CommitInfo-like object for the command
                 const commitInfo = {
                     hash: blame.hash,
@@ -108,11 +111,18 @@ export class BlameDecorator implements vscode.Disposable {
                     `command:gitmaster.showCommitDiff?${encodeURIComponent(JSON.stringify(args))}`,
                 );
 
-                const hoverMessage = new vscode.MarkdownString(
-                    `**${blame.author}** committed ${blame.relativeDate}\n\n` +
-                    `${blame.message}\n\n` +
-                    `[View Commit Details](${commandUri})`,
-                );
+                // Different message for uncommitted changes
+                const hoverMessage = isUncommitted
+                    ? new vscode.MarkdownString(
+                        `**${blame.author}** • Uncommitted Changes\n\n` +
+                        `${blame.message}\n\n` +
+                        `[View Current Changes](${commandUri})`,
+                    )
+                    : new vscode.MarkdownString(
+                        `**${blame.author}** committed ${blame.relativeDate}\n\n` +
+                        `${blame.message}\n\n` +
+                        `[View Commit Details](${commandUri})`,
+                    );
                 hoverMessage.isTrusted = true;
 
                 const decoration: vscode.DecorationOptions = {
