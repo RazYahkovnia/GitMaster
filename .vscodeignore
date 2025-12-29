@@ -18,3 +18,4 @@ jest.e2e.config.js
 **/*.test.ts
 **/*.test.js
 .env
+releases/
