@@ -1,4 +1,6 @@
 # Change Log
+## [0.0.17] - 2025-12-31
+- **Readme Update**: Updating readme with Gif example
 
 ## [0.0.16] - 2025-12-24
 ### 📌 Shelf Management
