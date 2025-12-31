@@ -45,15 +45,15 @@ export class BranchCommands {
             }
 
             // Handle remote branches
-            let branchName = branch.name;
             if (branch.isRemote) {
                 // For remote branches, create a local tracking branch
                 const localName = branch.name.replace(/^[^/]+\//, '');
-                branchName = localName;
+                await this.gitService.checkoutRemoteBranch(branch.name, localName, actualRepoRoot);
+                vscode.window.showInformationMessage(`Checked out to branch "${localName}"`);
+            } else {
+                await this.gitService.checkoutBranch(branch.name, actualRepoRoot);
+                vscode.window.showInformationMessage(`Checked out to branch "${branch.name}"`);
             }
-
-            await this.gitService.checkoutBranch(branchName, actualRepoRoot);
-            vscode.window.showInformationMessage(`Checked out to branch "${branchName}"`);
 
             // Refresh the branches view
             this.branchesProvider.refresh();
@@ -82,27 +82,115 @@ export class BranchCommands {
                 return;
             }
 
-            // Can't delete remote branches directly
+            // Branches view is local-only, but guard anyway.
             if (branch.isRemote) {
-                vscode.window.showErrorMessage('Cannot delete remote branches from this view. Use Git commands directly.');
+                vscode.window.showErrorMessage('Remote-tracking branches are not shown in Branches view. Refresh the view.');
                 return;
             }
 
+            const upstream = this.parseUpstreamRemote(branch.upstream);
+
+            // If upstream isn't set, try to detect matching remote-tracking branches (e.g. origin/<branch.name>).
+            let remoteCandidates: Array<{ remote: string; branch: string }> = [];
+            if (!upstream) {
+                const remoteTracking = await this.gitService.getRemoteTrackingBranches(actualRepoRoot);
+                remoteCandidates = remoteTracking
+                    .map(ref => this.parseUpstreamRemote(ref))
+                    .filter((x): x is { remote: string; branch: string } => Boolean(x))
+                    .filter(x => x.branch === branch.name);
+            }
+
+            const hasRemoteOption = Boolean(upstream) || remoteCandidates.length > 0;
+            const actions = hasRemoteOption ? ['Delete Local', 'Delete Local + Remote'] : ['Delete'];
+
             // Confirm deletion
             const action = await vscode.window.showWarningMessage(
-                `Are you sure you want to delete branch "${branch.name}"?`,
-                { modal: true },
-                'Delete',
-                'Force Delete',
+                `Delete local branch "${branch.name}"?`,
+                {
+                    modal: true,
+                    detail: hasRemoteOption
+                        ? (upstream
+                            ? `This deletes the local branch. "${branch.name}" tracks "${branch.upstream}". You can also delete the remote branch from the same flow.`
+                            : `This deletes the local branch. A matching remote branch exists (${remoteCandidates.map(r => `${r.remote}/${r.branch}`).join(', ')}). You can also delete the remote branch from the same flow.`)
+                        : 'This deletes the local branch only.',
+                },
+                ...actions,
             );
 
             if (!action) {
                 return;
             }
 
-            const force = action === 'Force Delete';
-            await this.gitService.deleteBranch(branch.name, actualRepoRoot, force);
-            vscode.window.showInformationMessage(`Deleted branch "${branch.name}"`);
+            const requestedRemoteDelete = action === 'Delete Local + Remote';
+
+            // Try safe delete first (refuses if not fully merged).
+            let localForce = false;
+            try {
+                await this.gitService.deleteBranch(branch.name, actualRepoRoot, false);
+            } catch (error) {
+                const msg = String(error);
+                if (msg.includes('not fully merged') || msg.includes('not fully merged.')) {
+                    const forceAction = await vscode.window.showWarningMessage(
+                        `Branch "${branch.name}" is not fully merged.`,
+                        {
+                            modal: true,
+                            detail: 'Force delete removes the local branch without checking merge status (git branch -D).',
+                        },
+                        requestedRemoteDelete ? 'Force Delete Local + Remote' : 'Force Delete Local',
+                    );
+                    if (!forceAction) {
+                        return;
+                    }
+                    localForce = true;
+                    await this.gitService.deleteBranch(branch.name, actualRepoRoot, true);
+                } else {
+                    throw error;
+                }
+            }
+
+            // Optionally delete remote branch (server-side)
+            if (requestedRemoteDelete) {
+                // Choose the remote branch to delete
+                let remoteToDelete = upstream;
+                if (!remoteToDelete) {
+                    if (remoteCandidates.length === 1) {
+                        remoteToDelete = remoteCandidates[0];
+                    } else if (remoteCandidates.length > 1) {
+                        const selected = await vscode.window.showQuickPick(
+                            remoteCandidates.map(r => ({
+                                label: `${r.remote}/${r.branch}`,
+                                remote: r.remote,
+                                branch: r.branch,
+                            })),
+                            { placeHolder: 'Select remote branch to delete' },
+                        );
+                        remoteToDelete = selected ? { remote: selected.remote, branch: selected.branch } : null;
+                    }
+                }
+
+                if (!remoteToDelete) {
+                    vscode.window.showInformationMessage(`Deleted local branch "${branch.name}"${localForce ? ' (forced)' : ''}. Remote branch was not deleted.`);
+                    this.branchesProvider.refresh();
+                    return;
+                }
+
+                const confirmRemote = await vscode.window.showWarningMessage(
+                    `Also delete remote branch "${remoteToDelete.remote}/${remoteToDelete.branch}"?`,
+                    {
+                        modal: true,
+                        detail: `This will run: git push ${remoteToDelete.remote} --delete ${remoteToDelete.branch}`,
+                    },
+                    'Delete Remote Branch',
+                );
+                if (confirmRemote === 'Delete Remote Branch') {
+                    await this.gitService.deleteRemoteBranch(remoteToDelete.remote, remoteToDelete.branch, actualRepoRoot);
+                    vscode.window.showInformationMessage(`Deleted local branch "${branch.name}" and remote "${remoteToDelete.remote}/${remoteToDelete.branch}"`);
+                } else {
+                    vscode.window.showInformationMessage(`Deleted local branch "${branch.name}"${localForce ? ' (forced)' : ''}. Remote branch was not deleted.`);
+                }
+            } else {
+                vscode.window.showInformationMessage(`Deleted branch "${branch.name}"${localForce ? ' (forced)' : ''}`);
+            }
 
             // Refresh the branches view
             this.branchesProvider.refresh();
@@ -110,6 +198,19 @@ export class BranchCommands {
             vscode.window.showErrorMessage(`Failed to delete branch: ${error}`);
             console.error('Error deleting branch:', error);
         }
+    }
+
+    private parseUpstreamRemote(upstream?: string): { remote: string; branch: string } | null {
+        if (!upstream) {
+            return null;
+        }
+        const idx = upstream.indexOf('/');
+        if (idx <= 0 || idx === upstream.length - 1) {
+            return null;
+        }
+        const remote = upstream.slice(0, idx);
+        const branch = upstream.slice(idx + 1);
+        return remote && branch ? { remote, branch } : null;
     }
 
     /**

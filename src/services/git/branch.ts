@@ -2,7 +2,7 @@ import { GitExecutor } from './core';
 import { BranchInfo } from '../../types/git';
 
 export class GitBranchService {
-    constructor(private executor: GitExecutor) {}
+    constructor(private executor: GitExecutor) { }
 
     /**
      * Checkout to a specific commit
@@ -67,12 +67,34 @@ export class GitBranchService {
     }
 
     /**
+     * Checkout a remote branch by creating (or reusing) a local tracking branch.
+     *
+     * Example: remoteBranchName="origin/feature/x", localBranchName="feature/x"
+     */
+    async checkoutRemoteBranch(remoteBranchName: string, localBranchName: string, repoRoot: string): Promise<void> {
+        try {
+            // Prefer explicit tracking branch creation for deterministic behavior across Git versions/configs.
+            await this.executor.exec(['checkout', '-b', localBranchName, '--track', remoteBranchName], { cwd: repoRoot });
+        } catch (error) {
+            // If the local branch already exists, just checkout to it.
+            const message = String(error);
+            if (message.includes(`A branch named '${localBranchName}' already exists`) || message.includes('already exists')) {
+                await this.checkoutBranch(localBranchName, repoRoot);
+                return;
+            }
+            throw new Error(`Failed to checkout remote branch: ${error}`);
+        }
+    }
+
+    /**
      * Get all branches (local and remote) sorted by most recent activity
      */
     async getBranches(repoRoot: string, limit: number = 20): Promise<BranchInfo[]> {
         try {
             // Get branches sorted by most recent commit
-            const format = '%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
+            // NOTE: `%(refname:short)` for remote-tracking branches is typically `origin/foo` (not `remotes/origin/foo`),
+            // so we include the full `%(refname)` to reliably detect `refs/remotes/*`.
+            const format = '%(refname)|%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
             const { stdout } = await this.executor.execShell(
                 `git branch -a --sort=-committerdate --format="${format}" | head -n ${limit}`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
@@ -88,20 +110,24 @@ export class GitBranchService {
 
             for (const line of lines) {
                 const parts = line.split('|');
-                if (parts.length >= 7) {
-                    let branchName = parts[0].trim();
-                    const isCurrent = parts[1].trim() === '*';
-                    const commitHash = parts[2].trim();
-                    const shortCommitHash = parts[3].trim();
-                    const lastCommitMessage = parts[4].trim();
-                    const lastCommitAuthor = parts[5].trim();
-                    const lastCommitDate = parts[6].trim();
-                    const upstream = parts[7]?.trim() || undefined;
+                if (parts.length >= 8) {
+                    const refName = parts[0].trim();
+                    const branchName = parts[1].trim();
+                    const isCurrent = parts[2].trim() === '*';
+                    const commitHash = parts[3].trim();
+                    const shortCommitHash = parts[4].trim();
+                    const lastCommitMessage = parts[5].trim();
+                    const lastCommitAuthor = parts[6].trim();
+                    const lastCommitDate = parts[7].trim();
+                    const upstream = parts[8]?.trim() || undefined;
 
                     // Skip remote tracking refs that are duplicates
-                    const isRemote = branchName.startsWith('remotes/');
+                    const isRemote = refName.startsWith('refs/remotes/');
                     if (isRemote) {
-                        branchName = branchName.replace('remotes/', '');
+                        // Skip remote HEAD symbolic ref (shown as `origin` in refname:short)
+                        if (refName.endsWith('/HEAD')) {
+                            continue;
+                        }
                         // Skip if we already have the local version
                         const localName = branchName.replace(/^[^/]+\//, '');
                         if (seenBranches.has(localName)) {
@@ -133,6 +159,64 @@ export class GitBranchService {
     }
 
     /**
+     * Get local branches only (refs/heads) sorted by most recent activity
+     */
+    async getLocalBranches(repoRoot: string, limit: number = 50): Promise<BranchInfo[]> {
+        try {
+            // Same parsing format as getBranches(), but without `-a` so only local branches are returned.
+            const format = '%(refname)|%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
+            const { stdout } = await this.executor.execShell(
+                `git branch --sort=-committerdate --format="${format}" | head -n ${limit}`,
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            const branches: BranchInfo[] = [];
+            const lines = stdout.trim().split('\n');
+
+            for (const line of lines) {
+                const parts = line.split('|');
+                if (parts.length >= 8) {
+                    const refName = parts[0].trim();
+                    const branchName = parts[1].trim();
+                    const isCurrent = parts[2].trim() === '*';
+                    const commitHash = parts[3].trim();
+                    const shortCommitHash = parts[4].trim();
+                    const lastCommitMessage = parts[5].trim();
+                    const lastCommitAuthor = parts[6].trim();
+                    const lastCommitDate = parts[7].trim();
+                    const upstream = parts[8]?.trim() || undefined;
+
+                    // Only local refs should appear, but guard just in case.
+                    if (!refName.startsWith('refs/heads/')) {
+                        continue;
+                    }
+
+                    branches.push({
+                        name: branchName,
+                        isCurrent,
+                        isRemote: false,
+                        commitHash,
+                        shortCommitHash,
+                        lastCommitMessage,
+                        lastCommitAuthor,
+                        lastCommitDate,
+                        upstream,
+                    });
+                }
+            }
+
+            return branches;
+        } catch (error) {
+            console.error('Error getting local branches:', error);
+            return [];
+        }
+    }
+
+    /**
      * Delete a branch (local or remote)
      */
     async deleteBranch(branchName: string, repoRoot: string, force: boolean = false): Promise<void> {
@@ -141,6 +225,57 @@ export class GitBranchService {
             await this.executor.exec(['branch', flag, branchName], { cwd: repoRoot });
         } catch (error) {
             throw new Error(`Failed to delete branch: ${error}`);
+        }
+    }
+
+    /**
+     * Delete a remote-tracking branch reference (local only), e.g. `origin/feature/x`.
+     * This does NOT delete the branch on the remote server.
+     */
+    async deleteRemoteTrackingBranch(remoteBranchName: string, repoRoot: string): Promise<void> {
+        try {
+            await this.executor.exec(['branch', '-d', '-r', remoteBranchName], { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to delete remote-tracking branch: ${error}`);
+        }
+    }
+
+    /**
+     * Delete a branch on a remote (server-side).
+     *
+     * Example: remote="origin", branchName="feature/x"
+     */
+    async deleteRemoteBranch(remote: string, branchName: string, repoRoot: string): Promise<void> {
+        try {
+            await this.executor.exec(['push', remote, '--delete', branchName], { cwd: repoRoot });
+        } catch (error) {
+            throw new Error(`Failed to delete remote branch: ${error}`);
+        }
+    }
+
+    /**
+     * List remote-tracking branch refs (e.g. origin/main, upstream/feature/x).
+     * Note: this lists *local references* under refs/remotes; it does not contact the network.
+     */
+    async getRemoteTrackingBranches(repoRoot: string): Promise<string[]> {
+        try {
+            const { stdout } = await this.executor.execShell(
+                'git for-each-ref --format="%(refname:short)" refs/remotes',
+                { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
+            );
+
+            if (!stdout.trim()) {
+                return [];
+            }
+
+            return stdout
+                .split('\n')
+                .map(l => l.trim())
+                .filter(Boolean)
+                .filter(ref => !ref.endsWith('/HEAD')); // e.g. origin/HEAD
+        } catch (error) {
+            console.error('Error getting remote-tracking branches:', error);
+            return [];
         }
     }
 

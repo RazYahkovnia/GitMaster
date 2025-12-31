@@ -196,7 +196,8 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
         }
 
         try {
-            let branches = await this.gitService.getBranches(this.currentRepoRoot, 50);
+            // Branches view is intentionally local-only (no `origin/*` remote-tracking branches).
+            let branches = await this.gitService.getLocalBranches(this.currentRepoRoot, 50);
 
             // Apply author filter if set
             if (this.filterAuthor) {

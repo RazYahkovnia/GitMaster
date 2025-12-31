@@ -1,25 +1,14 @@
 import * as vscode from 'vscode';
 import * as crypto from 'crypto';
 import { GitService } from '../services/gitService';
+import { GraphCommit as BaseGraphCommit } from '../types/git';
 
-interface GraphCommit {
-    hash: string;
-    shortHash: string;
-    message: string;
-    author: string;
-    email: string;
-    avatarUrl: string;
-    date: string;
-    parents: string[];
-    branches: string[];
-    tags: string[];
-    refs: string[];
-}
+type GraphCommitWithAvatar = BaseGraphCommit & { avatarUrl: string };
 
 export class GitGraphView {
     private panel: vscode.WebviewPanel | undefined;
     private currentRepoRoot: string = '';
-    private currentCommits: GraphCommit[] = [];
+    private currentCommits: BaseGraphCommit[] = [];
     private currentSkip: number = 0;
     private readonly batchSize: number = 50;
 
@@ -236,7 +225,7 @@ export class GitGraphView {
         }
     }
 
-    private async getGraphCommits(repoRoot: string, limit: number, skip: number): Promise<GraphCommit[]> {
+    private async getGraphCommits(repoRoot: string, limit: number, skip: number): Promise<BaseGraphCommit[]> {
         try {
             return await this.gitService.getGraphCommits(repoRoot, limit, skip);
         } catch (error) {
@@ -245,7 +234,7 @@ export class GitGraphView {
         }
     }
 
-    private processCommits(commits: GraphCommit[]): GraphCommit[] {
+    private processCommits(commits: BaseGraphCommit[]): GraphCommitWithAvatar[] {
         return commits.map(c => {
             const hash = crypto.createHash('md5').update(c.email ? c.email.trim().toLowerCase() : '').digest('hex');
             return {
@@ -255,7 +244,7 @@ export class GitGraphView {
         });
     }
 
-    private getWebviewContent(commits: GraphCommit[]): string {
+    private getWebviewContent(commits: BaseGraphCommit[]): string {
         const processedCommits = this.processCommits(commits);
 
         return `<!DOCTYPE html>
