@@ -119,6 +119,22 @@ export interface BranchInfo {
 }
 
 /**
+ * Commit shape used by the Git Graph view
+ */
+export interface GraphCommit {
+    hash: string;
+    shortHash: string;
+    message: string;
+    author: string;
+    email: string;
+    date: string;
+    parents: string[];
+    branches: string[];
+    tags: string[];
+    refs: string[];
+}
+
+/**
  * Rebase action type
  */
 export type RebaseAction = 'pick' | 'reword' | 'edit' | 'squash' | 'fixup' | 'drop';

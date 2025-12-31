@@ -31,6 +31,8 @@ export enum TreeItemCollapsibleState {
 export const window = {
     showInformationMessage: jest.fn(),
     showErrorMessage: jest.fn(),
+    showWarningMessage: jest.fn(),
+    showQuickPick: jest.fn(),
     createTreeView: jest.fn(),
 };
 
