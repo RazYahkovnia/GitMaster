@@ -76,6 +76,11 @@ Save your WIP changes with meaningful names. No more "stash@{0}" confusion.
 
 ![GitMaster Shelves Guide](resources/git-master-guide.gif)
 
+<figure align="center">
+  <img src="https://github.com/RazYahkovnia/GitMaster/blob/master/resources/git-master-guide.gif" alt="GitMaster Stash Guide" />
+</figure>
+
+
 ### 🌿 **Branch Management**
 
 Work efficiently with team repositories. Focus on what matters.
