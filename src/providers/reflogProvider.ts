@@ -1,17 +1,8 @@
 import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { ReflogEntry } from '../types/git';
-
-/**
- * Tree item for a date separator in grouped view
- */
-export class DateSeparatorTreeItem extends vscode.TreeItem {
-    constructor(label: string) {
-        super(label, vscode.TreeItemCollapsibleState.Expanded);
-        this.contextValue = 'dateSeparator';
-        this.iconPath = new vscode.ThemeIcon('calendar');
-    }
-}
+import { DateSeparatorTreeItem } from './shared/dateSeparatorTreeItem';
+import { groupItemsByDate, getDateGroupLabel } from '../utils/dateGrouping';
 
 /**
  * Tree item for a reflog entry (git operation)
@@ -216,49 +207,16 @@ export class ReflogProvider implements vscode.TreeDataProvider<vscode.TreeItem> 
     }
 
     private groupEntriesByDate(entries: ReflogEntry[]): Map<string, ReflogEntry[]> {
-        const groups = new Map<string, ReflogEntry[]>();
         const now = new Date();
-
-        for (const entry of entries) {
-            const entryDate = new Date(entry.timestamp);
-            const label = this.getDateLabel(entryDate, now);
-
-            if (!groups.has(label)) {
-                groups.set(label, []);
-            }
-            groups.get(label)!.push(entry);
-        }
-
-        return groups;
+        return groupItemsByDate(entries, e => new Date(e.timestamp), now);
     }
 
     private getEntriesForDateGroup(entries: ReflogEntry[], dateLabel: string): ReflogEntry[] {
         const now = new Date();
         return entries.filter(entry => {
             const entryDate = new Date(entry.timestamp);
-            return this.getDateLabel(entryDate, now) === dateLabel;
+            return getDateGroupLabel(entryDate, now) === dateLabel;
         });
-    }
-
-    private getDateLabel(date: Date, now: Date): string {
-        const diffMs = now.getTime() - date.getTime();
-        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-        if (diffDays === 0) {
-            return 'Today';
-        } else if (diffDays === 1) {
-            return 'Yesterday';
-        } else if (diffDays < 7) {
-            return 'Last Week';
-        } else if (diffDays < 30) {
-            return 'Last Month';
-        } else if (diffDays < 90) {
-            return 'Last 3 Months';
-        } else if (diffDays < 180) {
-            return 'Last 6 Months';
-        } else {
-            return 'Older';
-        }
     }
 
     setRepoRoot(repoRoot: string | undefined): void {

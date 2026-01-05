@@ -283,6 +283,13 @@ export class BranchCommands {
     }
 
     /**
+     * Toggle grouping by date
+     */
+    toggleBranchesGroupByDate(): void {
+        this.branchesProvider.toggleGroupByDate();
+    }
+
+    /**
      * Filter branches by current user
      */
     async filterByMyBranches(): Promise<void> {

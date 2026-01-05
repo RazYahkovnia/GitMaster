@@ -114,6 +114,8 @@ export interface BranchInfo {
     lastCommitAuthor: string;
     /** Last commit date (relative) */
     lastCommitDate: string;
+    /** Last commit timestamp (ISO format) */
+    lastCommitTimestamp: string;
     /** Upstream branch (if tracking) */
     upstream?: string;
 }

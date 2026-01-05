@@ -94,7 +94,7 @@ export class GitBranchService {
             // Get branches sorted by most recent commit
             // NOTE: `%(refname:short)` for remote-tracking branches is typically `origin/foo` (not `remotes/origin/foo`),
             // so we include the full `%(refname)` to reliably detect `refs/remotes/*`.
-            const format = '%(refname)|%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
+            const format = '%(refname)|%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(committerdate:iso-strict)|%(upstream:short)';
             const { stdout } = await this.executor.execShell(
                 `git branch -a --sort=-committerdate --format="${format}" | head -n ${limit}`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
@@ -119,7 +119,8 @@ export class GitBranchService {
                     const lastCommitMessage = parts[5].trim();
                     const lastCommitAuthor = parts[6].trim();
                     const lastCommitDate = parts[7].trim();
-                    const upstream = parts[8]?.trim() || undefined;
+                    const lastCommitTimestamp = parts[8]?.trim() || '';
+                    const upstream = parts[9]?.trim() || undefined;
 
                     // Skip remote tracking refs that are duplicates
                     const isRemote = refName.startsWith('refs/remotes/');
@@ -146,6 +147,7 @@ export class GitBranchService {
                         lastCommitMessage,
                         lastCommitAuthor,
                         lastCommitDate,
+                        lastCommitTimestamp,
                         upstream,
                     });
                 }
@@ -164,7 +166,7 @@ export class GitBranchService {
     async getLocalBranches(repoRoot: string, limit: number = 50): Promise<BranchInfo[]> {
         try {
             // Same parsing format as getBranches(), but without `-a` so only local branches are returned.
-            const format = '%(refname)|%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(upstream:short)';
+            const format = '%(refname)|%(refname:short)|%(HEAD)|%(objectname)|%(objectname:short)|%(subject)|%(authorname)|%(committerdate:relative)|%(committerdate:iso-strict)|%(upstream:short)';
             const { stdout } = await this.executor.execShell(
                 `git branch --sort=-committerdate --format="${format}" | head -n ${limit}`,
                 { cwd: repoRoot, maxBuffer: 10 * 1024 * 1024 },
@@ -188,7 +190,8 @@ export class GitBranchService {
                     const lastCommitMessage = parts[5].trim();
                     const lastCommitAuthor = parts[6].trim();
                     const lastCommitDate = parts[7].trim();
-                    const upstream = parts[8]?.trim() || undefined;
+                    const lastCommitTimestamp = parts[8]?.trim() || '';
+                    const upstream = parts[9]?.trim() || undefined;
 
                     // Only local refs should appear, but guard just in case.
                     if (!refName.startsWith('refs/heads/')) {
@@ -204,6 +207,7 @@ export class GitBranchService {
                         lastCommitMessage,
                         lastCommitAuthor,
                         lastCommitDate,
+                        lastCommitTimestamp,
                         upstream,
                     });
                 }

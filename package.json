@@ -330,6 +330,11 @@
                 "icon": "$(pinned)"
             },
             {
+                "command": "gitmaster.toggleBranchesGroupByDate",
+                "title": "Group by Date",
+                "icon": "$(calendar)"
+            },
+            {
                 "command": "gitmaster.startRebase",
                 "title": "Start Interactive Rebase",
                 "icon": "$(git-branch)"
@@ -543,6 +548,11 @@
                 },
                 {
                     "command": "gitmaster.refreshBranches",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@6"
+                },
+                {
+                    "command": "gitmaster.toggleBranchesGroupByDate",
                     "when": "view == gitmaster.branches",
                     "group": "navigation@5"
                 },
