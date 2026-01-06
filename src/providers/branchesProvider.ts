@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import { GitService } from '../services/gitService';
 import { BranchInfo } from '../types/git';
 import { getAuthorColor } from '../utils/colorUtils';
+import { DateSeparatorTreeItem } from './shared/dateSeparatorTreeItem';
+import { groupItemsByDate, getDateGroupLabel } from '../utils/dateGrouping';
 
 /**
  * Tree item for a branch
@@ -85,6 +87,7 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
     private currentRepoRoot: string | undefined;
     private filterAuthor: string | null = null;
     private readonly pinnedBranchesKey = 'gitmaster.pinnedBranches';
+    private groupByDate: boolean = false;
 
     constructor(
         private gitService: GitService,
@@ -183,11 +186,6 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
      * Get children (branches) for the tree view
      */
     async getChildren(element?: vscode.TreeItem): Promise<vscode.TreeItem[]> {
-        // Branches view only has root level items (no nested structure)
-        if (element) {
-            return [];
-        }
-
         if (!this.currentRepoRoot) {
             const emptyItem = new vscode.TreeItem('No repository opened');
             emptyItem.contextValue = 'empty';
@@ -196,7 +194,8 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
         }
 
         try {
-            let branches = await this.gitService.getBranches(this.currentRepoRoot, 50);
+            // Branches view is intentionally local-only (no `origin/*` remote-tracking branches).
+            let branches = await this.gitService.getLocalBranches(this.currentRepoRoot, 50);
 
             // Apply author filter if set
             if (this.filterAuthor) {
@@ -216,31 +215,29 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
             // Get pinned branches
             const pinnedBranches = this.getPinnedBranches();
 
-            // Sort branches: pinned first, then by current, then alphabetically
-            const sortedBranches = branches.sort((a, b) => {
-                const aIsPinned = pinnedBranches.has(a.name);
-                const bIsPinned = pinnedBranches.has(b.name);
+            // If element is provided and grouping is enabled, return branches for that date group
+            if (element && element instanceof DateSeparatorTreeItem && this.groupByDate) {
+                const dateLabel = element.label as string;
+                const groupBranches = this.getBranchesForDateGroup(branches, pinnedBranches, dateLabel);
+                return groupBranches.map(branch =>
+                    new BranchTreeItem(
+                        branch,
+                        this.currentRepoRoot!,
+                        pinnedBranches.has(branch.name),
+                        vscode.TreeItemCollapsibleState.None,
+                    ),
+                );
+            }
 
-                // Pinned branches come first
-                if (aIsPinned && !bIsPinned) { return -1; }
-                if (!aIsPinned && bIsPinned) { return 1; }
+            // Root level
+            if (!element) {
+                if (this.groupByDate) {
+                    return this.createGroupedView(branches, pinnedBranches);
+                }
+                return this.createFlatView(branches, pinnedBranches);
+            }
 
-                // Current branch comes next
-                if (a.isCurrent && !b.isCurrent) { return -1; }
-                if (!a.isCurrent && b.isCurrent) { return 1; }
-
-                // Otherwise alphabetically
-                return a.name.localeCompare(b.name);
-            });
-
-            return sortedBranches.map(branch =>
-                new BranchTreeItem(
-                    branch,
-                    this.currentRepoRoot!,
-                    pinnedBranches.has(branch.name),
-                    vscode.TreeItemCollapsibleState.None,
-                ),
-            );
+            return [];
         } catch (error) {
             console.error('Error getting branches:', error);
             const errorItem = new vscode.TreeItem('Failed to load branches');
@@ -248,5 +245,93 @@ export class BranchesProvider implements vscode.TreeDataProvider<vscode.TreeItem
             errorItem.iconPath = new vscode.ThemeIcon('error');
             return [errorItem];
         }
+    }
+
+    private createFlatView(branches: BranchInfo[], pinnedBranches: Set<string>): vscode.TreeItem[] {
+        // Sort branches: pinned first, then by current, then alphabetically
+        const sortedBranches = branches.sort((a, b) => {
+            const aIsPinned = pinnedBranches.has(a.name);
+            const bIsPinned = pinnedBranches.has(b.name);
+
+            // Pinned branches come first
+            if (aIsPinned && !bIsPinned) { return -1; }
+            if (!aIsPinned && bIsPinned) { return 1; }
+
+            // Current branch comes next
+            if (a.isCurrent && !b.isCurrent) { return -1; }
+            if (!a.isCurrent && b.isCurrent) { return 1; }
+
+            // Otherwise alphabetically
+            return a.name.localeCompare(b.name);
+        });
+
+        return sortedBranches.map(branch =>
+            new BranchTreeItem(
+                branch,
+                this.currentRepoRoot!,
+                pinnedBranches.has(branch.name),
+                vscode.TreeItemCollapsibleState.None,
+            ),
+        );
+    }
+
+    private createGroupedView(branches: BranchInfo[], pinnedBranches: Set<string>): vscode.TreeItem[] {
+        const items: vscode.TreeItem[] = [];
+
+        // Keep pinned branches always visible at the top (not duplicated inside groups)
+        const pinned = branches
+            .filter(b => pinnedBranches.has(b.name))
+            .sort((a, b) => {
+                if (a.isCurrent && !b.isCurrent) { return -1; }
+                if (!a.isCurrent && b.isCurrent) { return 1; }
+                return a.name.localeCompare(b.name);
+            });
+
+        items.push(...pinned.map(branch =>
+            new BranchTreeItem(
+                branch,
+                this.currentRepoRoot!,
+                true,
+                vscode.TreeItemCollapsibleState.None,
+            ),
+        ));
+
+        const unpinned = branches.filter(b => !pinnedBranches.has(b.name));
+        const groups = groupItemsByDate(unpinned, b => new Date(b.lastCommitTimestamp), new Date());
+
+        for (const [label, groupBranches] of groups) {
+            const separator = new DateSeparatorTreeItem(label);
+            separator.description = `${groupBranches.length} branch${groupBranches.length !== 1 ? 'es' : ''}`;
+            items.push(separator);
+        }
+
+        return items;
+    }
+
+    private getBranchesForDateGroup(branches: BranchInfo[], pinnedBranches: Set<string>, dateLabel: string): BranchInfo[] {
+        const now = new Date();
+        return branches
+            .filter(b => !pinnedBranches.has(b.name))
+            .filter(b => getDateGroupLabel(new Date(b.lastCommitTimestamp), now) === dateLabel)
+            .sort((a, b) => {
+                if (a.isCurrent && !b.isCurrent) { return -1; }
+                if (!a.isCurrent && b.isCurrent) { return 1; }
+                return a.name.localeCompare(b.name);
+            });
+    }
+
+    /**
+     * Toggle grouping by date
+     */
+    toggleGroupByDate(): void {
+        this.groupByDate = !this.groupByDate;
+        this.refresh();
+    }
+
+    /**
+     * Get current grouping state
+     */
+    isGroupedByDate(): boolean {
+        return this.groupByDate;
     }
 }

@@ -514,6 +514,11 @@ function registerCommands(context: vscode.ExtensionContext): void {
         async (branchOrTreeItem) => branchCommands.unpinBranch(branchOrTreeItem),
     );
 
+    const toggleBranchesGroupByDateCommand = vscode.commands.registerCommand(
+        'gitmaster.toggleBranchesGroupByDate',
+        () => branchCommands.toggleBranchesGroupByDate(),
+    );
+
     // Rebase commands
     const startRebaseCommand = vscode.commands.registerCommand(
         'gitmaster.startRebase',
@@ -743,6 +748,7 @@ function registerCommands(context: vscode.ExtensionContext): void {
         clearBranchFilterCommand,
         pinBranchCommand,
         unpinBranchCommand,
+        toggleBranchesGroupByDateCommand,
         startRebaseCommand,
         startRebaseOnDefaultCommand,
         fetchAndRebaseCommand,

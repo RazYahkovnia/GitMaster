@@ -2,7 +2,7 @@
     "name": "gitmaster",
     "displayName": "GitMaster",
     "description": "Git investigation tools with visual history, graph, named stashes (shelves), and author tracking. Find when bugs were introduced, understand code changes, and manage WIP work efficiently.",
-    "version": "0.0.17",
+    "version": "0.0.18",
     "publisher": "razyahkovnia",
     "author": "Raz Yahkovnia",
     "license": "MIT",
@@ -330,6 +330,11 @@
                 "icon": "$(pinned)"
             },
             {
+                "command": "gitmaster.toggleBranchesGroupByDate",
+                "title": "Group by Date",
+                "icon": "$(calendar)"
+            },
+            {
                 "command": "gitmaster.startRebase",
                 "title": "Start Interactive Rebase",
                 "icon": "$(git-branch)"
@@ -543,6 +548,11 @@
                 },
                 {
                     "command": "gitmaster.refreshBranches",
+                    "when": "view == gitmaster.branches",
+                    "group": "navigation@6"
+                },
+                {
+                    "command": "gitmaster.toggleBranchesGroupByDate",
                     "when": "view == gitmaster.branches",
                     "group": "navigation@5"
                 },
@@ -813,6 +823,7 @@
         "@types/vscode": "^1.85.0",
         "@typescript-eslint/eslint-plugin": "^6.13.0",
         "@typescript-eslint/parser": "^6.13.0",
+        "@jest/test-sequencer": "^30.2.0",
         "eslint": "^8.55.0",
         "jest": "^30.2.0",
         "ts-jest": "^29.4.6",

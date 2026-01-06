@@ -1,4 +1,9 @@
 # Change Log
+## [0.0.18] - 2025-12-31
+- **Branches view**: Show **local branches only** (no `origin/*` remote-tracking entries).
+- **Delete branch**: Confirmation dialog can optionally delete the **remote branch** (based on the local branch's upstream, e.g. `origin/feature/x`).
+- **Force delete clarity**: Force is now only offered when needed (when the branch is not fully merged) and explains that it uses `git branch -D`.
+
 ## [0.0.17] - 2025-12-31
 - **Readme Update**: Updating readme with Gif example
 

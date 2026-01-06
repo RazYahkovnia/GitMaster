@@ -11,7 +11,7 @@ import { GitRebaseService } from './git/rebase';
 import { GitWorktreeService } from './git/worktree';
 import { GitGraphService } from './git/graph';
 import { GitContributorsService } from './git/contributors';
-import { CommitInfo, ChangedFile, StashInfo, ReflogEntry, RepositoryCommit, BranchInfo, BlameInfo, GitWorktree, RebaseCommit } from '../types/git';
+import { CommitInfo, ChangedFile, StashInfo, ReflogEntry, RepositoryCommit, BranchInfo, BlameInfo, GitWorktree, RebaseCommit, GraphCommit } from '../types/git';
 
 /**
  * Service for interacting with Git repositories
@@ -143,12 +143,32 @@ export class GitService {
         return this.branchService.checkoutBranch(branchName, repoRoot);
     }
 
+    async checkoutRemoteBranch(remoteBranchName: string, localBranchName: string, repoRoot: string): Promise<void> {
+        return this.branchService.checkoutRemoteBranch(remoteBranchName, localBranchName, repoRoot);
+    }
+
     async getBranches(repoRoot: string, limit: number = 20): Promise<BranchInfo[]> {
         return this.branchService.getBranches(repoRoot, limit);
     }
 
+    async getLocalBranches(repoRoot: string, limit: number = 50): Promise<BranchInfo[]> {
+        return this.branchService.getLocalBranches(repoRoot, limit);
+    }
+
     async deleteBranch(branchName: string, repoRoot: string, force: boolean = false): Promise<void> {
         return this.branchService.deleteBranch(branchName, repoRoot, force);
+    }
+
+    async deleteRemoteTrackingBranch(remoteBranchName: string, repoRoot: string): Promise<void> {
+        return this.branchService.deleteRemoteTrackingBranch(remoteBranchName, repoRoot);
+    }
+
+    async deleteRemoteBranch(remote: string, branchName: string, repoRoot: string): Promise<void> {
+        return this.branchService.deleteRemoteBranch(remote, branchName, repoRoot);
+    }
+
+    async getRemoteTrackingBranches(repoRoot: string): Promise<string[]> {
+        return this.branchService.getRemoteTrackingBranches(repoRoot);
     }
 
     async getBranchAuthors(repoRoot: string): Promise<string[]> {
@@ -304,7 +324,7 @@ export class GitService {
     }
 
     // Graph Service Delegation
-    async getGraphCommits(repoRoot: string, limit: number = 50, skip: number = 0, refs: string[] = []): Promise<any[]> {
+    async getGraphCommits(repoRoot: string, limit: number = 50, skip: number = 0, refs: string[] = []): Promise<GraphCommit[]> {
         return this.graphService.getGraphCommits(repoRoot, limit, skip, refs);
     }
 

@@ -1,4 +1,5 @@
 import { GitExecutor } from './core';
+import { GraphCommit } from '../../types/git';
 
 export class GitGraphService {
     constructor(private executor: GitExecutor) { }
@@ -6,7 +7,7 @@ export class GitGraphService {
     /**
      * Get commits for graph visualization with parent and ref information
      */
-    async getGraphCommits(repoRoot: string, limit: number = 50, skip: number = 0, refs: string[] = []): Promise<any[]> {
+    async getGraphCommits(repoRoot: string, limit: number = 50, skip: number = 0, refs: string[] = []): Promise<GraphCommit[]> {
         try {
             const args = ['log'];
 
@@ -35,7 +36,7 @@ export class GitGraphService {
                 return [];
             }
 
-            const commits: any[] = [];
+            const commits: GraphCommit[] = [];
             const rawCommits = stdout.split('\x00\n');
 
             for (const rawCommit of rawCommits) {

@@ -114,8 +114,26 @@ export interface BranchInfo {
     lastCommitAuthor: string;
     /** Last commit date (relative) */
     lastCommitDate: string;
+    /** Last commit timestamp (ISO format) */
+    lastCommitTimestamp: string;
     /** Upstream branch (if tracking) */
     upstream?: string;
+}
+
+/**
+ * Commit shape used by the Git Graph view
+ */
+export interface GraphCommit {
+    hash: string;
+    shortHash: string;
+    message: string;
+    author: string;
+    email: string;
+    date: string;
+    parents: string[];
+    branches: string[];
+    tags: string[];
+    refs: string[];
 }
 
 /**
