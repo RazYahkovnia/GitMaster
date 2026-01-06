@@ -19,8 +19,8 @@ describe('GitBranchService', () => {
     describe('getLocalBranches', () => {
         test('returns only local branches and parses upstream', async () => {
             const stdout =
-                'refs/heads/master|master|*|aaaaaaaa|aaaaaaa|Initial commit|Alice|1 day ago|\n' +
-                'refs/heads/feature/x|feature/x||bbbbbbbb|bbbbbbb|Add feature|Bob|2 hours ago|origin/feature/x\n';
+                'refs/heads/master|master|*|aaaaaaaa|aaaaaaa|Initial commit|Alice|1 day ago|2024-01-01T10:00:00+00:00|\n' +
+                'refs/heads/feature/x|feature/x||bbbbbbbb|bbbbbbb|Add feature|Bob|2 hours ago|2024-01-02T10:00:00+00:00|origin/feature/x\n';
 
             mockExecutor.execShell.mockResolvedValueOnce({ stdout, stderr: '' } as any);
 
@@ -32,12 +32,14 @@ describe('GitBranchService', () => {
                 isCurrent: true,
                 isRemote: false,
                 upstream: undefined,
+                lastCommitTimestamp: '2024-01-01T10:00:00+00:00',
             }));
             expect(branches[1]).toEqual(expect.objectContaining({
                 name: 'feature/x',
                 isCurrent: false,
                 isRemote: false,
                 upstream: 'origin/feature/x',
+                lastCommitTimestamp: '2024-01-02T10:00:00+00:00',
             }));
         });
     });

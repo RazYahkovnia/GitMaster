@@ -26,6 +26,7 @@ describe('BranchCommands', () => {
             lastCommitMessage: 'msg',
             lastCommitAuthor: 'me',
             lastCommitDate: 'now',
+            lastCommitTimestamp: '2024-01-02T10:00:00+00:00',
             upstream: 'origin/feature/x',
         };
 
@@ -61,6 +62,7 @@ describe('BranchCommands', () => {
             lastCommitMessage: 'msg',
             lastCommitAuthor: 'me',
             lastCommitDate: 'now',
+            lastCommitTimestamp: '2024-01-02T10:00:00+00:00',
             upstream: undefined,
         };
 

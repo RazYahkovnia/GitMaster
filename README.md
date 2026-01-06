@@ -88,6 +88,7 @@ Work efficiently with team repositories. Focus on what matters.
 - 👤 **My Branches filter** - hide team noise
 - 🔍 **Filter by author** - track specific developers
 - 📌 **Pin important branches** - persistent across sessions
+- 📅 **Group by date** - collapse branches into time buckets (Today, Yesterday, Last Week, …)
 - 🎨 **Color-coded** - same author, same color
 - ☁️ **Remote branch checkout** - one click
 - ➕ **Create & delete** visually
